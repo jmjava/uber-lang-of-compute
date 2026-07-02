@@ -113,6 +113,19 @@ kubectl get readreplicas -o jsonpath='{.items[*].spec.replicationMode}'
 
 See [ADR 0012](docs/adr/0012-debezium-cdc-sync.md).
 
+### Workflow CR references (Phase 10)
+
+Reference standalone Snapshot and Domino CRs instead of inline specs:
+
+```bash
+kubectl apply -f examples/standalone-snapshot-domino/snapshot.yaml
+kubectl apply -f examples/standalone-snapshot-domino/dominos.yaml
+kubectl apply -f examples/workflow-snapshot-refs/workflow.yaml
+kubectl get workflows -o wide
+```
+
+See [examples/workflow-snapshot-refs/README.md](examples/workflow-snapshot-refs/README.md) and [ADR 0013](docs/adr/0013-workflow-cr-references.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -139,6 +152,7 @@ See [ADR 0012](docs/adr/0012-debezium-cdc-sync.md).
 - [ADR 0010: Standalone Snapshot/Domino](docs/adr/0010-standalone-snapshot-domino.md)
 - [ADR 0011: Read-Replica Materialization](docs/adr/0011-read-replica-materialization.md)
 - [ADR 0012: Debezium CDC Sync](docs/adr/0012-debezium-cdc-sync.md)
+- [ADR 0013: Workflow CR References](docs/adr/0013-workflow-cr-references.md)
 
 ## Roadmap
 
@@ -149,10 +163,11 @@ See [ADR 0012](docs/adr/0012-debezium-cdc-sync.md).
 | **Phase 3** | ComputeWheel time-slice rotation + player-piano pre-provision |
 | **Phase 4** | Hot-swapped dominos — DominoChain CRD, init chain + OpenKruise |
 | **Phase 5** | Node-local TSDB DaemonSet + store.Backend abstraction |
-| **Phase 6 (current)** | Multiverse routing via Kafka + PluggableUniverse |
-| **Phase 7 (current)** | Standalone Snapshot + Domino CRD reconcilers |
-| **Phase 8 (current)** | Read-replica materialization from Multiverse routing |
-| **Phase 9 (current)** | Debezium CDC sync for cross-universe read replicas |
+| **Phase 6** | Multiverse routing via Kafka + PluggableUniverse |
+| **Phase 7** | Standalone Snapshot + Domino CRD reconcilers |
+| **Phase 8** | Read-replica materialization from Multiverse routing |
+| **Phase 9** | Debezium CDC sync for cross-universe read replicas |
+| **Phase 10 (current)** | Workflow references to standalone Snapshot/Domino CRs |
 
 ## License
 

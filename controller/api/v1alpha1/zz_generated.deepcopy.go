@@ -69,6 +69,10 @@ func (in *WorkflowSpec) DeepCopyInto(out *WorkflowSpec) {
 			in.Dominos[i].DeepCopyInto(&out.Dominos[i])
 		}
 	}
+	if in.DominoRefs != nil {
+		out.DominoRefs = make([]string, len(in.DominoRefs))
+		copy(out.DominoRefs, in.DominoRefs)
+	}
 	if in.Execution.Chain != nil {
 		out.Execution.Chain = make([]string, len(in.Execution.Chain))
 		copy(out.Execution.Chain, in.Execution.Chain)

@@ -29,14 +29,20 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 		return nil, fmt.Errorf("snapshot %q is not sealed; cannot execute deterministically", snap.Metadata.Name)
 	}
 
-	snapshotData, err := json.Marshal(snap.Spec.Source.Inline)
+	snapshotData, err := json.Marshal(snapshotContent(snap))
 	if err != nil {
 		return nil, fmt.Errorf("marshal snapshot data: %w", err)
 	}
 
-	snapshotID, err := hash.SnapshotID(snap.Spec.TimeSlice, snap.Spec.Source.Inline)
-	if err != nil {
-		return nil, fmt.Errorf("compute snapshot ID: %w", err)
+	snapshotID := ""
+	if snap.Status != nil && snap.Status.SnapshotID != "" {
+		snapshotID = snap.Status.SnapshotID
+	}
+	if snapshotID == "" {
+		snapshotID, err = hash.SnapshotID(snap.Spec.TimeSlice, snapshotContent(snap))
+		if err != nil {
+			return nil, fmt.Errorf("compute snapshot ID: %w", err)
+		}
 	}
 
 	if err := e.store.SaveSnapshot(snapshotID, snap.Spec.TimeSlice, string(snapshotData), true); err != nil {

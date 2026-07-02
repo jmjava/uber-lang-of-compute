@@ -22,7 +22,7 @@ spec:
           properties:
             spec:
               type: object
-              required: [snapshot, dominos, execution]
+              required: [execution]
               properties:
                 snapshot:
                   type: object
@@ -44,6 +44,9 @@ spec:
                       type: string
                     sealed:
                       type: boolean
+                snapshotRef:
+                  type: string
+                  description: Name of a sealed Snapshot CR in the same namespace
                 dominos:
                   type: array
                   items:
@@ -71,6 +74,11 @@ spec:
                               type: string
                       image:
                         type: string
+                dominoRefs:
+                  type: array
+                  description: Names of Domino CRs in the same namespace, executed in order
+                  items:
+                    type: string
                 execution:
                   type: object
                   required: [chain]
