@@ -3,10 +3,9 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/jmjava/uber-lang-of-compute/controller/pkg/builtin"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/executor"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/hash"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/snapshot"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
@@ -15,12 +14,18 @@ import (
 
 // Engine executes domino chains against snapshots with memoization.
 type Engine struct {
-	store store.Backend
+	store    store.Backend
+	executor executor.Config
 }
 
 // New creates an Engine backed by the given store.
 func New(s store.Backend) *Engine {
-	return &Engine{store: s}
+	return &Engine{store: s, executor: executor.DefaultConfig()}
+}
+
+// NewWithExecutor creates an Engine with explicit pluggable runtime configuration.
+func NewWithExecutor(s store.Backend, execCfg executor.Config) *Engine {
+	return &Engine{store: s, executor: execCfg}
 }
 
 // Run executes a workflow's domino chain and returns a replay log.
@@ -174,11 +179,7 @@ func (e *Engine) resolveInputs(d *types.Domino, snap types.Snapshot, snapshotID 
 }
 
 func (e *Engine) executeDomino(d *types.Domino, inputJSON string) (string, error) {
-	cmd := d.Spec.Command
-	if strings.HasPrefix(cmd, "builtin:") {
-		return builtin.Execute(cmd, inputJSON)
-	}
-	return "", fmt.Errorf("unsupported command %q (only builtin: commands supported in MVP)", cmd)
+	return executor.Execute(e.executor, d.Spec.Command, inputJSON)
 }
 
 // RunSingle executes one domino against a sealed snapshot with optional dependency outputs.

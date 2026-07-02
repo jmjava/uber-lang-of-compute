@@ -194,6 +194,17 @@ Large path files (≥1 MiB) use mmap on Unix at seal time. TSDB stores snapshot 
 
 See [ADR 0020](docs/adr/0020-mmap-tsdb-streaming.md).
 
+### Julia pluggable execution (Phase 14)
+
+Run dominos via Julia subprocess using `julia:<script>` commands:
+
+```bash
+julia --project=controller/julia -e 'using Pkg; Pkg.instantiate()'
+./controller/bin/kbl-compute --workflow examples/julia-domino-chain/workflow.yaml
+```
+
+See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) and [ADR 0022](docs/adr/0022-julia-pluggable-execution.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -228,6 +239,7 @@ See [ADR 0020](docs/adr/0020-mmap-tsdb-streaming.md).
 - [ADR 0018: Store-First Snapshot](docs/adr/0018-store-first-snapshot.md)
 - [ADR 0019: Direct-Bytes Staging](docs/adr/0019-direct-bytes-staging.md)
 - [ADR 0020: mmap + TSDB Streaming](docs/adr/0020-mmap-tsdb-streaming.md)
+- [ADR 0022: Julia Pluggable Execution](docs/adr/0022-julia-pluggable-execution.md)
 
 ## Roadmap
 
@@ -246,11 +258,11 @@ See [ADR 0020](docs/adr/0020-mmap-tsdb-streaming.md).
 | **Phase 11** | DominoChain container path resolves Workflow CR refs |
 | **Phase 12** | Node-local path snapshot ingestion |
 | **Phase 13** | ComputeWheel workflow template CR references |
-| **Phase 14** | Pluggable execution engines — Julia, Python, and custom runtimes via PluggableUniverse |
+| **Phase 14 (current)** | Julia pluggable execution — `julia:` domino commands via subprocess + bundled scripts |
 | **Phase 15** | HTTP/HTTPS snapshot URI ingestion |
 | **Phase 16** | Store-first snapshot reads — hot path skips re-fetching HTTP/path sources |
 | **Phase 17** | Direct-bytes snapshot staging — single-pass seal without parse→remarshal |
-| **Phase 18 (current)** | mmap path reads (≥1 MiB) + TSDB snapshot data sidecars and streaming `/data` endpoint |
+| **Phase 18** | mmap path reads (≥1 MiB) + TSDB snapshot data sidecars and streaming `/data` endpoint |
 
 ## Performance note
 

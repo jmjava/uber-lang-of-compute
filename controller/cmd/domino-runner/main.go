@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jmjava/uber-lang-of-compute/controller/pkg/builtin"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/executor"
 )
 
 // domino-runner is the container entrypoint for hot-swapped domino steps.
 // Environment:
-//   KBL_COMMAND  - builtin:identity, builtin:interpolate, etc.
+//   KBL_COMMAND  - builtin:identity, julia:interpolate, etc.
 //   KBL_INPUT    - path to input JSON file
 //   KBL_OUTPUT   - path to write output JSON
+//   KBL_JULIA_BIN, KBL_JULIA_PROJECT - optional Julia runtime settings
 func main() {
 	cmd := os.Getenv("KBL_COMMAND")
 	inputPath := os.Getenv("KBL_INPUT")
@@ -32,7 +33,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	out, err := builtin.Execute(cmd, string(input))
+	out, err := executor.ExecuteDefault(cmd, string(input))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "execute: %v\n", err)
 		os.Exit(1)

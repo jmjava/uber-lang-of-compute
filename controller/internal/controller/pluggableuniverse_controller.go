@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -32,9 +33,17 @@ func (r *PluggableUniverseReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	phase := kblv1alpha1.PluggableUniversePhaseActive
 	message := "universe active"
 
+	engineType := strings.ToLower(strings.TrimSpace(u.Spec.ExecutionEngine.Type))
 	if u.Spec.ExecutionEngine.Type == "" {
 		phase = kblv1alpha1.PluggableUniversePhaseDegraded
 		message = "executionEngine.type is required"
+	} else if engineType == "julia" {
+		message = "julia subprocess runtime (julia: commands)"
+		if u.Spec.ExecutionEngine.RuntimeImage != "" {
+			message = fmt.Sprintf("julia runtime image %s", u.Spec.ExecutionEngine.RuntimeImage)
+		}
+	} else if engineType == "python" {
+		message = "python execution planned; use builtin: or julia: commands today"
 	}
 	if u.Spec.DataLayer.Type == "" {
 		phase = kblv1alpha1.PluggableUniversePhaseDegraded
