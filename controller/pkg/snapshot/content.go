@@ -3,16 +3,23 @@ package snapshot
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
 
+const maxSnapshotFetchBytes = 32 << 20 // 32 MiB
+
+var snapshotHTTPClient = &http.Client{Timeout: 30 * time.Second}
+
 // ResolveContent loads snapshot payload data for hashing, persistence, and execution.
-// Inline sources return as-is. Path and file:// URI sources read node-local file contents.
-// Other URIs remain metadata-only until remote ingestion is implemented.
+// Inline sources return as-is. Path and file:// URI sources read node-local files.
+// http:// and https:// URIs are fetched at seal/execute time. Other URI schemes remain metadata-only.
 func ResolveContent(spec kblv1alpha1.SnapshotSpec) (interface{}, error) {
 	if spec.Source.Inline != nil {
 		return spec.Source.Inline, nil
@@ -23,6 +30,9 @@ func ResolveContent(spec kblv1alpha1.SnapshotSpec) (interface{}, error) {
 	if spec.Source.URI != "" {
 		if path, ok := fileURIPath(spec.Source.URI); ok {
 			return loadPath(path)
+		}
+		if isHTTPURI(spec.Source.URI) {
+			return loadHTTP(spec.Source.URI)
 		}
 		return map[string]string{"uri": spec.Source.URI}, nil
 	}
@@ -42,12 +52,39 @@ func ResolveEngineContent(spec types.SnapshotSpec) (interface{}, error) {
 	})
 }
 
+// IsSourceNotReady reports transient source resolution failures that should requeue.
+func IsSourceNotReady(err error) bool {
+	return IsPathNotReady(err) || IsURINotReady(err)
+}
+
 // IsPathNotReady reports whether content resolution failed because the path is not yet available.
 func IsPathNotReady(err error) bool {
 	if err == nil {
 		return false
 	}
 	return os.IsNotExist(err) || strings.Contains(err.Error(), "no such file or directory")
+}
+
+// IsURINotReady reports whether an HTTP snapshot fetch failed transiently.
+func IsURINotReady(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "fetch snapshot uri") {
+		return false
+	}
+	return strings.Contains(msg, "connection refused") ||
+		strings.Contains(msg, "connection reset") ||
+		strings.Contains(msg, "timeout") ||
+		strings.Contains(msg, "HTTP 502") ||
+		strings.Contains(msg, "HTTP 503") ||
+		strings.Contains(msg, "HTTP 504") ||
+		strings.Contains(msg, "HTTP 429")
+}
+
+func isHTTPURI(uri string) bool {
+	return strings.HasPrefix(uri, "http://") || strings.HasPrefix(uri, "https://")
 }
 
 func fileURIPath(uri string) (string, bool) {
@@ -66,14 +103,40 @@ func loadPath(path string) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read snapshot path %q: %w", path, err)
 	}
+	return parseSnapshotBytes(data, path, "path")
+}
 
+func loadHTTP(uri string) (interface{}, error) {
+	resp, err := snapshotHTTPClient.Get(uri)
+	if err != nil {
+		return nil, fmt.Errorf("fetch snapshot uri %q: %w", uri, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("fetch snapshot uri %q: HTTP %d", uri, resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(io.LimitReader(resp.Body, maxSnapshotFetchBytes+1))
+	if err != nil {
+		return nil, fmt.Errorf("fetch snapshot uri %q: read body: %w", uri, err)
+	}
+	if len(data) > maxSnapshotFetchBytes {
+		return nil, fmt.Errorf("fetch snapshot uri %q: body exceeds %d bytes", uri, maxSnapshotFetchBytes)
+	}
+
+	return parseSnapshotBytes(data, uri, "uri")
+}
+
+func parseSnapshotBytes(data []byte, source, sourceType string) (interface{}, error) {
 	var parsed interface{}
 	if err := json.Unmarshal(data, &parsed); err == nil {
 		return parsed, nil
 	}
 
-	return map[string]interface{}{
-		"path": path,
-		"raw":  string(data),
-	}, nil
+	out := map[string]interface{}{
+		sourceType: source,
+		"raw":      string(data),
+	}
+	return out, nil
 }

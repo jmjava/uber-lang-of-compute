@@ -164,6 +164,18 @@ kubectl get computewheels,workflows -l kbl.io/computewheel=finance-wheel-refs
 
 See [ADR 0016](docs/adr/0016-computewheel-cr-references.md).
 
+### HTTP snapshot ingestion (Phase 15)
+
+Fetch snapshot data from HTTP/HTTPS URIs:
+
+```bash
+cd examples/http-snapshot/data && python3 -m http.server 8080 &
+kubectl apply -f examples/http-snapshot/snapshot.yaml
+kubectl get snapshots curve-http -o wide
+```
+
+See [examples/http-snapshot/README.md](examples/http-snapshot/README.md) and [ADR 0017](docs/adr/0017-http-snapshot-ingestion.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -194,6 +206,7 @@ See [ADR 0016](docs/adr/0016-computewheel-cr-references.md).
 - [ADR 0014: DominoChain CR References](docs/adr/0014-dominochain-cr-references.md)
 - [ADR 0015: Path Snapshot Ingestion](docs/adr/0015-path-snapshot-ingestion.md)
 - [ADR 0016: ComputeWheel CR References](docs/adr/0016-computewheel-cr-references.md)
+- [ADR 0017: HTTP Snapshot Ingestion](docs/adr/0017-http-snapshot-ingestion.md)
 
 ## Roadmap
 
@@ -211,8 +224,9 @@ See [ADR 0016](docs/adr/0016-computewheel-cr-references.md).
 | **Phase 10** | Workflow references to standalone Snapshot/Domino CRs |
 | **Phase 11** | DominoChain container path resolves Workflow CR refs |
 | **Phase 12** | Node-local path snapshot ingestion |
-| **Phase 13 (current)** | ComputeWheel workflow template CR references |
+| **Phase 13** | ComputeWheel workflow template CR references |
 | **Phase 14** | Pluggable execution engines — Julia, Python, and custom runtimes via PluggableUniverse |
+| **Phase 15 (current)** | HTTP/HTTPS snapshot URI ingestion |
 
 ## License
 

@@ -380,7 +380,7 @@ func isSnapshotNotReady(err error) bool {
 	if apierrors.IsNotFound(err) {
 		return true
 	}
-	if snapshot.IsPathNotReady(err) {
+	if snapshot.IsSourceNotReady(err) {
 		return true
 	}
 	msg := err.Error()

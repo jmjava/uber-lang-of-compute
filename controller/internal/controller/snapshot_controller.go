@@ -51,7 +51,7 @@ func (r *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	snapshotID, err := snapshot.ComputeID(snap.Spec)
 	if err != nil {
-		if snapshot.IsPathNotReady(err) {
+		if snapshot.IsSourceNotReady(err) {
 			if _, uerr := r.updateStatus(ctx, &snap, kblv1alpha1.SnapshotPhasePending, "", err.Error()); uerr != nil {
 				return ctrl.Result{}, uerr
 			}
@@ -62,7 +62,7 @@ func (r *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	data, err := snapshot.MarshalData(snap.Spec)
 	if err != nil {
-		if snapshot.IsPathNotReady(err) {
+		if snapshot.IsSourceNotReady(err) {
 			if _, uerr := r.updateStatus(ctx, &snap, kblv1alpha1.SnapshotPhasePending, "", err.Error()); uerr != nil {
 				return ctrl.Result{}, uerr
 			}
