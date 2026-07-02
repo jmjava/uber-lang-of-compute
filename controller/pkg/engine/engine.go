@@ -8,6 +8,7 @@ import (
 
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/builtin"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/hash"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/snapshot"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
@@ -29,7 +30,12 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 		return nil, fmt.Errorf("snapshot %q is not sealed; cannot execute deterministically", snap.Metadata.Name)
 	}
 
-	snapshotData, err := json.Marshal(snapshotContent(snap))
+	content, err := snapshot.ResolveEngineContent(snap.Spec)
+	if err != nil {
+		return nil, fmt.Errorf("resolve snapshot content: %w", err)
+	}
+
+	snapshotData, err := json.Marshal(content)
 	if err != nil {
 		return nil, fmt.Errorf("marshal snapshot data: %w", err)
 	}
@@ -39,7 +45,7 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 		snapshotID = snap.Status.SnapshotID
 	}
 	if snapshotID == "" {
-		snapshotID, err = hash.SnapshotID(snap.Spec.TimeSlice, snapshotContent(snap))
+		snapshotID, err = hash.SnapshotID(snap.Spec.TimeSlice, content)
 		if err != nil {
 			return nil, fmt.Errorf("compute snapshot ID: %w", err)
 		}
@@ -130,8 +136,13 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 }
 
 func (e *Engine) resolveInputs(d *types.Domino, snap types.Snapshot, priorOutputs map[string]string) (string, error) {
+	content, err := snapshot.ResolveEngineContent(snap.Spec)
+	if err != nil {
+		return "", fmt.Errorf("resolve snapshot content: %w", err)
+	}
+
 	if len(d.Spec.Inputs) == 0 {
-		data, err := json.Marshal(snapshotContent(snap))
+		data, err := json.Marshal(content)
 		return string(data), err
 	}
 
@@ -150,7 +161,7 @@ func (e *Engine) resolveInputs(d *types.Domino, snap types.Snapshot, priorOutput
 			}
 		}
 		if input.FromSnapshot != "" {
-			data, err := json.Marshal(snapshotContent(snap))
+			data, err := json.Marshal(content)
 			if err != nil {
 				return "", err
 			}
@@ -235,17 +246,4 @@ func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.
 		return nil, fmt.Errorf("save result: %w", err)
 	}
 	return &entry, nil
-}
-
-func snapshotContent(snap types.Snapshot) interface{} {
-	if snap.Spec.Source.Inline != nil {
-		return snap.Spec.Source.Inline
-	}
-	if snap.Spec.Source.Path != "" {
-		return map[string]string{"path": snap.Spec.Source.Path}
-	}
-	if snap.Spec.Source.URI != "" {
-		return map[string]string{"uri": snap.Spec.Source.URI}
-	}
-	return map[string]interface{}{}
 }
