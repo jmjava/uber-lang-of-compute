@@ -39,6 +39,7 @@ func (r *WorkflowReconciler) publishSnapshotEvent(ctx context.Context, wf *kblv1
 		var mv kblv1alpha1.Multiverse
 		if err := r.Get(ctx, client.ObjectKey{Namespace: wf.Namespace, Name: wf.Spec.Routing.MultiverseRef}, &mv); err == nil {
 			_ = PublishSnapshotEvent(ctx, bus, &mv, evt)
+			publishWorkflowCDC(ctx, &mv, wf, result)
 			return
 		}
 	}

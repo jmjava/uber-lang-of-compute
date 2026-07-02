@@ -64,6 +64,7 @@ pkg/dominochain/       Init chain + OpenKruise pod builders, domino-runner hando
 cmd/domino-runner/     Container entrypoint for in-cluster domino steps
 pkg/wheel/             Time-slice rotation logic and workflow builder
 pkg/replica/            Cross-store read-replica materialization
+pkg/cdc/                Debezium-compatible CDC export, publish, and apply
 pkg/snapshot/          Snapshot sealing and deterministic ID computation
 pkg/events/            Memory + Kafka event bus for snapshot completion events
 pkg/routing/           Multiverse partition and time-slice routing
@@ -126,6 +127,12 @@ kubectl get readreplicas -o wide
 
 See [ADR 0011](../docs/adr/0011-read-replica-materialization.md).
 
+## Debezium CDC sync
+
+When Multiverse sync is enabled, workflows publish CDC events to `kbl.cdc.snapshots` and ReadReplicas replicate via `replicationMode: cdc` instead of direct store copy.
+
+See [ADR 0012](../docs/adr/0012-debezium-cdc-sync.md).
+
 ## Post-MVP
 
 - ~~Kubernetes controller-runtime reconciler for CRDs~~ (Workflow reconciler shipped in Phase 2)
@@ -135,4 +142,5 @@ See [ADR 0011](../docs/adr/0011-read-replica-materialization.md).
 - ~~Multiverse routing via Debezium/Kafka~~ (Multiverse + PluggableUniverse shipped in Phase 6)
 - ~~Standalone Snapshot/Domino CRD reconcilers~~ (shipped in Phase 7)
 - ~~Read-replica materialization from routed multiverse events~~ (shipped in Phase 8)
-- Debezium CDC replacing direct store copy for cross-universe sync
+- ~~Debezium CDC replacing direct store copy for cross-universe sync~~ (shipped in Phase 9)
+- Workflow references to standalone Snapshot/Domino CRs

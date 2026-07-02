@@ -54,3 +54,4 @@ spec:
       brokers: ["kafka:9092"]
       topic: kbl.snapshot.events
       groupId: kbl-multiverse-finance
+      cdcTopic: kbl.cdc.snapshots
