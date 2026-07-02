@@ -30,8 +30,8 @@ func TestSealPayloadPreservesPathBytes(t *testing.T) {
 	if id == "" {
 		t.Fatal("expected snapshot ID")
 	}
-	if data != original {
-		t.Fatalf("expected original bytes preserved, got %q", data)
+	if string(data) != original {
+		t.Fatalf("expected original bytes preserved, got %q", string(data))
 	}
 
 	// MarshalData via old path would reformat JSON; SealPayload must not.

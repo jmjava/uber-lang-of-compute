@@ -31,5 +31,8 @@ func ComputeID(spec kblv1alpha1.SnapshotSpec) (string, error) {
 // MarshalData serializes resolved snapshot content for store persistence.
 func MarshalData(spec kblv1alpha1.SnapshotSpec) (string, error) {
 	_, data, err := SealPayload(spec)
-	return data, err
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }

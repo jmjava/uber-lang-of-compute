@@ -3,6 +3,7 @@ package store
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sync"
@@ -31,10 +32,19 @@ func OpenTSDBEngine(root string) (*TSDBEngine, error) {
 }
 
 func (t *TSDBEngine) SaveSnapshot(snapshotID, timeSlice, data string, sealed bool) error {
+	return t.SaveSnapshotPayload(snapshotID, timeSlice, []byte(data), sealed)
+}
+
+func (t *TSDBEngine) SaveSnapshotPayload(snapshotID, timeSlice string, payload []byte, sealed bool) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	rec := snapshotRecord{SnapshotID: snapshotID, TimeSlice: timeSlice, Data: data, Sealed: sealed, CreatedAt: time.Now().UTC()}
+	rec := snapshotRecord{
+		SnapshotID: snapshotID,
+		TimeSlice:  timeSlice,
+		Sealed:     sealed,
+		CreatedAt:  time.Now().UTC(),
+	}
 	body, err := json.Marshal(rec)
 	if err != nil {
 		return err
@@ -42,22 +52,37 @@ func (t *TSDBEngine) SaveSnapshot(snapshotID, timeSlice, data string, sealed boo
 	if err := os.WriteFile(t.snapshotPath(snapshotID), body, 0o644); err != nil {
 		return err
 	}
-	return os.WriteFile(t.snapshotDataPath(snapshotID), []byte(data), 0o644)
+	return os.WriteFile(t.snapshotDataPath(snapshotID), payload, 0o644)
 }
 
 func (t *TSDBEngine) GetSnapshotData(snapshotID string) (string, bool, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
+	sealed, err := t.snapshotSealedLocked(snapshotID)
+	if err != nil {
+		return "", false, err
+	}
 	body, err := os.ReadFile(t.snapshotDataPath(snapshotID))
 	if err != nil {
 		return "", false, err
 	}
-	_, _, sealed, err := t.getSnapshotMetaLocked(snapshotID)
-	if err != nil {
-		return "", false, err
-	}
 	return string(body), sealed, nil
+}
+
+func (t *TSDBEngine) OpenSnapshotData(snapshotID string) (io.ReadCloser, bool, error) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
+	sealed, err := t.snapshotSealedLocked(snapshotID)
+	if err != nil {
+		return nil, false, err
+	}
+	f, err := os.Open(t.snapshotDataPath(snapshotID))
+	if err != nil {
+		return nil, false, err
+	}
+	return f, sealed, nil
 }
 
 func (t *TSDBEngine) GetSnapshot(snapshotID string) (timeSlice, data string, sealed bool, err error) {
@@ -75,7 +100,28 @@ func (t *TSDBEngine) getSnapshotMetaLocked(snapshotID string) (timeSlice, data s
 	if err := json.Unmarshal(body, &rec); err != nil {
 		return "", "", false, err
 	}
-	return rec.TimeSlice, rec.Data, rec.Sealed, nil
+	data = rec.Data
+	if data == "" {
+		sidecar, readErr := os.ReadFile(t.snapshotDataPath(snapshotID))
+		if readErr == nil {
+			data = string(sidecar)
+		} else if !os.IsNotExist(readErr) {
+			return "", "", false, readErr
+		}
+	}
+	return rec.TimeSlice, data, rec.Sealed, nil
+}
+
+func (t *TSDBEngine) snapshotSealedLocked(snapshotID string) (bool, error) {
+	body, err := os.ReadFile(t.snapshotPath(snapshotID))
+	if err != nil {
+		return false, err
+	}
+	var rec snapshotRecord
+	if err := json.Unmarshal(body, &rec); err != nil {
+		return false, err
+	}
+	return rec.Sealed, nil
 }
 
 func (t *TSDBEngine) LookupMemo(snapshotID, dominoID, inputHash string) (outputHash, output string, found bool, err error) {
@@ -205,7 +251,7 @@ func (t *TSDBEngine) memoPath(snapshotID, dominoID, inputHash string) string {
 type snapshotRecord struct {
 	SnapshotID string    `json:"snapshot_id"`
 	TimeSlice  string    `json:"time_slice"`
-	Data       string    `json:"data"`
+	Data       string    `json:"data,omitempty"`
 	Sealed     bool      `json:"sealed"`
 	CreatedAt  time.Time `json:"created_at"`
 }
