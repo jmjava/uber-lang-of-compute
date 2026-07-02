@@ -23,37 +23,43 @@ See [docs/vocabulary.md](docs/vocabulary.md) for the full glossary.
 ```
 docs/           Vision, architecture, vocabulary, ADRs
 specs/          Four DSL schemas + workflow example
-crds/           Kubernetes CRD definitions
-controller/     Go runtime — domino chain execution, memoization, replay log
+crds/           Kubernetes CRD definitions (Snapshot, Domino, Workflow, …)
+controller/     Go runtime — CLI + Kubernetes controller
 examples/       Finance curve, simple domino chain, node-local TSDB target
 tests/          Snapshot replay, memoization, scheduling (planned)
 ```
 
 ## MVP: Quick Start
 
-The MVP proves deterministic replay + caching + locality for one domino chain:
+### CLI (local)
 
 ```bash
-cd controller
-go mod tidy
-go build -o kbl-compute .
+make build
 
-# Run finance curve example
-./kbl-compute \
-  --workflow ../examples/finance-curve-snapshot/workflow.yaml \
+./controller/bin/kbl-compute \
+  --workflow examples/finance-curve-snapshot/workflow.yaml \
   --replay-log /tmp/replay.json
 
 # Run again — all dominos reused from memo cache
-./kbl-compute \
-  --workflow ../examples/finance-curve-snapshot/workflow.yaml \
+./controller/bin/kbl-compute \
+  --workflow examples/finance-curve-snapshot/workflow.yaml \
   --replay-log /tmp/replay-2.json
+```
+
+### Kubernetes Controller
+
+```bash
+kubectl apply -f crds/
+kubectl apply -f examples/finance-curve-snapshot/workflow-crd.yaml
+./controller/bin/kbl-controller --store-root /tmp/kbl-store
+kubectl get workflows -o wide
+kubectl get configmap finance-curve-replay -o yaml
 ```
 
 Run tests:
 
 ```bash
-cd controller
-go test ./...
+make test
 ```
 
 ## What the MVP Proves
@@ -74,12 +80,14 @@ go test ./...
 - [ADR 0003: Node-Local Data](docs/adr/0003-node-local-data.md)
 - [ADR 0004: Hot-Swapped Dominos](docs/adr/0004-hot-swapped-dominos.md)
 
+- [ADR 0005: Kubernetes Controller](docs/adr/0005-kubernetes-controller.md)
+
 ## Roadmap
 
 | Phase | Focus |
 |-------|-------|
 | **MVP (current)** | CLI runtime, SQLite store, builtin dominos, replay log |
-| Phase 2 | Kubernetes controller-runtime reconciler for CRDs |
+| **Phase 2 (current)** | Workflow CRD + `kbl-controller` reconciler |
 | Phase 3 | OpenKruise hot-swapped container dominos |
 | Phase 4 | Node-local TSDB DaemonSet, Compute Wheel scheduling |
 | Phase 5 | Multiverse routing via Debezium/Kafka |

@@ -1,0 +1,154 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: workflows.kbl.io
+spec:
+  group: kbl.io
+  names:
+    kind: Workflow
+    listKind: WorkflowList
+    plural: workflows
+    singular: workflow
+    shortNames:
+      - wf
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [snapshot, dominos, execution]
+              properties:
+                snapshot:
+                  type: object
+                  required: [timeSlice, sealed]
+                  properties:
+                    timeSlice:
+                      type: string
+                    source:
+                      type: object
+                      properties:
+                        inline:
+                          type: object
+                          x-kubernetes-preserve-unknown-fields: true
+                        path:
+                          type: string
+                        uri:
+                          type: string
+                    computeContextRef:
+                      type: string
+                    sealed:
+                      type: boolean
+                dominos:
+                  type: array
+                  items:
+                    type: object
+                    required: [name, snapshotRef, command]
+                    properties:
+                      name:
+                        type: string
+                      snapshotRef:
+                        type: string
+                      command:
+                        type: string
+                      dependsOn:
+                        type: array
+                        items:
+                          type: string
+                      inputs:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            fromDomino:
+                              type: string
+                            fromSnapshot:
+                              type: string
+                      image:
+                        type: string
+                execution:
+                  type: object
+                  required: [chain]
+                  properties:
+                    chain:
+                      type: array
+                      items:
+                        type: string
+                    deterministic:
+                      type: boolean
+                provisioning:
+                  type: object
+                  properties:
+                    storePath:
+                      type: string
+                    nodeLocal:
+                      type: boolean
+                routing:
+                  type: object
+                  properties:
+                    universe:
+                      type: string
+                    computeContextRef:
+                      type: string
+            status:
+              type: object
+              properties:
+                observedGeneration:
+                  type: integer
+                  format: int64
+                phase:
+                  type: string
+                  enum: [Pending, Running, Completed, Error]
+                snapshotID:
+                  type: string
+                dominoCount:
+                  type: integer
+                reusedCount:
+                  type: integer
+                recomputedCount:
+                  type: integer
+                lastRunTime:
+                  type: string
+                  format: date-time
+                message:
+                  type: string
+                replayLogRef:
+                  type: string
+                dominoResults:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      dominoID:
+                        type: string
+                      inputHash:
+                        type: string
+                      outputHash:
+                        type: string
+                      reused:
+                        type: boolean
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Snapshot
+          type: string
+          jsonPath: .status.snapshotID
+        - name: Reused
+          type: integer
+          jsonPath: .status.reusedCount
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp

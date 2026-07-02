@@ -1,4 +1,5 @@
 # Binaries
+controller/bin/
 controller/kbl-compute
 *.exe
 *.dll

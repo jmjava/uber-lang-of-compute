@@ -69,7 +69,6 @@ func main() {
 		fmt.Println(string(out))
 	}
 
-	// Summary
 	reused := 0
 	for _, e := range result.Entries {
 		if e.Reused {

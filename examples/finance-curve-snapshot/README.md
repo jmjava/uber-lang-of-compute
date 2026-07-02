@@ -15,17 +15,25 @@ From the blog post *Applicability to Finance* (Apr 15, 2025):
 
 ```bash
 cd controller
-go build -o kbl-compute .
+go build -o bin/kbl-compute ./cmd/kbl-compute
 
 # First run — all dominos computed
-./kbl-compute \
+./bin/kbl-compute \
   --workflow ../examples/finance-curve-snapshot/workflow.yaml \
   --replay-log /tmp/kbl-finance/replay-1.json
 
 # Second run — all dominos reused from memo cache
-./kbl-compute \
+./bin/kbl-compute \
   --workflow ../examples/finance-curve-snapshot/workflow.yaml \
   --replay-log /tmp/kbl-finance/replay-2.json
+```
+
+## Kubernetes
+
+Apply as a Workflow CRD (requires `kubectl apply -f ../../crds/` first):
+
+```bash
+kubectl apply -f workflow-crd.yaml
 ```
 
 Compare replay logs: first run shows `"reused": false` for all entries; second run shows `"reused": true`.
