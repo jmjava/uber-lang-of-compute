@@ -1,0 +1,56 @@
+apiVersion: kbl.io/v1alpha1
+kind: PluggableUniverse
+metadata:
+  name: finance-universe
+spec:
+  name: Finance Local Universe
+  executionEngine:
+    type: builtin
+    runtimeImage: ghcr.io/jmjava/kbl-domino-runner:latest
+  dataLayer:
+    type: tsdb
+    config:
+      endpoint: http://127.0.0.1:9090
+  provisioningModel:
+    autoscaler: true
+    minNodes: 1
+    maxNodes: 10
+---
+apiVersion: kbl.io/v1alpha1
+kind: PluggableUniverse
+metadata:
+  name: rates-universe
+spec:
+  name: Rates Universe
+  executionEngine:
+    type: builtin
+  dataLayer:
+    type: tsdb
+---
+apiVersion: kbl.io/v1alpha1
+kind: Multiverse
+metadata:
+  name: finance-multiverse
+  namespace: default
+spec:
+  defaultUniverse: finance-local
+  universes:
+    - name: finance-local
+      pluggableUniverseRef: finance-universe
+      computeContextRef: node-a-tsdb-ctx
+    - name: rates-universe
+      pluggableUniverseRef: rates-universe
+      computeContextRef: node-b-ctx
+      partitions:
+        - key: asset_class
+          values: [rates]
+  timeSliceRoutes:
+    - timeSlice: "2025-04-15"
+      universe: finance-local
+      computeContextRef: node-a-tsdb-ctx
+  sync:
+    enabled: true
+    kafka:
+      brokers: ["kafka:9092"]
+      topic: kbl.snapshot.events
+      groupId: kbl-multiverse-finance

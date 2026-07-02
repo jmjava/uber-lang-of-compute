@@ -71,6 +71,38 @@ Run tests:
 make test
 ```
 
+### Multiverse routing (cross-universe)
+
+```bash
+kubectl apply -f examples/multiverse-finance/multiverse.yaml
+kubectl apply -f examples/multiverse-finance/workflow-rates.yaml
+./controller/bin/kbl-controller --store-root /tmp/kbl-store --kafka-brokers kafka:9092
+kubectl get multiverses -o yaml   # status.routedEvents
+```
+
+See [examples/multiverse-finance/README.md](examples/multiverse-finance/README.md) and [ADR 0009](docs/adr/0009-multiverse-routing.md).
+
+### Standalone Snapshot + Domino
+
+```bash
+kubectl apply -f examples/standalone-snapshot-domino/snapshot.yaml
+kubectl apply -f examples/standalone-snapshot-domino/dominos.yaml
+./controller/bin/kbl-controller --store-root /tmp/kbl-store
+kubectl get snapshots,dominos -o wide
+```
+
+See [examples/standalone-snapshot-domino/README.md](examples/standalone-snapshot-domino/README.md) and [ADR 0010](docs/adr/0010-standalone-snapshot-domino.md).
+
+### Read-replica materialization
+
+```bash
+kubectl apply -f examples/multiverse-finance/multiverse.yaml
+# After workflows complete and Multiverse routes events:
+kubectl get readreplicas -o wide
+```
+
+See [ADR 0011](docs/adr/0011-read-replica-materialization.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -92,17 +124,23 @@ make test
 - [ADR 0005: Kubernetes Controller](docs/adr/0005-kubernetes-controller.md)
 - [ADR 0006: Compute Wheel Rotation](docs/adr/0006-compute-wheel-rotation.md)
 - [ADR 0007: Hot-Swapped Dominos](docs/adr/0007-hot-swapped-dominos-implementation.md)
+- [ADR 0008: Node-Local TSDB](docs/adr/0008-node-local-tsdb.md)
+- [ADR 0009: Multiverse Routing](docs/adr/0009-multiverse-routing.md)
+- [ADR 0010: Standalone Snapshot/Domino](docs/adr/0010-standalone-snapshot-domino.md)
+- [ADR 0011: Read-Replica Materialization](docs/adr/0011-read-replica-materialization.md)
 
 ## Roadmap
 
 | Phase | Focus |
 |-------|-------|
-| **MVP (current)** | CLI runtime, SQLite store, builtin dominos, replay log |
-| **Phase 2 (current)** | Workflow CRD + `kbl-controller` reconciler |
-| **Phase 3 (current)** | ComputeWheel time-slice rotation + player-piano pre-provision |
-| **Phase 4 (current)** | Hot-swapped dominos — DominoChain CRD, init chain + OpenKruise |
-| Phase 5 | Node-local TSDB DaemonSet |
-| Phase 6 | Multiverse routing via Debezium/Kafka |
+| **MVP** | CLI runtime, SQLite store, builtin dominos, replay log |
+| **Phase 2** | Workflow CRD + `kbl-controller` reconciler |
+| **Phase 3** | ComputeWheel time-slice rotation + player-piano pre-provision |
+| **Phase 4** | Hot-swapped dominos — DominoChain CRD, init chain + OpenKruise |
+| **Phase 5** | Node-local TSDB DaemonSet + store.Backend abstraction |
+| **Phase 6 (current)** | Multiverse routing via Kafka + PluggableUniverse |
+| **Phase 7 (current)** | Standalone Snapshot + Domino CRD reconcilers |
+| **Phase 8 (current)** | Read-replica materialization from Multiverse routing |
 
 ## License
 

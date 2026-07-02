@@ -30,16 +30,22 @@ func main() {
 	var probeAddr string
 	var storeRoot string
 	var enableLeaderElection bool
+	var kafkaBrokers string
+	var kafkaTopic string
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&storeRoot, "store-root", "/var/kbl/store", "Root directory for node-local SQLite stores.")
+	flag.StringVar(&kafkaBrokers, "kafka-brokers", "", "Comma-separated Kafka brokers for multiverse sync (optional)")
+	flag.StringVar(&kafkaTopic, "kafka-topic", "kbl.snapshot.events", "Kafka topic for snapshot events")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for controller manager.")
 	opts := zap.Options{Development: true}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	eventBus := kblcontroller.NewEventBus(kafkaBrokers, kafkaTopic)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -56,6 +62,7 @@ func main() {
 		Client:    mgr.GetClient(),
 		Scheme:    mgr.GetScheme(),
 		StoreRoot: storeRoot,
+		EventBus:  eventBus,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Workflow")
 		os.Exit(1)
@@ -76,6 +83,58 @@ func main() {
 		StoreRoot: storeRoot,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "DominoChain")
+		os.Exit(1)
+	}
+
+	if err = (&kblcontroller.ComputeContextReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ComputeContext")
+		os.Exit(1)
+	}
+
+	if err = (&kblcontroller.MultiverseReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		Bus:    eventBus,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Multiverse")
+		os.Exit(1)
+	}
+
+	if err = (&kblcontroller.PluggableUniverseReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "PluggableUniverse")
+		os.Exit(1)
+	}
+
+	if err = (&kblcontroller.SnapshotReconciler{
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		StoreRoot: storeRoot,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Snapshot")
+		os.Exit(1)
+	}
+
+	if err = (&kblcontroller.DominoReconciler{
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		StoreRoot: storeRoot,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Domino")
+		os.Exit(1)
+	}
+
+	if err = (&kblcontroller.ReadReplicaReconciler{
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		StoreRoot: storeRoot,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ReadReplica")
 		os.Exit(1)
 	}
 

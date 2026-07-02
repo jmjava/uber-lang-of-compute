@@ -1,0 +1,47 @@
+apiVersion: kbl.io/v1alpha1
+kind: ComputeContext
+metadata:
+  name: node-a-tsdb-ctx
+spec:
+  nodeName: worker-a
+  storeType: tsdb
+  storeEndpoint: http://127.0.0.1:9090
+  dataPath: /var/kbl/tsdb
+---
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: finance-tsdb
+  namespace: default
+spec:
+  snapshot:
+    timeSlice: "2025-04-15T00:00:00Z"
+    source:
+      inline:
+        instruments:
+          - instrument_id: US2Y
+            rate: 4.80
+            maturity: "2027-02-15"
+          - instrument_id: US10Y
+            rate: 4.25
+            maturity: "2035-02-15"
+    sealed: true
+  dominos:
+    - name: load
+      snapshotRef: snap
+      command: builtin:identity
+    - name: interpolate
+      snapshotRef: snap
+      command: builtin:interpolate
+      dependsOn: [load]
+      inputs:
+        - fromDomino: load
+  execution:
+    chain: [load, interpolate]
+    deterministic: true
+  provisioning:
+    storePath: http://127.0.0.1:9090
+    nodeLocal: true
+  routing:
+    computeContextRef: node-a-tsdb-ctx
+    universe: finance-local

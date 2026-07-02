@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/engine"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
@@ -34,7 +35,12 @@ func main() {
 		*storePath = wf.Spec.Provisioning.StorePath
 	}
 
-	s, err := store.Open(*storePath)
+	var s store.Backend
+	if strings.HasPrefix(*storePath, "http://") || strings.HasPrefix(*storePath, "https://") {
+		s, err = store.OpenBackend(store.Config{Type: store.TypeTSDB, Endpoint: *storePath})
+	} else {
+		s, err = store.Open(*storePath)
+	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "open store: %v\n", err)
 		os.Exit(1)

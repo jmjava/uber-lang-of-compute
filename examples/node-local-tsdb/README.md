@@ -1,46 +1,56 @@
-# Node-Local TSDB (Target Architecture)
+# Node-Local TSDB (Phase 5)
 
-## MVP Status
+Node-local time-series store via **kbl-tsdb** DaemonSet — replaces direct SQLite access for production compute contexts.
 
-The MVP uses **SQLite** on a node-local filesystem path as the store backend. This proves data locality and memoization without requiring a Kubernetes cluster.
-
-## Target Architecture
-
-From *Minimize Entropy while maximizing Caching* (Apr 11, 2025):
+## Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│           Kubernetes Node              │
-│  ┌─────────────────────────────────┐   │
-│  │  TSDB DaemonSet Pod             │   │
-│  │  (node-local time-series DB)    │   │
-│  │  - snapshot tables              │   │
-│  │  - memo cache (hash → result)     │   │
-│  │  - replay log                   │   │
-│  └──────────────┬──────────────────┘   │
-│                 │ hostPath / local PV  │
-│  ┌──────────────▼──────────────────┐   │
-│  │  ComputeContext Pod             │   │
-│  │  - domino chain execution       │   │
-│  │  - reads/writes via localhost   │   │
-│  └─────────────────────────────────┘   │
-└─────────────────────────────────────────┘
+Node
+├── kbl-tsdb DaemonSet (:9090, hostPath /var/kbl/tsdb)
+│   ├── snapshots/   immutable snapshot series
+│   ├── memo/        hash → domino result cache
+│   └── replay/      append-only replay log
+└── kbl-controller / domino pods
+    └── HTTP client → http://127.0.0.1:9090
 ```
 
-## Migration Path
+## Deploy TSDB DaemonSet
 
-1. **MVP (current):** SQLite at `--store-path`, single-node CLI
-2. **Phase 2:** SQLite in `emptyDir` volume, domino runs as K8s Job
-3. **Phase 3:** Node-local TSDB DaemonSet; controller connects via localhost
-4. **Phase 4:** Debezium/Kafka sync for cross-node read replicas (not compute-time reads)
+```bash
+kubectl apply -f ../../deploy/node-local-tsdb/daemonset.yaml
+kubectl -n kbl-system get pods -l app.kubernetes.io/name=kbl-tsdb
+curl http://127.0.0.1:9090/healthz   # on any node
+```
 
-## Store Interface
+## Local development (no Kubernetes)
 
-The `pkg/store` package abstracts persistence. Swapping SQLite for TSDB requires implementing the same interface:
+```bash
+# Terminal 1
+./controller/bin/kbl-tsdb --addr=:9090 --data-dir=/tmp/kbl-tsdb
 
-- `SaveSnapshot(snapshotID, timeSlice, data, sealed)`
-- `LookupMemo(snapshotID, dominoID, inputHash)`
-- `SaveResult(snapshotID, dominoID, inputHash, outputHash, output, reused)`
-- `GetDominoOutput(snapshotID, dominoID)`
+# Terminal 2 — point workflow at TSDB endpoint
+./controller/bin/kbl-compute \
+  --workflow ../examples/finance-curve-snapshot/workflow.yaml \
+  --store http://127.0.0.1:9090
+```
 
-See [ADR 0003](../../docs/adr/0003-node-local-data.md) for the node-local data decision.
+Note: CLI `--store` accepts HTTP URLs for TSDB when using updated store resolver (use workflow with `storePath: http://127.0.0.1:9090`).
+
+## ComputeContext with TSDB
+
+```bash
+kubectl apply -f workflow-tsdb.yaml
+```
+
+Workflows with `routing.computeContextRef` pointing to a `storeType: tsdb` context use the node-local TSDB endpoint automatically.
+
+## Store interface
+
+All backends implement `store.Backend`:
+
+| Backend | Config |
+|---------|--------|
+| SQLite | `{type: sqlite, path: "/var/kbl/store.db"}` |
+| TSDB | `{type: tsdb, endpoint: "http://127.0.0.1:9090"}` |
+
+See [ADR 0008](../../docs/adr/0008-node-local-tsdb.md).

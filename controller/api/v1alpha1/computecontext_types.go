@@ -30,15 +30,19 @@ type ComputeContext struct {
 }
 
 type ComputeContextSpec struct {
-	NodeName  string `json:"nodeName"`
-	StorePath string `json:"storePath,omitempty"`
-	StoreType string `json:"storeType,omitempty"`
+	NodeName      string `json:"nodeName"`
+	StorePath     string `json:"storePath,omitempty"`
+	StoreType     string `json:"storeType,omitempty"`
+	StoreEndpoint string `json:"storeEndpoint,omitempty"`
+	DataPath      string `json:"dataPath,omitempty"`
 }
 
 type ComputeContextStatus struct {
 	Phase         ComputeContextPhase `json:"phase,omitempty"`
+	StoreEndpoint string              `json:"storeEndpoint,omitempty"`
 	SnapshotCount int                 `json:"snapshotCount,omitempty"`
 	CacheEntries  int                 `json:"cacheEntries,omitempty"`
+	Conditions    []metav1.Condition  `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

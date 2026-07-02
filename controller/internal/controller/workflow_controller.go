@@ -20,6 +20,7 @@ import (
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/convert"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/dominochain"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/engine"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/events"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
@@ -36,6 +37,7 @@ type WorkflowReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
 	StoreRoot string
+	EventBus  events.Bus
 }
 
 // +kubebuilder:rbac:groups=kbl.io,resources=workflows,verbs=get;list;watch;create;update;patch;delete
@@ -100,7 +102,7 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 		return r.executeContainer(ctx, wf, logger, storePath)
 	}
 
-	s, err := store.Open(storePath)
+	s, err := store.OpenForWorkflow(ctx, r.Client, wf, r.StoreRoot)
 	if err != nil {
 		return r.fail(ctx, wf, fmt.Errorf("open store: %w", err))
 	}
@@ -157,6 +159,8 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 	if err := r.Status().Update(ctx, wf); err != nil {
 		return ctrl.Result{}, err
 	}
+
+	r.publishSnapshotEvent(ctx, wf, result)
 
 	logger.Info("workflow completed",
 		"workflow", wf.Name,
@@ -221,11 +225,7 @@ func (r *WorkflowReconciler) executeContainer(ctx context.Context, wf *kblv1alph
 func (r *WorkflowReconciler) completeFromChain(ctx context.Context, wf *kblv1alpha1.Workflow, chain *kblv1alpha1.DominoChain, logger interface {
 	Info(msg string, keysAndValues ...interface{})
 }) (ctrl.Result, error) {
-	storePath := chain.Spec.StorePath
-	if storePath == "" {
-		storePath = filepath.Join(r.StoreRoot, wf.Namespace, wf.Name+".db")
-	}
-	s, err := store.Open(storePath)
+	s, err := store.OpenForWorkflow(ctx, r.Client, wf, r.StoreRoot)
 	if err != nil {
 		return r.fail(ctx, wf, err)
 	}
@@ -274,6 +274,7 @@ func (r *WorkflowReconciler) completeFromChain(ctx context.Context, wf *kblv1alp
 	if err := r.Status().Update(ctx, wf); err != nil {
 		return ctrl.Result{}, err
 	}
+	r.publishSnapshotEvent(ctx, wf, result)
 	logger.Info("workflow completed via domino chain", "workflow", wf.Name, "chain", chain.Name)
 	return ctrl.Result{}, nil
 }

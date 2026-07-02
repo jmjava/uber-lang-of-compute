@@ -4,6 +4,7 @@ build:
 	cd controller && go build -o bin/kbl-compute ./cmd/kbl-compute
 	cd controller && go build -o bin/kbl-controller ./cmd/kbl-controller
 	cd controller && go build -o bin/domino-runner ./cmd/domino-runner
+	cd controller && go build -o bin/kbl-tsdb ./cmd/kbl-tsdb
 
 test:
 	cd controller && go test ./...

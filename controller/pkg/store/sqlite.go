@@ -9,13 +9,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// Store provides node-local persistence for snapshots, domino outputs, and memo cache.
-type Store struct {
+// SQLiteBackend implements Backend using SQLite on a local filesystem path.
+type SQLiteBackend struct {
 	db *sql.DB
 }
 
-// Open creates or opens a SQLite store at the given path.
-func Open(path string) (*Store, error) {
+// OpenSQLite creates or opens a SQLite store at the given path.
+func OpenSQLite(path string) (*SQLiteBackend, error) {
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("create store directory: %w", err)
@@ -26,7 +26,7 @@ func Open(path string) (*Store, error) {
 		return nil, fmt.Errorf("open sqlite: %w", err)
 	}
 
-	s := &Store{db: db}
+	s := &SQLiteBackend{db: db}
 	if err := s.migrate(); err != nil {
 		db.Close()
 		return nil, err
@@ -34,7 +34,7 @@ func Open(path string) (*Store, error) {
 	return s, nil
 }
 
-func (s *Store) migrate() error {
+func (s *SQLiteBackend) migrate() error {
 	schema := `
 	CREATE TABLE IF NOT EXISTS snapshots (
 		snapshot_id TEXT PRIMARY KEY,
@@ -73,8 +73,7 @@ func (s *Store) migrate() error {
 	return err
 }
 
-// SaveSnapshot persists snapshot data.
-func (s *Store) SaveSnapshot(snapshotID, timeSlice, data string, sealed bool) error {
+func (s *SQLiteBackend) SaveSnapshot(snapshotID, timeSlice, data string, sealed bool) error {
 	sealedInt := 0
 	if sealed {
 		sealedInt = 1
@@ -86,8 +85,7 @@ func (s *Store) SaveSnapshot(snapshotID, timeSlice, data string, sealed bool) er
 	return err
 }
 
-// GetSnapshot retrieves snapshot data by ID.
-func (s *Store) GetSnapshot(snapshotID string) (timeSlice, data string, sealed bool, err error) {
+func (s *SQLiteBackend) GetSnapshot(snapshotID string) (timeSlice, data string, sealed bool, err error) {
 	row := s.db.QueryRow(
 		`SELECT time_slice, data, sealed FROM snapshots WHERE snapshot_id = ?`, snapshotID,
 	)
@@ -97,8 +95,7 @@ func (s *Store) GetSnapshot(snapshotID string) (timeSlice, data string, sealed b
 	return
 }
 
-// LookupMemo checks if a domino result exists for the given key.
-func (s *Store) LookupMemo(snapshotID, dominoID, inputHash string) (outputHash, output string, found bool, err error) {
+func (s *SQLiteBackend) LookupMemo(snapshotID, dominoID, inputHash string) (outputHash, output string, found bool, err error) {
 	row := s.db.QueryRow(
 		`SELECT output_hash, output FROM domino_results
 		 WHERE snapshot_id = ? AND domino_id = ? AND input_hash = ?`,
@@ -114,8 +111,7 @@ func (s *Store) LookupMemo(snapshotID, dominoID, inputHash string) (outputHash, 
 	return outputHash, output, true, nil
 }
 
-// SaveResult stores a domino result and appends to replay log.
-func (s *Store) SaveResult(snapshotID, dominoID, inputHash, outputHash, output string, reused bool) error {
+func (s *SQLiteBackend) SaveResult(snapshotID, dominoID, inputHash, outputHash, output string, reused bool) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
@@ -149,20 +145,22 @@ func (s *Store) SaveResult(snapshotID, dominoID, inputHash, outputHash, output s
 	return tx.Commit()
 }
 
-// GetDominoOutput retrieves the latest output for a domino in a snapshot chain run.
-func (s *Store) GetDominoOutput(snapshotID, dominoID string) (string, error) {
+func (s *SQLiteBackend) GetDominoOutput(snapshotID, dominoID string) (string, error) {
+	_, _, output, err := s.GetLatestResult(snapshotID, dominoID)
+	return output, err
+}
+
+func (s *SQLiteBackend) GetLatestResult(snapshotID, dominoID string) (inputHash, outputHash, output string, err error) {
 	row := s.db.QueryRow(
-		`SELECT output FROM domino_results
+		`SELECT input_hash, output_hash, output FROM domino_results
 		 WHERE snapshot_id = ? AND domino_id = ?
 		 ORDER BY created_at DESC LIMIT 1`,
 		snapshotID, dominoID,
 	)
-	var output string
-	err := row.Scan(&output)
-	return output, err
+	err = row.Scan(&inputHash, &outputHash, &output)
+	return
 }
 
-// Close closes the database connection.
-func (s *Store) Close() error {
+func (s *SQLiteBackend) Close() error {
 	return s.db.Close()
 }

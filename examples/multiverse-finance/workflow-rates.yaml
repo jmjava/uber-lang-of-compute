@@ -1,0 +1,30 @@
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: rates-curve
+  namespace: default
+  labels:
+    kbl.io/partition-asset_class: rates
+spec:
+  snapshot:
+    timeSlice: "2025-04-16T00:00:00Z"
+    source:
+      inline:
+        instruments:
+          - instrument_id: US10Y
+            rate: 4.25
+            maturity: "2035-02-15"
+    sealed: true
+  dominos:
+    - name: load
+      snapshotRef: snap
+      command: builtin:identity
+  execution:
+    chain: [load]
+    deterministic: true
+  provisioning:
+    storePath: http://127.0.0.1:9090
+    nodeLocal: true
+  routing:
+    multiverseRef: finance-multiverse
+    universe: rates-universe

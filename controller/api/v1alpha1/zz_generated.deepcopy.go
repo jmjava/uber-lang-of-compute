@@ -197,6 +197,12 @@ func (in *ComputeContextList) DeepCopyObject() runtime.Object {
 
 func (in *ComputeContextStatus) DeepCopyInto(out *ComputeContextStatus) {
 	*out = *in
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		for i := range in.Conditions {
+			in.Conditions[i].DeepCopyInto(&out.Conditions[i])
+		}
+	}
 }
 
 func (in *ComputeWheel) DeepCopyInto(out *ComputeWheel) {
@@ -373,6 +379,379 @@ func (in *DominoChainStatus) DeepCopyInto(out *DominoChainStatus) {
 	if in.StepResults != nil {
 		out.StepResults = make([]StepResult, len(in.StepResults))
 		copy(out.StepResults, in.StepResults)
+	}
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		for i := range in.Conditions {
+			in.Conditions[i].DeepCopyInto(&out.Conditions[i])
+		}
+	}
+}
+
+func (in *PluggableUniverse) DeepCopyInto(out *PluggableUniverse) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	out.Status = in.Status
+}
+
+func (in *PluggableUniverse) DeepCopy() *PluggableUniverse {
+	if in == nil {
+		return nil
+	}
+	out := new(PluggableUniverse)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *PluggableUniverse) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *PluggableUniverseList) DeepCopyInto(out *PluggableUniverseList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		out.Items = make([]PluggableUniverse, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+}
+
+func (in *PluggableUniverseList) DeepCopy() *PluggableUniverseList {
+	if in == nil {
+		return nil
+	}
+	out := new(PluggableUniverseList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *PluggableUniverseList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *PluggableUniverseSpec) DeepCopyInto(out *PluggableUniverseSpec) {
+	*out = *in
+	if in.DataLayer.Config != nil {
+		out.DataLayer.Config = deepCopyMap(in.DataLayer.Config)
+	}
+	if in.ProvisioningModel != nil {
+		p := *in.ProvisioningModel
+		out.ProvisioningModel = &p
+	}
+}
+
+func (in *Multiverse) DeepCopyInto(out *Multiverse) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+func (in *Multiverse) DeepCopy() *Multiverse {
+	if in == nil {
+		return nil
+	}
+	out := new(Multiverse)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *Multiverse) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *MultiverseList) DeepCopyInto(out *MultiverseList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		out.Items = make([]Multiverse, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+}
+
+func (in *MultiverseList) DeepCopy() *MultiverseList {
+	if in == nil {
+		return nil
+	}
+	out := new(MultiverseList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *MultiverseList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *MultiverseSpec) DeepCopyInto(out *MultiverseSpec) {
+	*out = *in
+	if in.Universes != nil {
+		out.Universes = make([]UniverseRouteSpec, len(in.Universes))
+		copy(out.Universes, in.Universes)
+	}
+	if in.TimeSliceRoutes != nil {
+		out.TimeSliceRoutes = make([]TimeSliceRoute, len(in.TimeSliceRoutes))
+		copy(out.TimeSliceRoutes, in.TimeSliceRoutes)
+	}
+	if in.Sync != nil {
+		s := *in.Sync
+		out.Sync = &s
+		if in.Sync.Kafka != nil {
+			k := *in.Sync.Kafka
+			out.Sync.Kafka = &k
+			if in.Sync.Kafka.Brokers != nil {
+				out.Sync.Kafka.Brokers = make([]string, len(in.Sync.Kafka.Brokers))
+				copy(out.Sync.Kafka.Brokers, in.Sync.Kafka.Brokers)
+			}
+		}
+	}
+}
+
+func (in *MultiverseStatus) DeepCopyInto(out *MultiverseStatus) {
+	*out = *in
+	if in.RoutedEvents != nil {
+		out.RoutedEvents = make([]RoutedEvent, len(in.RoutedEvents))
+		copy(out.RoutedEvents, in.RoutedEvents)
+	}
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		for i := range in.Conditions {
+			in.Conditions[i].DeepCopyInto(&out.Conditions[i])
+		}
+	}
+}
+
+func (in *Snapshot) DeepCopyInto(out *Snapshot) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+func (in *Snapshot) DeepCopy() *Snapshot {
+	if in == nil {
+		return nil
+	}
+	out := new(Snapshot)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *Snapshot) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *SnapshotList) DeepCopyInto(out *SnapshotList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		out.Items = make([]Snapshot, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+}
+
+func (in *SnapshotList) DeepCopy() *SnapshotList {
+	if in == nil {
+		return nil
+	}
+	out := new(SnapshotList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *SnapshotList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *SnapshotStatus) DeepCopyInto(out *SnapshotStatus) {
+	*out = *in
+	if in.SealedAt != nil {
+		t := *in.SealedAt
+		out.SealedAt = &t
+	}
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		for i := range in.Conditions {
+			in.Conditions[i].DeepCopyInto(&out.Conditions[i])
+		}
+	}
+}
+
+func (in *Domino) DeepCopyInto(out *Domino) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+func (in *Domino) DeepCopy() *Domino {
+	if in == nil {
+		return nil
+	}
+	out := new(Domino)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *Domino) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *DominoList) DeepCopyInto(out *DominoList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		out.Items = make([]Domino, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+}
+
+func (in *DominoList) DeepCopy() *DominoList {
+	if in == nil {
+		return nil
+	}
+	out := new(DominoList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *DominoList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *DominoResourceSpec) DeepCopyInto(out *DominoResourceSpec) {
+	*out = *in
+	if in.DependsOn != nil {
+		out.DependsOn = make([]string, len(in.DependsOn))
+		copy(out.DependsOn, in.DependsOn)
+	}
+	if in.Inputs != nil {
+		out.Inputs = make([]DominoInput, len(in.Inputs))
+		copy(out.Inputs, in.Inputs)
+	}
+}
+
+func (in *DominoResourceStatus) DeepCopyInto(out *DominoResourceStatus) {
+	*out = *in
+	if in.CompletedAt != nil {
+		t := *in.CompletedAt
+		out.CompletedAt = &t
+	}
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		for i := range in.Conditions {
+			in.Conditions[i].DeepCopyInto(&out.Conditions[i])
+		}
+	}
+}
+
+func (in *ReadReplica) DeepCopyInto(out *ReadReplica) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+func (in *ReadReplica) DeepCopy() *ReadReplica {
+	if in == nil {
+		return nil
+	}
+	out := new(ReadReplica)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *ReadReplica) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *ReadReplicaList) DeepCopyInto(out *ReadReplicaList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		out.Items = make([]ReadReplica, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+}
+
+func (in *ReadReplicaList) DeepCopy() *ReadReplicaList {
+	if in == nil {
+		return nil
+	}
+	out := new(ReadReplicaList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *ReadReplicaList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *ReadReplicaSpec) DeepCopyInto(out *ReadReplicaSpec) {
+	*out = *in
+	if in.Partitions != nil {
+		out.Partitions = make(map[string]string, len(in.Partitions))
+		for k, v := range in.Partitions {
+			out.Partitions[k] = v
+		}
+	}
+}
+
+func (in *ReadReplicaStatus) DeepCopyInto(out *ReadReplicaStatus) {
+	*out = *in
+	if in.MaterializedAt != nil {
+		t := *in.MaterializedAt
+		out.MaterializedAt = &t
 	}
 	if in.Conditions != nil {
 		out.Conditions = make([]metav1.Condition, len(in.Conditions))

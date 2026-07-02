@@ -29,21 +29,34 @@ spec:
                   description: Kubernetes node hosting this compute context
                 storePath:
                   type: string
-                  description: Node-local path for snapshot data and memo cache
+                  description: Node-local path for SQLite or TSDB data directory
                 storeType:
                   type: string
                   enum: [sqlite, tsdb]
                   default: sqlite
+                storeEndpoint:
+                  type: string
+                  description: HTTP endpoint for node-local TSDB (e.g. http://127.0.0.1:9090)
+                dataPath:
+                  type: string
+                  description: Host path for TSDB DaemonSet data volume
             status:
               type: object
               properties:
                 phase:
                   type: string
                   enum: [Ready, Degraded, Offline]
+                storeEndpoint:
+                  type: string
                 snapshotCount:
                   type: integer
                 cacheEntries:
                   type: integer
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
       subresources:
         status: {}
       additionalPrinterColumns:
@@ -53,6 +66,9 @@ spec:
         - name: Store
           type: string
           jsonPath: .spec.storeType
+        - name: Endpoint
+          type: string
+          jsonPath: .status.storeEndpoint
         - name: Phase
           type: string
           jsonPath: .status.phase
