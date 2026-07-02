@@ -18,7 +18,7 @@ Phases 16–17 optimized execute and seal paths, but large path files still allo
 
 ## Consequences
 
-- mmap still copies once into Go heap for seal (true zero-copy deferred)
+- mmap still copies once into Go heap for seal on non-TSDB backends and `ReadPathBytes` callers (true zero-copy seal completed in Phase 19 for TSDB sidecars)
 - Sidecar files add disk usage proportional to snapshot payload size
 - Non-Unix builds fall back to `os.ReadFile`
 
