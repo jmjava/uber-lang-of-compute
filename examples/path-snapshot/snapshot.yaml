@@ -1,0 +1,10 @@
+apiVersion: kbl.io/v1alpha1
+kind: Snapshot
+metadata:
+  name: curve-file
+  namespace: default
+spec:
+  timeSlice: "2025-04-15T00:00:00Z"
+  source:
+    path: /var/kbl/data/curve.json
+  sealed: true

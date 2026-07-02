@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,11 +51,23 @@ func (r *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	snapshotID, err := snapshot.ComputeID(snap.Spec)
 	if err != nil {
+		if snapshot.IsPathNotReady(err) {
+			if _, uerr := r.updateStatus(ctx, &snap, kblv1alpha1.SnapshotPhasePending, "", err.Error()); uerr != nil {
+				return ctrl.Result{}, uerr
+			}
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
 		return r.fail(ctx, &snap, err)
 	}
 
 	data, err := snapshot.MarshalData(snap.Spec)
 	if err != nil {
+		if snapshot.IsPathNotReady(err) {
+			if _, uerr := r.updateStatus(ctx, &snap, kblv1alpha1.SnapshotPhasePending, "", err.Error()); uerr != nil {
+				return ctrl.Result{}, uerr
+			}
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
 		return r.fail(ctx, &snap, err)
 	}
 

@@ -2,6 +2,7 @@ package controller_test
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -64,6 +65,53 @@ func TestSnapshotReconcilerSealsSnapshot(t *testing.T) {
 	}
 	if _, err := filepath.Glob(filepath.Join(storeDir, "default", "*.db")); err != nil {
 		t.Fatalf("glob store: %v", err)
+	}
+}
+
+func TestSnapshotReconcilerSealsPathSnapshot(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = kblv1alpha1.AddToScheme(scheme)
+
+	storeDir := t.TempDir()
+	dataDir := filepath.Join(storeDir, "data")
+	if err := os.MkdirAll(dataDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	dataPath := filepath.Join(dataDir, "curve.json")
+	if err := os.WriteFile(dataPath, []byte(`{"instruments":[{"instrument_id":"US10Y","rate":4.25}]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	snap := &kblv1alpha1.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "file-snap",
+			Namespace:  "default",
+			Generation: 1,
+		},
+		Spec: kblv1alpha1.SnapshotSpec{
+			TimeSlice: "2025-04-15T00:00:00Z",
+			Source:    kblv1alpha1.SnapshotSource{Path: dataPath},
+			Sealed:    true,
+		},
+	}
+
+	cl := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(snap).WithObjects(snap).Build()
+	r := &kblcontroller.SnapshotReconciler{Client: cl, Scheme: scheme, StoreRoot: storeDir}
+
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: "file-snap", Namespace: "default"}}
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("reconcile: %v", err)
+	}
+
+	var updated kblv1alpha1.Snapshot
+	if err := cl.Get(context.Background(), req.NamespacedName, &updated); err != nil {
+		t.Fatal(err)
+	}
+	if updated.Status.Phase != kblv1alpha1.SnapshotPhaseSealed {
+		t.Fatalf("expected Sealed, got %s: %s", updated.Status.Phase, updated.Status.Message)
+	}
+	if updated.Status.SnapshotID == "" {
+		t.Fatal("expected snapshot ID from file content")
 	}
 }
 

@@ -20,14 +20,8 @@ func Validate(spec kblv1alpha1.SnapshotSpec) error {
 }
 
 // ContentData returns the data payload used for snapshot ID hashing.
-func ContentData(spec kblv1alpha1.SnapshotSpec) interface{} {
-	if spec.Source.Inline != nil {
-		return spec.Source.Inline
-	}
-	if spec.Source.Path != "" {
-		return map[string]string{"path": spec.Source.Path}
-	}
-	return map[string]string{"uri": spec.Source.URI}
+func ContentData(spec kblv1alpha1.SnapshotSpec) (interface{}, error) {
+	return ResolveContent(spec)
 }
 
 // ComputeID returns a deterministic snapshot ID for the spec.
@@ -35,12 +29,20 @@ func ComputeID(spec kblv1alpha1.SnapshotSpec) (string, error) {
 	if err := Validate(spec); err != nil {
 		return "", err
 	}
-	return hash.SnapshotID(spec.TimeSlice, ContentData(spec))
+	content, err := ContentData(spec)
+	if err != nil {
+		return "", err
+	}
+	return hash.SnapshotID(spec.TimeSlice, content)
 }
 
-// MarshalData serializes snapshot source for store persistence.
+// MarshalData serializes resolved snapshot content for store persistence.
 func MarshalData(spec kblv1alpha1.SnapshotSpec) (string, error) {
-	data, err := json.Marshal(ContentData(spec))
+	content, err := ContentData(spec)
+	if err != nil {
+		return "", err
+	}
+	data, err := json.Marshal(content)
 	if err != nil {
 		return "", fmt.Errorf("marshal snapshot data: %w", err)
 	}

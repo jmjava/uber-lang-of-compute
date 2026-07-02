@@ -1,0 +1,6 @@
+{
+  "instruments": [
+    {"instrument_id": "US10Y", "rate": 4.25, "maturity": "2035-02-15"},
+    {"instrument_id": "US2Y", "rate": 4.80, "maturity": "2027-02-15"}
+  ]
+}

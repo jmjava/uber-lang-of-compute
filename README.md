@@ -139,6 +139,18 @@ kubectl get dominochains -w
 
 See [ADR 0014](docs/adr/0014-dominochain-cr-references.md).
 
+### Path snapshot ingestion (Phase 12)
+
+Load snapshot data from node-local files for content-addressed sealing:
+
+```bash
+sudo mkdir -p /var/kbl/data && sudo cp examples/path-snapshot/data/curve.json /var/kbl/data/
+kubectl apply -f examples/path-snapshot/snapshot.yaml
+kubectl get snapshots curve-file -o wide
+```
+
+See [examples/path-snapshot/README.md](examples/path-snapshot/README.md) and [ADR 0015](docs/adr/0015-path-snapshot-ingestion.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -167,6 +179,7 @@ See [ADR 0014](docs/adr/0014-dominochain-cr-references.md).
 - [ADR 0012: Debezium CDC Sync](docs/adr/0012-debezium-cdc-sync.md)
 - [ADR 0013: Workflow CR References](docs/adr/0013-workflow-cr-references.md)
 - [ADR 0014: DominoChain CR References](docs/adr/0014-dominochain-cr-references.md)
+- [ADR 0015: Path Snapshot Ingestion](docs/adr/0015-path-snapshot-ingestion.md)
 
 ## Roadmap
 
@@ -182,7 +195,8 @@ See [ADR 0014](docs/adr/0014-dominochain-cr-references.md).
 | **Phase 8** | Read-replica materialization from Multiverse routing |
 | **Phase 9** | Debezium CDC sync for cross-universe read replicas |
 | **Phase 10** | Workflow references to standalone Snapshot/Domino CRs |
-| **Phase 11 (current)** | DominoChain container path resolves Workflow CR refs |
+| **Phase 11** | DominoChain container path resolves Workflow CR refs |
+| **Phase 12 (current)** | Node-local path snapshot ingestion |
 
 ## License
 

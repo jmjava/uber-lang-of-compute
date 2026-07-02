@@ -8,6 +8,7 @@ import (
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/convert"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/snapshot"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
 
@@ -47,9 +48,13 @@ func FromEngineWorkflow(engineWF *types.Workflow, wf *kblv1alpha1.Workflow, stor
 	}
 }
 
-// SnapshotJSON marshals inline snapshot data for the chain ConfigMap.
+// SnapshotJSON marshals resolved snapshot content for the chain ConfigMap.
 func SnapshotJSON(snap kblv1alpha1.SnapshotSpec) (string, error) {
-	data, err := json.Marshal(snap.Source.Inline)
+	content, err := snapshot.ResolveContent(snap)
+	if err != nil {
+		return "", err
+	}
+	data, err := json.Marshal(content)
 	if err != nil {
 		return "", err
 	}

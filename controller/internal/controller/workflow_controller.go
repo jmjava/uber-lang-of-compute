@@ -22,6 +22,7 @@ import (
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/dominochain"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/engine"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/events"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/snapshot"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
@@ -377,6 +378,9 @@ func isSnapshotNotReady(err error) bool {
 		return false
 	}
 	if apierrors.IsNotFound(err) {
+		return true
+	}
+	if snapshot.IsPathNotReady(err) {
 		return true
 	}
 	msg := err.Error()
