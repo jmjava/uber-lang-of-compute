@@ -1,0 +1,175 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: computewheels.kbl.io
+spec:
+  group: kbl.io
+  names:
+    kind: ComputeWheel
+    listKind: ComputeWheelList
+    plural: computewheels
+    singular: computewheel
+    shortNames:
+      - wheel
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [contexts, timeSliceInterval, workflowTemplate]
+              properties:
+                contexts:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: string
+                  description: ComputeContext names forming the wheel
+                timeSliceInterval:
+                  type: string
+                  description: Duration between time slice rotations (e.g. 1h, 24h, 1d)
+                workflowTemplate:
+                  type: object
+                  required: [snapshot, dominos, execution]
+                  properties:
+                    snapshot:
+                      type: object
+                      required: [sealed]
+                      properties:
+                        timeSlice:
+                          type: string
+                        source:
+                          type: object
+                          properties:
+                            inline:
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                            path:
+                              type: string
+                            uri:
+                              type: string
+                        computeContextRef:
+                          type: string
+                        sealed:
+                          type: boolean
+                    dominos:
+                      type: array
+                      items:
+                        type: object
+                        required: [name, command]
+                        properties:
+                          name:
+                            type: string
+                          snapshotRef:
+                            type: string
+                          command:
+                            type: string
+                          dependsOn:
+                            type: array
+                            items:
+                              type: string
+                          inputs:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                fromDomino:
+                                  type: string
+                                fromSnapshot:
+                                  type: string
+                    execution:
+                      type: object
+                      required: [chain]
+                      properties:
+                        chain:
+                          type: array
+                          items:
+                            type: string
+                        deterministic:
+                          type: boolean
+                    provisioning:
+                      type: object
+                      properties:
+                        storePath:
+                          type: string
+                        nodeLocal:
+                          type: boolean
+                    routing:
+                      type: object
+                      properties:
+                        universe:
+                          type: string
+                        computeContextRef:
+                          type: string
+                schedule:
+                  type: object
+                  properties:
+                    startTimeSlice:
+                      type: string
+                      format: date-time
+                maxRotations:
+                  type: integer
+                  minimum: 0
+                preProvisionNext:
+                  type: boolean
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum: [Idle, Rotating, Processing, Error]
+                currentTimeSlice:
+                  type: string
+                activeContext:
+                  type: string
+                activeContextIndex:
+                  type: integer
+                activeWorkflow:
+                  type: string
+                lastRotation:
+                  type: string
+                  format: date-time
+                rotationCount:
+                  type: integer
+                processedSlots:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      timeSlice:
+                        type: string
+                      context:
+                        type: string
+                      workflow:
+                        type: string
+                      snapshotID:
+                        type: string
+                      completedAt:
+                        type: string
+                message:
+                  type: string
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: TimeSlice
+          type: string
+          jsonPath: .status.currentTimeSlice
+        - name: Context
+          type: string
+          jsonPath: .status.activeContext
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Rotations
+          type: integer
+          jsonPath: .status.rotationCount

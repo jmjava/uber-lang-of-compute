@@ -1,0 +1,74 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: dominos.kbl.io
+spec:
+  group: kbl.io
+  names:
+    kind: Domino
+    listKind: DominoList
+    plural: dominos
+    singular: domino
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [snapshotRef, command]
+              properties:
+                snapshotRef:
+                  type: string
+                  description: Name of the Snapshot this domino executes against
+                command:
+                  type: string
+                  description: "Command to execute (builtin:<name> or shell command)"
+                dependsOn:
+                  type: array
+                  items:
+                    type: string
+                  description: Names of dominos that must complete before this one
+                inputs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      fromDomino:
+                        type: string
+                      fromSnapshot:
+                        type: string
+                image:
+                  type: string
+                  description: Container image (post-MVP hot-swap)
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum: [Pending, Running, Completed, Cached, Error]
+                inputHash:
+                  type: string
+                outputHash:
+                  type: string
+                reused:
+                  type: boolean
+                completedAt:
+                  type: string
+                  format: date-time
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Snapshot
+          type: string
+          jsonPath: .spec.snapshotRef
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
+        - name: Reused
+          type: boolean
+          jsonPath: .status.reused

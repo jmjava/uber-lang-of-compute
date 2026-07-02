@@ -1,0 +1,21 @@
+apiVersion: kbl.io/v1alpha1
+kind: DominoChain
+metadata:
+  name: simple-init-chain
+  namespace: default
+spec:
+  runtime: kubernetes-init
+  snapshot:
+    timeSlice: "2025-07-02T00:00:00Z"
+    source:
+      inline:
+        message: hello-hot-swap
+        value: 42
+    sealed: true
+  steps:
+    - name: load
+      command: builtin:identity
+    - name: pass-through
+      command: builtin:identity
+  storePath: /var/kbl/store/init-chain.db
+  runnerImage: ghcr.io/jmjava/kbl-domino-runner:latest

@@ -1,0 +1,21 @@
+# Binaries
+controller/bin/
+controller/kbl-compute
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go
+controller/vendor/
+
+# Test artifacts
+/tmp/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store

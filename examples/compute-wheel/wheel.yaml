@@ -1,0 +1,49 @@
+apiVersion: kbl.io/v1alpha1
+kind: ComputeWheel
+metadata:
+  name: finance-wheel
+  namespace: default
+  labels:
+    kbl.io/domain: finance
+spec:
+  contexts:
+    - node-a-ctx
+    - node-b-ctx
+  timeSliceInterval: 24h
+  maxRotations: 0  # 0 = continuous rotation
+  preProvisionNext: true
+  schedule:
+    startTimeSlice: "2025-04-15T00:00:00Z"
+  workflowTemplate:
+    snapshot:
+      source:
+        inline:
+          instruments:
+            - instrument_id: US10Y
+              rate: 4.25
+              maturity: "2035-02-15"
+            - instrument_id: US2Y
+              rate: 4.80
+              maturity: "2027-02-15"
+            - instrument_id: US5Y
+              rate: 4.45
+              maturity: "2030-02-15"
+      sealed: true
+    dominos:
+      - name: load-curve-data
+        command: builtin:identity
+      - name: interpolate-curve
+        command: builtin:interpolate
+        dependsOn: [load-curve-data]
+        inputs:
+          - fromDomino: load-curve-data
+      - name: compute-risk
+        command: builtin:risk-dv01
+        dependsOn: [interpolate-curve]
+        inputs:
+          - fromDomino: interpolate-curve
+    execution:
+      chain: [load-curve-data, interpolate-curve, compute-risk]
+      deterministic: true
+    routing:
+      universe: finance-local
