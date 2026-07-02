@@ -387,3 +387,156 @@ func (in *DominoChainStatus) DeepCopyInto(out *DominoChainStatus) {
 		}
 	}
 }
+
+func (in *PluggableUniverse) DeepCopyInto(out *PluggableUniverse) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	out.Status = in.Status
+}
+
+func (in *PluggableUniverse) DeepCopy() *PluggableUniverse {
+	if in == nil {
+		return nil
+	}
+	out := new(PluggableUniverse)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *PluggableUniverse) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *PluggableUniverseList) DeepCopyInto(out *PluggableUniverseList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		out.Items = make([]PluggableUniverse, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+}
+
+func (in *PluggableUniverseList) DeepCopy() *PluggableUniverseList {
+	if in == nil {
+		return nil
+	}
+	out := new(PluggableUniverseList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *PluggableUniverseList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *PluggableUniverseSpec) DeepCopyInto(out *PluggableUniverseSpec) {
+	*out = *in
+	if in.DataLayer.Config != nil {
+		out.DataLayer.Config = deepCopyMap(in.DataLayer.Config)
+	}
+	if in.ProvisioningModel != nil {
+		p := *in.ProvisioningModel
+		out.ProvisioningModel = &p
+	}
+}
+
+func (in *Multiverse) DeepCopyInto(out *Multiverse) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+func (in *Multiverse) DeepCopy() *Multiverse {
+	if in == nil {
+		return nil
+	}
+	out := new(Multiverse)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *Multiverse) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *MultiverseList) DeepCopyInto(out *MultiverseList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		out.Items = make([]Multiverse, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+}
+
+func (in *MultiverseList) DeepCopy() *MultiverseList {
+	if in == nil {
+		return nil
+	}
+	out := new(MultiverseList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *MultiverseList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *MultiverseSpec) DeepCopyInto(out *MultiverseSpec) {
+	*out = *in
+	if in.Universes != nil {
+		out.Universes = make([]UniverseRouteSpec, len(in.Universes))
+		copy(out.Universes, in.Universes)
+	}
+	if in.TimeSliceRoutes != nil {
+		out.TimeSliceRoutes = make([]TimeSliceRoute, len(in.TimeSliceRoutes))
+		copy(out.TimeSliceRoutes, in.TimeSliceRoutes)
+	}
+	if in.Sync != nil {
+		s := *in.Sync
+		out.Sync = &s
+		if in.Sync.Kafka != nil {
+			k := *in.Sync.Kafka
+			out.Sync.Kafka = &k
+			if in.Sync.Kafka.Brokers != nil {
+				out.Sync.Kafka.Brokers = make([]string, len(in.Sync.Kafka.Brokers))
+				copy(out.Sync.Kafka.Brokers, in.Sync.Kafka.Brokers)
+			}
+		}
+	}
+}
+
+func (in *MultiverseStatus) DeepCopyInto(out *MultiverseStatus) {
+	*out = *in
+	if in.RoutedEvents != nil {
+		out.RoutedEvents = make([]RoutedEvent, len(in.RoutedEvents))
+		copy(out.RoutedEvents, in.RoutedEvents)
+	}
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		for i := range in.Conditions {
+			in.Conditions[i].DeepCopyInto(&out.Conditions[i])
+		}
+	}
+}

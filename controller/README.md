@@ -58,11 +58,13 @@ The controller reconciles Workflow resources: executes the domino chain, updates
 ```
 cmd/kbl-compute/       CLI for local/CI execution
 cmd/kbl-controller/    Kubernetes controller-runtime reconciler
-api/v1alpha1/          Workflow, ComputeWheel, ComputeContext types
-internal/controller/   Workflow + ComputeWheel + DominoChain reconcilers
+api/v1alpha1/          Workflow, ComputeWheel, Multiverse, PluggableUniverse types
+internal/controller/   Workflow, ComputeWheel, DominoChain, Multiverse reconcilers
 pkg/dominochain/       Init chain + OpenKruise pod builders, domino-runner handoff
 cmd/domino-runner/     Container entrypoint for in-cluster domino steps
 pkg/wheel/             Time-slice rotation logic and workflow builder
+pkg/events/            Memory + Kafka event bus for snapshot completion events
+pkg/routing/           Multiverse partition and time-slice routing
 pkg/engine/            Chain execution, input resolution, memoization
 pkg/store/             SQLite + TSDB backends, resolver, HTTP TSDB client
 cmd/kbl-tsdb/          Node-local TSDB DaemonSet server
@@ -84,11 +86,26 @@ kubectl get computewheels -w
 
 See [ADR 0006](../docs/adr/0006-compute-wheel-rotation.md).
 
+## Multiverse routing
+
+The Multiverse reconciler routes snapshot completion events across Pluggable Universes:
+
+```bash
+kubectl apply -f ../examples/multiverse-finance/multiverse.yaml
+kubectl apply -f ../examples/multiverse-finance/workflow-rates.yaml
+./bin/kbl-controller --store-root /var/kbl/store --kafka-brokers kafka:9092
+kubectl get multiverses -o yaml
+```
+
+Controller flags: `--kafka-brokers` (comma-separated), `--kafka-topic` (default `kbl.snapshot.events`).
+
+See [ADR 0009](../docs/adr/0009-multiverse-routing.md).
+
 ## Post-MVP
 
 - ~~Kubernetes controller-runtime reconciler for CRDs~~ (Workflow reconciler shipped in Phase 2)
 - ~~Compute Wheel time-slice scheduling~~ (ComputeWheel reconciler shipped in Phase 3)
 - ~~OpenKruise hot-swapped container dominos~~ (DominoChain reconciler shipped in Phase 4)
 - ~~Node-local TSDB DaemonSet backend~~ (kbl-tsdb + store.Backend shipped in Phase 5)
-- Multiverse routing via Debezium/Kafka
+- ~~Multiverse routing via Debezium/Kafka~~ (Multiverse + PluggableUniverse shipped in Phase 6)
 - Standalone Snapshot/Domino CRD reconcilers

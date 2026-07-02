@@ -20,6 +20,7 @@ import (
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/convert"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/dominochain"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/engine"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/events"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
@@ -36,6 +37,7 @@ type WorkflowReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
 	StoreRoot string
+	EventBus  events.Bus
 }
 
 // +kubebuilder:rbac:groups=kbl.io,resources=workflows,verbs=get;list;watch;create;update;patch;delete
@@ -158,6 +160,8 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 		return ctrl.Result{}, err
 	}
 
+	r.publishSnapshotEvent(ctx, wf, result)
+
 	logger.Info("workflow completed",
 		"workflow", wf.Name,
 		"snapshotID", result.SnapshotID,
@@ -270,6 +274,7 @@ func (r *WorkflowReconciler) completeFromChain(ctx context.Context, wf *kblv1alp
 	if err := r.Status().Update(ctx, wf); err != nil {
 		return ctrl.Result{}, err
 	}
+	r.publishSnapshotEvent(ctx, wf, result)
 	logger.Info("workflow completed via domino chain", "workflow", wf.Name, "chain", chain.Name)
 	return ctrl.Result{}, nil
 }

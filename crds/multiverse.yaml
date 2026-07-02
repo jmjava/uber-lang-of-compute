@@ -1,0 +1,127 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: multiverses.kbl.io
+spec:
+  group: kbl.io
+  names:
+    kind: Multiverse
+    listKind: MultiverseList
+    plural: multiverses
+    singular: multiverse
+    shortNames:
+      - mv
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [defaultUniverse, universes]
+              properties:
+                defaultUniverse:
+                  type: string
+                universes:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [name, pluggableUniverseRef]
+                    properties:
+                      name:
+                        type: string
+                      pluggableUniverseRef:
+                        type: string
+                      computeContextRef:
+                        type: string
+                      partitions:
+                        type: array
+                        items:
+                          type: object
+                          required: [key, values]
+                          properties:
+                            key:
+                              type: string
+                            values:
+                              type: array
+                              items:
+                                type: string
+                timeSliceRoutes:
+                  type: array
+                  items:
+                    type: object
+                    required: [timeSlice, universe]
+                    properties:
+                      timeSlice:
+                        type: string
+                      universe:
+                        type: string
+                      computeContextRef:
+                        type: string
+                sync:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                    kafka:
+                      type: object
+                      properties:
+                        brokers:
+                          type: array
+                          items:
+                            type: string
+                        topic:
+                          type: string
+                        groupId:
+                          type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum: [Active, Degraded, Offline]
+                universeCount:
+                  type: integer
+                kafkaConnected:
+                  type: boolean
+                routedEvents:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      eventId:
+                        type: string
+                      snapshotId:
+                        type: string
+                      timeSlice:
+                        type: string
+                      sourceWorkflow:
+                        type: string
+                      targetUniverse:
+                        type: string
+                      computeContextRef:
+                        type: string
+                      routedAt:
+                        type: string
+                message:
+                  type: string
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Default
+          type: string
+          jsonPath: .spec.defaultUniverse
+        - name: Universes
+          type: integer
+          jsonPath: .status.universeCount
+        - name: Sync
+          type: boolean
+          jsonPath: .spec.sync.enabled
+        - name: Phase
+          type: string
+          jsonPath: .status.phase

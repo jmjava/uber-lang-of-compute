@@ -84,6 +84,7 @@ type ProvisioningSpec struct {
 type RoutingSpec struct {
 	Universe          string `json:"universe,omitempty"`
 	ComputeContextRef string `json:"computeContextRef,omitempty"`
+	MultiverseRef     string `json:"multiverseRef,omitempty"`
 }
 
 // WorkflowStatus defines the observed state of a Workflow.

@@ -95,6 +95,9 @@ spec:
                       type: string
                     computeContextRef:
                       type: string
+                    multiverseRef:
+                      type: string
+                      description: Multiverse resource name for cross-universe routing
             status:
               type: object
               properties:
