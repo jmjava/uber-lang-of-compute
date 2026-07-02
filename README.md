@@ -174,7 +174,13 @@ kubectl apply -f examples/http-snapshot/snapshot.yaml
 kubectl get snapshots curve-http -o wide
 ```
 
-See [examples/http-snapshot/README.md](examples/http-snapshot/README.md) and [ADR 0017](docs/adr/0017-http-snapshot-ingestion.md).
+See [ADR 0017](docs/adr/0017-http-snapshot-ingestion.md). After seal, domino runs use **store-first** reads (ADR 0018) and do not re-fetch the URI.
+
+### Store-first hot path (Phase 16)
+
+Once a snapshot is sealed into the node-local store, workflow execution reads persisted JSON from the store — no repeat HTTP or path resolution on the hot path.
+
+See [ADR 0018](docs/adr/0018-store-first-snapshot.md).
 
 ## What the MVP Proves
 
@@ -207,6 +213,7 @@ See [examples/http-snapshot/README.md](examples/http-snapshot/README.md) and [AD
 - [ADR 0015: Path Snapshot Ingestion](docs/adr/0015-path-snapshot-ingestion.md)
 - [ADR 0016: ComputeWheel CR References](docs/adr/0016-computewheel-cr-references.md)
 - [ADR 0017: HTTP Snapshot Ingestion](docs/adr/0017-http-snapshot-ingestion.md)
+- [ADR 0018: Store-First Snapshot](docs/adr/0018-store-first-snapshot.md)
 
 ## Roadmap
 
@@ -226,12 +233,13 @@ See [examples/http-snapshot/README.md](examples/http-snapshot/README.md) and [AD
 | **Phase 12** | Node-local path snapshot ingestion |
 | **Phase 13** | ComputeWheel workflow template CR references |
 | **Phase 14** | Pluggable execution engines — Julia, Python, and custom runtimes via PluggableUniverse |
-| **Phase 15 (current)** | HTTP/HTTPS snapshot URI ingestion |
-| **Phase 16** | High-performance snapshot access — node-local staging, zero-copy reads, and hot-path avoidance of REST fetches |
+| **Phase 15** | HTTP/HTTPS snapshot URI ingestion |
+| **Phase 16 (current)** | Store-first snapshot reads — hot path skips re-fetching HTTP/path sources |
+| **Phase 17** | Zero-copy / mmap snapshot staging and TSDB streaming reads |
 
 ## Performance note
 
-Phase 15 HTTP ingestion is intended for convenience and cross-node bootstrap, not the hot compute path. Production workloads should prefer **node-local paths** (Phase 12) or **pre-sealed snapshots** already on the TSDB/store so dominos read data where it lives — bring compute to the data, not data over REST on every seal.
+Phase 15 HTTP ingestion is intended for convenience and cross-node bootstrap, not the hot compute path. **Phase 16** loads persisted snapshot JSON from the node-local store on execute, skipping repeat HTTP/path reads. Production workloads should still prefer **node-local paths** (Phase 12) or **pre-sealed snapshots** on the TSDB/store — bring compute to the data.
 
 ## License
 
