@@ -56,22 +56,35 @@ The controller reconciles Workflow resources: executes the domino chain, updates
 ## Architecture
 
 ```
-cmd/kbl-compute/     CLI for local/CI execution
-cmd/kbl-controller/  Kubernetes controller-runtime reconciler
-api/v1alpha1/        Workflow CRD types
-internal/controller/ Workflow reconciler
-pkg/engine/          Chain execution, input resolution, memoization
-pkg/store/           SQLite: snapshots, domino_results, replay_log
-pkg/convert/         CRD → engine domain model
-pkg/hash/            SHA-256 input/output hashing
-pkg/builtin/         builtin:identity, interpolate, risk-dv01
+cmd/kbl-compute/       CLI for local/CI execution
+cmd/kbl-controller/    Kubernetes controller-runtime reconciler
+api/v1alpha1/          Workflow, ComputeWheel, ComputeContext types
+internal/controller/   Workflow + ComputeWheel reconcilers
+pkg/wheel/             Time-slice rotation logic and workflow builder
+pkg/engine/            Chain execution, input resolution, memoization
+pkg/store/             SQLite: snapshots, domino_results, replay_log
+pkg/convert/           CRD → engine domain model
+pkg/hash/              SHA-256 input/output hashing
+pkg/builtin/           builtin:identity, interpolate, risk-dv01
 ```
+
+## Compute Wheel
+
+The ComputeWheel reconciler rotates contexts through time slices:
+
+```bash
+kubectl apply -f ../examples/compute-wheel/computecontexts.yaml
+kubectl apply -f ../examples/compute-wheel/wheel.yaml
+kubectl get computewheels -w
+```
+
+See [ADR 0006](../docs/adr/0006-compute-wheel-rotation.md).
 
 ## Post-MVP
 
 - ~~Kubernetes controller-runtime reconciler for CRDs~~ (Workflow reconciler shipped in Phase 2)
+- ~~Compute Wheel time-slice scheduling~~ (ComputeWheel reconciler shipped in Phase 3)
 - OpenKruise hot-swapped container dominos
 - Node-local TSDB DaemonSet backend
-- Compute Wheel time-slice scheduling
 - Multiverse routing via Debezium/Kafka
 - Standalone Snapshot/Domino CRD reconcilers

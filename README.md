@@ -56,6 +56,15 @@ kubectl get workflows -o wide
 kubectl get configmap finance-curve-replay -o yaml
 ```
 
+### Compute Wheel (time-slice rotation)
+
+```bash
+kubectl apply -f examples/compute-wheel/computecontexts.yaml
+kubectl apply -f examples/compute-wheel/wheel.yaml
+kubectl get computewheels -w
+kubectl get workflows -l kbl.io/computewheel=finance-wheel
+```
+
 Run tests:
 
 ```bash
@@ -81,6 +90,7 @@ make test
 - [ADR 0004: Hot-Swapped Dominos](docs/adr/0004-hot-swapped-dominos.md)
 
 - [ADR 0005: Kubernetes Controller](docs/adr/0005-kubernetes-controller.md)
+- [ADR 0006: Compute Wheel Rotation](docs/adr/0006-compute-wheel-rotation.md)
 
 ## Roadmap
 
@@ -88,9 +98,10 @@ make test
 |-------|-------|
 | **MVP (current)** | CLI runtime, SQLite store, builtin dominos, replay log |
 | **Phase 2 (current)** | Workflow CRD + `kbl-controller` reconciler |
-| Phase 3 | OpenKruise hot-swapped container dominos |
-| Phase 4 | Node-local TSDB DaemonSet, Compute Wheel scheduling |
-| Phase 5 | Multiverse routing via Debezium/Kafka |
+| **Phase 3 (current)** | ComputeWheel time-slice rotation + player-piano pre-provision |
+| Phase 4 | OpenKruise hot-swapped container dominos |
+| Phase 5 | Node-local TSDB DaemonSet |
+| Phase 6 | Multiverse routing via Debezium/Kafka |
 
 ## License
 

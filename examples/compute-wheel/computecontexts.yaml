@@ -1,0 +1,17 @@
+apiVersion: kbl.io/v1alpha1
+kind: ComputeContext
+metadata:
+  name: node-a-ctx
+spec:
+  nodeName: worker-a
+  storePath: /var/kbl/store/node-a
+  storeType: sqlite
+---
+apiVersion: kbl.io/v1alpha1
+kind: ComputeContext
+metadata:
+  name: node-b-ctx
+spec:
+  nodeName: worker-b
+  storePath: /var/kbl/store/node-b
+  storeType: sqlite

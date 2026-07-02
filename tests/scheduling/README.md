@@ -1,16 +1,27 @@
 # Scheduling Tests
 
-## Status
+Scheduling is implemented via the **ComputeWheel reconciler** (Phase 3).
 
-Scheduling tests are planned for post-MVP when the ComputeWheel CRD and player-piano scheduler are implemented.
+## Run
 
-## Target Tests
+```bash
+cd controller
+go test ./internal/controller/... -run TestComputeWheel -v
+go test ./pkg/wheel/... -v
+```
 
-- Time slice rotation assigns correct snapshot to each Compute Context
-- Pre-provisioning activates next domino container before current completes
-- Node affinity routes dominos to the node owning snapshot data
-- Compute Wheel rotation does not interrupt in-flight domino chains
+## What Is Verified
 
-## Current MVP
+- ComputeWheel creates Workflow resources per context×time-slice slot
+- Context rotation within a time slice (ctx-a → ctx-b → …)
+- Time slice advance after all contexts complete
+- `maxRotations` stops the wheel after N slice rotations
+- `preProvisionNext` creates the next slot's Workflow while current runs (player-piano)
 
-The MVP executes domino chains sequentially via CLI. Scheduling logic will be added with the Kubernetes controller-runtime reconciler.
+## Future Tests
+
+- Clock-driven requeue when interval elapses with no in-flight work
+- Node affinity enforcement via ComputeContext → nodeName
+- OpenKruise pre-warmed container slots
+
+See [ADR 0006](../../docs/adr/0006-compute-wheel-rotation.md).
