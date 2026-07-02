@@ -130,6 +130,119 @@ func TestWorkflowReconcilerExecutesChain(t *testing.T) {
 	}
 }
 
+func TestWorkflowReconcilerExecutesWithCRRefs(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = kblv1alpha1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	storeDir := t.TempDir()
+	storePath := filepath.Join(storeDir, "workflow-refs.db")
+
+	snap := &kblv1alpha1.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{Name: "curve-snap", Namespace: "default", Generation: 1},
+		Spec: kblv1alpha1.SnapshotSpec{
+			TimeSlice: "2025-04-15T00:00:00Z",
+			Source: kblv1alpha1.SnapshotSource{
+				Inline: map[string]interface{}{
+					"instruments": []interface{}{
+						map[string]interface{}{
+							"instrument_id": "US10Y",
+							"rate":          4.25,
+							"maturity":      "2035-02-15",
+						},
+						map[string]interface{}{
+							"instrument_id": "US2Y",
+							"rate":          4.80,
+							"maturity":      "2027-02-15",
+						},
+					},
+				},
+			},
+			Sealed: true,
+		},
+	}
+
+	load := &kblv1alpha1.Domino{
+		ObjectMeta: metav1.ObjectMeta{Name: "load", Namespace: "default"},
+		Spec: kblv1alpha1.DominoResourceSpec{
+			SnapshotRef: "curve-snap",
+			Command:     "builtin:identity",
+		},
+	}
+
+	interp := &kblv1alpha1.Domino{
+		ObjectMeta: metav1.ObjectMeta{Name: "interpolate", Namespace: "default"},
+		Spec: kblv1alpha1.DominoResourceSpec{
+			SnapshotRef: "curve-snap",
+			Command:     "builtin:interpolate",
+			DependsOn:   []string{"load"},
+			Inputs:      []kblv1alpha1.DominoInput{{FromDomino: "load"}},
+		},
+	}
+
+	wf := &kblv1alpha1.Workflow{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "refs-finance",
+			Namespace:  "default",
+			Generation: 1,
+		},
+		Spec: kblv1alpha1.WorkflowSpec{
+			SnapshotRef: "curve-snap",
+			DominoRefs:  []string{"load", "interpolate"},
+			Execution: kblv1alpha1.ExecutionSpec{
+				Chain:         []string{"load", "interpolate"},
+				Deterministic: true,
+			},
+			Provisioning: kblv1alpha1.ProvisioningSpec{
+				StorePath: storePath,
+				NodeLocal: true,
+			},
+		},
+	}
+
+	cl := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(snap, wf).
+		WithObjects(snap, load, interp, wf).
+		Build()
+
+	snapRec := &kblcontroller.SnapshotReconciler{Client: cl, Scheme: scheme, StoreRoot: storeDir}
+	if _, err := snapRec.Reconcile(context.Background(), reconcile.Request{
+		NamespacedName: types.NamespacedName{Name: "curve-snap", Namespace: "default"},
+	}); err != nil {
+		t.Fatalf("seal snapshot: %v", err)
+	}
+
+	r := &kblcontroller.WorkflowReconciler{
+		Client:    cl,
+		Scheme:    scheme,
+		StoreRoot: storeDir,
+	}
+
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: wf.Name, Namespace: wf.Namespace}}
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("reconcile (finalizer): %v", err)
+	}
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("reconcile (execute): %v", err)
+	}
+
+	var updated kblv1alpha1.Workflow
+	if err := cl.Get(context.Background(), req.NamespacedName, &updated); err != nil {
+		t.Fatalf("get workflow: %v", err)
+	}
+	if updated.Status.Phase != kblv1alpha1.WorkflowPhaseCompleted {
+		t.Fatalf("expected Completed, got %s: %s", updated.Status.Phase, updated.Status.Message)
+	}
+	if updated.Status.DominoCount != 2 {
+		t.Errorf("expected 2 dominos, got %d", updated.Status.DominoCount)
+	}
+	if updated.Status.SnapshotID == "" {
+		t.Error("expected snapshot ID from sealed Snapshot CR")
+	}
+}
+
 func TestWorkflowReconcilerSkipsCompleted(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = kblv1alpha1.AddToScheme(scheme)

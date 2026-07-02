@@ -33,8 +33,10 @@ type Workflow struct {
 
 // WorkflowSpec defines the desired state of a Workflow.
 type WorkflowSpec struct {
-	Snapshot     SnapshotSpec       `json:"snapshot"`
-	Dominos      []DominoSpec       `json:"dominos"`
+	Snapshot     SnapshotSpec       `json:"snapshot,omitempty"`
+	SnapshotRef  string             `json:"snapshotRef,omitempty"`
+	Dominos      []DominoSpec       `json:"dominos,omitempty"`
+	DominoRefs   []string           `json:"dominoRefs,omitempty"`
 	Execution    ExecutionSpec      `json:"execution"`
 	Provisioning ProvisioningSpec   `json:"provisioning,omitempty"`
 	Routing      RoutingSpec        `json:"routing,omitempty"`

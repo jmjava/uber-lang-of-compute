@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -43,6 +44,8 @@ type WorkflowReconciler struct {
 // +kubebuilder:rbac:groups=kbl.io,resources=workflows,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kbl.io,resources=workflows/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kbl.io,resources=workflows/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kbl.io,resources=snapshots,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kbl.io,resources=dominos,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kbl.io,resources=dominochains,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kbl.io,resources=dominochains/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
@@ -109,7 +112,18 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 	defer s.Close()
 
 	eng := engine.New(s)
-	engineWF := convert.ToEngineWorkflow(wf)
+	engineWF, err := convert.ResolveEngineWorkflow(ctx, r.Client, wf)
+	if err != nil {
+		if isSnapshotNotReady(err) {
+			wf.Status.Phase = kblv1alpha1.WorkflowPhasePending
+			wf.Status.Message = err.Error()
+			if uerr := r.Status().Update(ctx, wf); uerr != nil {
+				return ctrl.Result{}, uerr
+			}
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+		return r.fail(ctx, wf, err)
+	}
 	result, err := eng.Run(engineWF)
 	if err != nil {
 		return r.fail(ctx, wf, err)
@@ -232,7 +246,11 @@ func (r *WorkflowReconciler) completeFromChain(ctx context.Context, wf *kblv1alp
 	defer s.Close()
 
 	eng := engine.New(s)
-	result, err := eng.Run(convert.ToEngineWorkflow(wf))
+	engineWF, err := convert.ResolveEngineWorkflow(ctx, r.Client, wf)
+	if err != nil {
+		return r.fail(ctx, wf, err)
+	}
+	result, err := eng.Run(engineWF)
 	if err != nil {
 		return r.fail(ctx, wf, err)
 	}
@@ -255,7 +273,7 @@ func (r *WorkflowReconciler) completeFromChain(ctx context.Context, wf *kblv1alp
 	now := metav1.NewTime(time.Now().UTC())
 	wf.Status.ObservedGeneration = wf.Generation
 	wf.Status.Phase = kblv1alpha1.WorkflowPhaseCompleted
-	wf.Status.SnapshotID = chain.Status.SnapshotID
+	wf.Status.SnapshotID = result.SnapshotID
 	wf.Status.DominoCount = len(result.Entries)
 	wf.Status.ReusedCount = reused
 	wf.Status.RecomputedCount = len(result.Entries) - reused
@@ -341,6 +359,17 @@ func (r *WorkflowReconciler) writeReplayLog(ctx context.Context, wf *kblv1alpha1
 	}
 
 	return fmt.Sprintf("configmap/%s/%s", wf.Namespace, cmName), nil
+}
+
+func isSnapshotNotReady(err error) bool {
+	if err == nil {
+		return false
+	}
+	if apierrors.IsNotFound(err) {
+		return true
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "is not ready")
 }
 
 func (r *WorkflowReconciler) finalize(ctx context.Context, wf *kblv1alpha1.Workflow) (ctrl.Result, error) {
