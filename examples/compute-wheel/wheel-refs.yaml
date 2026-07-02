@@ -1,0 +1,24 @@
+apiVersion: kbl.io/v1alpha1
+kind: ComputeWheel
+metadata:
+  name: finance-wheel-refs
+  namespace: default
+spec:
+  contexts:
+    - node-a-ctx
+    - node-b-ctx
+  timeSliceInterval: 24h
+  maxRotations: 2
+  preProvisionNext: true
+  schedule:
+    startTimeSlice: "2025-04-15T00:00:00Z"
+  workflowTemplate:
+    snapshotRef: curve-snap
+    dominoRefs:
+      - load-curve
+      - interpolate-curve
+    execution:
+      chain: [load-curve, interpolate-curve]
+      deterministic: true
+    routing:
+      universe: finance-local

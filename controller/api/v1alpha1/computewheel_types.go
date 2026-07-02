@@ -49,11 +49,13 @@ type ComputeWheelSpec struct {
 
 // WorkflowTemplateSpec is the workflow template stamped per context/time slice.
 type WorkflowTemplateSpec struct {
-	Snapshot     SnapshotSpec     `json:"snapshot"`
-	Dominos      []DominoSpec     `json:"dominos"`
-	Execution    ExecutionSpec    `json:"execution"`
-	Provisioning ProvisioningSpec `json:"provisioning,omitempty"`
-	Routing      RoutingSpec      `json:"routing,omitempty"`
+	Snapshot     SnapshotSpec       `json:"snapshot,omitempty"`
+	SnapshotRef  string             `json:"snapshotRef,omitempty"`
+	Dominos      []DominoSpec       `json:"dominos,omitempty"`
+	DominoRefs   []string           `json:"dominoRefs,omitempty"`
+	Execution    ExecutionSpec      `json:"execution"`
+	Provisioning ProvisioningSpec   `json:"provisioning,omitempty"`
+	Routing      RoutingSpec        `json:"routing,omitempty"`
 }
 
 // WheelScheduleSpec configures wheel scheduling.

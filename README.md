@@ -151,6 +151,19 @@ kubectl get snapshots curve-file -o wide
 
 See [examples/path-snapshot/README.md](examples/path-snapshot/README.md) and [ADR 0015](docs/adr/0015-path-snapshot-ingestion.md).
 
+### ComputeWheel CR references (Phase 13)
+
+Wheels can stamp Workflows that reference standalone Snapshot/Domino CRs:
+
+```bash
+kubectl apply -f examples/standalone-snapshot-domino/snapshot.yaml
+kubectl apply -f examples/standalone-snapshot-domino/dominos.yaml
+kubectl apply -f examples/compute-wheel/wheel-refs.yaml
+kubectl get computewheels,workflows -l kbl.io/computewheel=finance-wheel-refs
+```
+
+See [ADR 0016](docs/adr/0016-computewheel-cr-references.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -180,6 +193,7 @@ See [examples/path-snapshot/README.md](examples/path-snapshot/README.md) and [AD
 - [ADR 0013: Workflow CR References](docs/adr/0013-workflow-cr-references.md)
 - [ADR 0014: DominoChain CR References](docs/adr/0014-dominochain-cr-references.md)
 - [ADR 0015: Path Snapshot Ingestion](docs/adr/0015-path-snapshot-ingestion.md)
+- [ADR 0016: ComputeWheel CR References](docs/adr/0016-computewheel-cr-references.md)
 
 ## Roadmap
 
@@ -196,7 +210,9 @@ See [examples/path-snapshot/README.md](examples/path-snapshot/README.md) and [AD
 | **Phase 9** | Debezium CDC sync for cross-universe read replicas |
 | **Phase 10** | Workflow references to standalone Snapshot/Domino CRs |
 | **Phase 11** | DominoChain container path resolves Workflow CR refs |
-| **Phase 12 (current)** | Node-local path snapshot ingestion |
+| **Phase 12** | Node-local path snapshot ingestion |
+| **Phase 13 (current)** | ComputeWheel workflow template CR references |
+| **Phase 14** | Pluggable execution engines — Julia, Python, and custom runtimes via PluggableUniverse |
 
 ## License
 
