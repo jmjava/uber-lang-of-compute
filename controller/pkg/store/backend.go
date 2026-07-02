@@ -1,6 +1,8 @@
 package store
 
 // Backend provides node-local persistence for snapshots, domino outputs, and memo cache.
+// GetSnapshot returns bytes as persisted at seal time (direct-bytes staging); callers on the
+// hot path should prefer store reads over re-resolving HTTP/path sources.
 type Backend interface {
 	SaveSnapshot(snapshotID, timeSlice, data string, sealed bool) error
 	GetSnapshot(snapshotID string) (timeSlice, data string, sealed bool, err error)

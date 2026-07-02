@@ -49,18 +49,7 @@ func (r *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return r.fail(ctx, &snap, err)
 	}
 
-	snapshotID, err := snapshot.ComputeID(snap.Spec)
-	if err != nil {
-		if snapshot.IsSourceNotReady(err) {
-			if _, uerr := r.updateStatus(ctx, &snap, kblv1alpha1.SnapshotPhasePending, "", err.Error()); uerr != nil {
-				return ctrl.Result{}, uerr
-			}
-			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
-		}
-		return r.fail(ctx, &snap, err)
-	}
-
-	data, err := snapshot.MarshalData(snap.Spec)
+	snapshotID, data, err := snapshot.SealPayload(snap.Spec)
 	if err != nil {
 		if snapshot.IsSourceNotReady(err) {
 			if _, uerr := r.updateStatus(ctx, &snap, kblv1alpha1.SnapshotPhasePending, "", err.Error()); uerr != nil {
