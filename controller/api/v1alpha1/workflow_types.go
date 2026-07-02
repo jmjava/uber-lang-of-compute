@@ -72,6 +72,8 @@ type DominoInput struct {
 type ExecutionSpec struct {
 	Chain         []string `json:"chain"`
 	Deterministic bool     `json:"deterministic"`
+	// Runtime selects execution backend: local (default), kubernetes-init, openkruise.
+	Runtime string `json:"runtime,omitempty"`
 }
 
 type ProvisioningSpec struct {

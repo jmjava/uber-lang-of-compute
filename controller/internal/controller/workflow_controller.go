@@ -18,6 +18,7 @@ import (
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/convert"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/dominochain"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/engine"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
@@ -40,7 +41,11 @@ type WorkflowReconciler struct {
 // +kubebuilder:rbac:groups=kbl.io,resources=workflows,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kbl.io,resources=workflows/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kbl.io,resources=workflows/finalizers,verbs=update
+// +kubebuilder:rbac:groups=kbl.io,resources=dominochains,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kbl.io,resources=dominochains/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps.kruise.io,resources=containerrecreaterequests,verbs=get;list;watch;create;update;patch;delete
 
 func (r *WorkflowReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
@@ -89,6 +94,10 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 			root = "/var/kbl/store"
 		}
 		storePath = filepath.Join(root, wf.Namespace, wf.Name+".db")
+	}
+
+	if dominochain.NeedsContainerRuntime(wf) {
+		return r.executeContainer(ctx, wf, logger, storePath)
 	}
 
 	s, err := store.Open(storePath)
@@ -156,6 +165,116 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 		"reused", reused,
 	)
 
+	return ctrl.Result{}, nil
+}
+
+func (r *WorkflowReconciler) executeContainer(ctx context.Context, wf *kblv1alpha1.Workflow, logger interface {
+	Info(msg string, keysAndValues ...interface{})
+}, storePath string) (ctrl.Result, error) {
+	chainName := wf.Name + "-dchain"
+	var chain kblv1alpha1.DominoChain
+	chainKey := client.ObjectKey{Namespace: wf.Namespace, Name: chainName}
+	err := r.Get(ctx, chainKey, &chain)
+	if apierrors.IsNotFound(err) {
+		spec := dominochain.FromWorkflow(wf, storePath)
+		chain = kblv1alpha1.DominoChain{
+			TypeMeta: metav1.TypeMeta{APIVersion: "kbl.io/v1alpha1", Kind: "DominoChain"},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      chainName,
+				Namespace: wf.Namespace,
+				Labels: map[string]string{
+					"kbl.io/workflow": wf.Name,
+				},
+			},
+			Spec: spec.Spec,
+		}
+		if err := controllerutil.SetControllerReference(wf, &chain, r.Scheme); err != nil {
+			return r.fail(ctx, wf, err)
+		}
+		if err := r.Create(ctx, &chain); err != nil {
+			return r.fail(ctx, wf, fmt.Errorf("create domino chain: %w", err))
+		}
+		wf.Status.Message = fmt.Sprintf("created domino chain %s", chainName)
+		if err := r.Status().Update(ctx, wf); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+	}
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
+	switch chain.Status.Phase {
+	case kblv1alpha1.DominoChainPhaseCompleted:
+		return r.completeFromChain(ctx, wf, &chain, logger)
+	case kblv1alpha1.DominoChainPhaseError:
+		return r.fail(ctx, wf, fmt.Errorf("domino chain failed: %s", chain.Status.Message))
+	default:
+		wf.Status.Message = fmt.Sprintf("waiting for domino chain %s (%s)", chainName, chain.Status.Phase)
+		if err := r.Status().Update(ctx, wf); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	}
+}
+
+func (r *WorkflowReconciler) completeFromChain(ctx context.Context, wf *kblv1alpha1.Workflow, chain *kblv1alpha1.DominoChain, logger interface {
+	Info(msg string, keysAndValues ...interface{})
+}) (ctrl.Result, error) {
+	storePath := chain.Spec.StorePath
+	if storePath == "" {
+		storePath = filepath.Join(r.StoreRoot, wf.Namespace, wf.Name+".db")
+	}
+	s, err := store.Open(storePath)
+	if err != nil {
+		return r.fail(ctx, wf, err)
+	}
+	defer s.Close()
+
+	eng := engine.New(s)
+	result, err := eng.Run(convert.ToEngineWorkflow(wf))
+	if err != nil {
+		return r.fail(ctx, wf, err)
+	}
+
+	reused := 0
+	dominoResults := make([]kblv1alpha1.DominoResult, len(result.Entries))
+	for i, e := range result.Entries {
+		if e.Reused {
+			reused++
+		}
+		dominoResults[i] = kblv1alpha1.DominoResult{
+			DominoID:   e.DominoID,
+			InputHash:  e.InputHash,
+			OutputHash: e.OutputHash,
+			Reused:     e.Reused,
+		}
+	}
+
+	replayRef, _ := r.writeReplayLog(ctx, wf, result)
+	now := metav1.NewTime(time.Now().UTC())
+	wf.Status.ObservedGeneration = wf.Generation
+	wf.Status.Phase = kblv1alpha1.WorkflowPhaseCompleted
+	wf.Status.SnapshotID = chain.Status.SnapshotID
+	wf.Status.DominoCount = len(result.Entries)
+	wf.Status.ReusedCount = reused
+	wf.Status.RecomputedCount = len(result.Entries) - reused
+	wf.Status.LastRunTime = &now
+	wf.Status.ReplayLogRef = replayRef
+	wf.Status.DominoResults = dominoResults
+	wf.Status.Message = fmt.Sprintf("container chain completed: %d dominos", len(result.Entries))
+	wf.Status.Conditions = []metav1.Condition{{
+		Type:               conditionReady,
+		Status:             metav1.ConditionTrue,
+		Reason:             "ContainerChainCompleted",
+		Message:            wf.Status.Message,
+		LastTransitionTime: now,
+		ObservedGeneration: wf.Generation,
+	}}
+	if err := r.Status().Update(ctx, wf); err != nil {
+		return ctrl.Result{}, err
+	}
+	logger.Info("workflow completed via domino chain", "workflow", wf.Name, "chain", chain.Name)
 	return ctrl.Result{}, nil
 }
 
@@ -238,5 +357,6 @@ func (r *WorkflowReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&kblv1alpha1.Workflow{}).
 		Owns(&corev1.ConfigMap{}).
+		Owns(&kblv1alpha1.DominoChain{}).
 		Complete(r)
 }

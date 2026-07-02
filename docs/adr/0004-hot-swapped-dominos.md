@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (post-MVP)
+Accepted (see [ADR 0007](./0007-hot-swapped-dominos-implementation.md) for implementation)
 
 ## Context
 

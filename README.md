@@ -91,6 +91,7 @@ make test
 
 - [ADR 0005: Kubernetes Controller](docs/adr/0005-kubernetes-controller.md)
 - [ADR 0006: Compute Wheel Rotation](docs/adr/0006-compute-wheel-rotation.md)
+- [ADR 0007: Hot-Swapped Dominos](docs/adr/0007-hot-swapped-dominos-implementation.md)
 
 ## Roadmap
 
@@ -99,7 +100,7 @@ make test
 | **MVP (current)** | CLI runtime, SQLite store, builtin dominos, replay log |
 | **Phase 2 (current)** | Workflow CRD + `kbl-controller` reconciler |
 | **Phase 3 (current)** | ComputeWheel time-slice rotation + player-piano pre-provision |
-| Phase 4 | OpenKruise hot-swapped container dominos |
+| **Phase 4 (current)** | Hot-swapped dominos — DominoChain CRD, init chain + OpenKruise |
 | Phase 5 | Node-local TSDB DaemonSet |
 | Phase 6 | Multiverse routing via Debezium/Kafka |
 

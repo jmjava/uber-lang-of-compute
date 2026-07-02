@@ -1,0 +1,27 @@
+apiVersion: kbl.io/v1alpha1
+kind: DominoChain
+metadata:
+  name: finance-openkruise-chain
+  namespace: default
+spec:
+  runtime: openkruise
+  snapshot:
+    timeSlice: "2025-04-15T00:00:00Z"
+    source:
+      inline:
+        instruments:
+          - instrument_id: US2Y
+            rate: 4.80
+            maturity: "2027-02-15"
+          - instrument_id: US10Y
+            rate: 4.25
+            maturity: "2035-02-15"
+    sealed: true
+  steps:
+    - name: load-curve-data
+      command: builtin:identity
+    - name: interpolate-curve
+      command: builtin:interpolate
+    - name: compute-risk
+      command: builtin:risk-dv01
+  runnerImage: ghcr.io/jmjava/kbl-domino-runner:latest

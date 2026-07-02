@@ -59,7 +59,9 @@ The controller reconciles Workflow resources: executes the domino chain, updates
 cmd/kbl-compute/       CLI for local/CI execution
 cmd/kbl-controller/    Kubernetes controller-runtime reconciler
 api/v1alpha1/          Workflow, ComputeWheel, ComputeContext types
-internal/controller/   Workflow + ComputeWheel reconcilers
+internal/controller/   Workflow + ComputeWheel + DominoChain reconcilers
+pkg/dominochain/       Init chain + OpenKruise pod builders, domino-runner handoff
+cmd/domino-runner/     Container entrypoint for in-cluster domino steps
 pkg/wheel/             Time-slice rotation logic and workflow builder
 pkg/engine/            Chain execution, input resolution, memoization
 pkg/store/             SQLite: snapshots, domino_results, replay_log
@@ -84,7 +86,7 @@ See [ADR 0006](../docs/adr/0006-compute-wheel-rotation.md).
 
 - ~~Kubernetes controller-runtime reconciler for CRDs~~ (Workflow reconciler shipped in Phase 2)
 - ~~Compute Wheel time-slice scheduling~~ (ComputeWheel reconciler shipped in Phase 3)
-- OpenKruise hot-swapped container dominos
+- ~~OpenKruise hot-swapped container dominos~~ (DominoChain reconciler shipped in Phase 4)
 - Node-local TSDB DaemonSet backend
 - Multiverse routing via Debezium/Kafka
 - Standalone Snapshot/Domino CRD reconcilers

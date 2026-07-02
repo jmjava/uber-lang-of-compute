@@ -300,3 +300,84 @@ func (in *ComputeWheelStatus) DeepCopyInto(out *ComputeWheelStatus) {
 		}
 	}
 }
+
+func (in *DominoChain) DeepCopyInto(out *DominoChain) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+func (in *DominoChain) DeepCopy() *DominoChain {
+	if in == nil {
+		return nil
+	}
+	out := new(DominoChain)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *DominoChain) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *DominoChainList) DeepCopyInto(out *DominoChainList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		out.Items = make([]DominoChain, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+}
+
+func (in *DominoChainList) DeepCopy() *DominoChainList {
+	if in == nil {
+		return nil
+	}
+	out := new(DominoChainList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *DominoChainList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *DominoChainSpec) DeepCopyInto(out *DominoChainSpec) {
+	*out = *in
+	in.Snapshot.DeepCopyInto(&out.Snapshot)
+	if in.Steps != nil {
+		out.Steps = make([]DominoStepSpec, len(in.Steps))
+		copy(out.Steps, in.Steps)
+	}
+	if in.NodeSelector != nil {
+		out.NodeSelector = make(map[string]string, len(in.NodeSelector))
+		for k, v := range in.NodeSelector {
+			out.NodeSelector[k] = v
+		}
+	}
+}
+
+func (in *DominoChainStatus) DeepCopyInto(out *DominoChainStatus) {
+	*out = *in
+	if in.StepResults != nil {
+		out.StepResults = make([]StepResult, len(in.StepResults))
+		copy(out.StepResults, in.StepResults)
+	}
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		for i := range in.Conditions {
+			in.Conditions[i].DeepCopyInto(&out.Conditions[i])
+		}
+	}
+}
