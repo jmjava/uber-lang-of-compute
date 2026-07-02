@@ -21,6 +21,7 @@ ADR 0015 added node-local path and `file://` ingestion. Snapshot `source.uri` va
 - Snapshot IDs for HTTP-based specs become content-addressed
 - Operators must ensure URIs are reachable from the controller at seal time
 - No authentication headers yet — public or in-cluster URLs only for now
+- **HTTP fetch is not the performance target** — REST ingestion is a bootstrap/convenience path; Phase 16 will prioritize node-local staging and zero-copy access for production hot paths (see README roadmap)
 
 ## References
 

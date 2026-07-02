@@ -227,6 +227,11 @@ See [examples/http-snapshot/README.md](examples/http-snapshot/README.md) and [AD
 | **Phase 13** | ComputeWheel workflow template CR references |
 | **Phase 14** | Pluggable execution engines — Julia, Python, and custom runtimes via PluggableUniverse |
 | **Phase 15 (current)** | HTTP/HTTPS snapshot URI ingestion |
+| **Phase 16** | High-performance snapshot access — node-local staging, zero-copy reads, and hot-path avoidance of REST fetches |
+
+## Performance note
+
+Phase 15 HTTP ingestion is intended for convenience and cross-node bootstrap, not the hot compute path. Production workloads should prefer **node-local paths** (Phase 12) or **pre-sealed snapshots** already on the TSDB/store so dominos read data where it lives — bring compute to the data, not data over REST on every seal.
 
 ## License
 
