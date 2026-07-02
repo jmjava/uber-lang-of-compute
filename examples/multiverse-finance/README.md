@@ -37,6 +37,16 @@ When `spec.sync.enabled: true`, completed snapshots are also published to `kbl.s
 
 Local dev uses the in-memory bus (default when `--kafka-brokers` is omitted).
 
+## Read replicas
+
+Routed events automatically create **ReadReplica** CRs that materialize snapshot + domino results to the target universe store. Check progress with:
+
+```bash
+kubectl get readreplicas -o wide
+```
+
+See [read-replica.md](read-replica.md) and [ADR 0011](../../docs/adr/0011-read-replica-materialization.md).
+
 ## Workflow labels
 
 ```yaml

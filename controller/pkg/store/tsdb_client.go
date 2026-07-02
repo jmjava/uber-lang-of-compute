@@ -108,22 +108,29 @@ func (c *TSDBClient) SaveResult(snapshotID, dominoID, inputHash, outputHash, out
 }
 
 func (c *TSDBClient) GetDominoOutput(snapshotID, dominoID string) (string, error) {
-	path := fmt.Sprintf("/v1/outputs/%s/%s", url.PathEscape(snapshotID), url.PathEscape(dominoID))
+	_, _, output, err := c.GetLatestResult(snapshotID, dominoID)
+	return output, err
+}
+
+func (c *TSDBClient) GetLatestResult(snapshotID, dominoID string) (inputHash, outputHash, output string, err error) {
+	path := fmt.Sprintf("/v1/latest-results/%s/%s", url.PathEscape(snapshotID), url.PathEscape(dominoID))
 	resp, err := c.client.Get(c.base + path)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", c.readError(resp)
+		return "", "", "", c.readError(resp)
 	}
-	var out struct {
-		Output string `json:"output"`
+	var rec struct {
+		InputHash  string `json:"input_hash"`
+		OutputHash string `json:"output_hash"`
+		Output     string `json:"output"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
-		return "", err
+	if err := json.NewDecoder(resp.Body).Decode(&rec); err != nil {
+		return "", "", "", err
 	}
-	return out.Output, nil
+	return rec.InputHash, rec.OutputHash, rec.Output, nil
 }
 
 func (c *TSDBClient) Close() error {

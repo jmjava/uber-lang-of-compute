@@ -1,0 +1,87 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: readreplicas.kbl.io
+spec:
+  group: kbl.io
+  names:
+    kind: ReadReplica
+    listKind: ReadReplicaList
+    plural: readreplicas
+    singular: readreplica
+    shortNames:
+      - rr
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - multiverseRef
+                - routedEventId
+                - sourceSnapshotID
+                - sourceWorkflow
+                - sourceNamespace
+                - timeSlice
+                - targetUniverse
+              properties:
+                multiverseRef:
+                  type: string
+                routedEventId:
+                  type: string
+                sourceSnapshotID:
+                  type: string
+                sourceWorkflow:
+                  type: string
+                sourceNamespace:
+                  type: string
+                timeSlice:
+                  type: string
+                targetUniverse:
+                  type: string
+                targetComputeContextRef:
+                  type: string
+                pluggableUniverseRef:
+                  type: string
+                finalOutputHash:
+                  type: string
+                partitions:
+                  type: object
+                  additionalProperties:
+                    type: string
+            status:
+              type: object
+              properties:
+                observedGeneration:
+                  type: integer
+                  format: int64
+                phase:
+                  type: string
+                  enum: [Pending, Materializing, Ready, Error]
+                dominoCount:
+                  type: integer
+                targetStorePath:
+                  type: string
+                materializedAt:
+                  type: string
+                  format: date-time
+                message:
+                  type: string
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Snapshot
+          type: string
+          jsonPath: .spec.sourceSnapshotID
+        - name: Universe
+          type: string
+          jsonPath: .spec.targetUniverse
+        - name: Phase
+          type: string
+          jsonPath: .status.phase

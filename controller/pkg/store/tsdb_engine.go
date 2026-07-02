@@ -118,27 +118,32 @@ func (t *TSDBEngine) SaveResult(snapshotID, dominoID, inputHash, outputHash, out
 }
 
 func (t *TSDBEngine) GetDominoOutput(snapshotID, dominoID string) (string, error) {
+	_, _, output, err := t.GetLatestResult(snapshotID, dominoID)
+	return output, err
+}
+
+func (t *TSDBEngine) GetLatestResult(snapshotID, dominoID string) (inputHash, outputHash, output string, err error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
 	dir := filepath.Join(t.root, "memo", snapshotID, dominoID)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 	if len(entries) == 0 {
-		return "", os.ErrNotExist
+		return "", "", "", os.ErrNotExist
 	}
 	latest := entries[len(entries)-1]
 	body, err := os.ReadFile(filepath.Join(dir, latest.Name()))
 	if err != nil {
-		return "", err
+		return "", "", "", err
 	}
 	var rec memoRecord
 	if err := json.Unmarshal(body, &rec); err != nil {
-		return "", err
+		return "", "", "", err
 	}
-	return rec.Output, nil
+	return rec.InputHash, rec.OutputHash, rec.Output, nil
 }
 
 func (t *TSDBEngine) Close() error { return nil }

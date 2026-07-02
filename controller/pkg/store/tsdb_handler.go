@@ -119,6 +119,27 @@ func NewTSDBHandler(engine *TSDBEngine) http.Handler {
 		}
 		writeJSON(w, map[string]string{"output": out})
 	})
+	mux.HandleFunc("/v1/latest-results/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/v1/latest-results/"), "/")
+		if len(parts) != 2 {
+			http.NotFound(w, r)
+			return
+		}
+		inHash, outHash, out, err := engine.GetLatestResult(parts[0], parts[1])
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		writeJSON(w, map[string]string{
+			"input_hash":  inHash,
+			"output_hash": outHash,
+			"output":      out,
+		})
+	})
 	return mux
 }
 

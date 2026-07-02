@@ -684,3 +684,79 @@ func (in *DominoResourceStatus) DeepCopyInto(out *DominoResourceStatus) {
 		}
 	}
 }
+
+func (in *ReadReplica) DeepCopyInto(out *ReadReplica) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	in.Spec.DeepCopyInto(&out.Spec)
+	in.Status.DeepCopyInto(&out.Status)
+}
+
+func (in *ReadReplica) DeepCopy() *ReadReplica {
+	if in == nil {
+		return nil
+	}
+	out := new(ReadReplica)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *ReadReplica) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *ReadReplicaList) DeepCopyInto(out *ReadReplicaList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		out.Items = make([]ReadReplica, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
+}
+
+func (in *ReadReplicaList) DeepCopy() *ReadReplicaList {
+	if in == nil {
+		return nil
+	}
+	out := new(ReadReplicaList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *ReadReplicaList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+	return nil
+}
+
+func (in *ReadReplicaSpec) DeepCopyInto(out *ReadReplicaSpec) {
+	*out = *in
+	if in.Partitions != nil {
+		out.Partitions = make(map[string]string, len(in.Partitions))
+		for k, v := range in.Partitions {
+			out.Partitions[k] = v
+		}
+	}
+}
+
+func (in *ReadReplicaStatus) DeepCopyInto(out *ReadReplicaStatus) {
+	*out = *in
+	if in.MaterializedAt != nil {
+		t := *in.MaterializedAt
+		out.MaterializedAt = &t
+	}
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		for i := range in.Conditions {
+			in.Conditions[i].DeepCopyInto(&out.Conditions[i])
+		}
+	}
+}

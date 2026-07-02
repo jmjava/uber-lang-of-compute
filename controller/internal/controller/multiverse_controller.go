@@ -35,6 +35,7 @@ type MultiverseReconciler struct {
 // +kubebuilder:rbac:groups=kbl.io,resources=multiverses/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kbl.io,resources=multiverses/finalizers,verbs=update
 // +kubebuilder:rbac:groups=kbl.io,resources=pluggableuniverses,verbs=get;list;watch
+// +kubebuilder:rbac:groups=kbl.io,resources=readreplicas,verbs=get;list;watch;create;update;patch
 
 func (r *MultiverseReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
@@ -148,7 +149,10 @@ func (r *MultiverseReconciler) ensureSubscription(ctx context.Context, mv *kblv1
 			RoutedAt:          time.Now().UTC().Format(time.RFC3339),
 		}
 		latest.Status.RoutedEvents = appendRoutedEvent(latest.Status.RoutedEvents, record, 50)
-		return r.Status().Update(hctx, &latest)
+		if err := r.Status().Update(hctx, &latest); err != nil {
+			return err
+		}
+		return r.ensureReadReplica(hctx, &latest, evt, target)
 	})
 }
 

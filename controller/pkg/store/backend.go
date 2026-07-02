@@ -7,6 +7,7 @@ type Backend interface {
 	LookupMemo(snapshotID, dominoID, inputHash string) (outputHash, output string, found bool, err error)
 	SaveResult(snapshotID, dominoID, inputHash, outputHash, output string, reused bool) error
 	GetDominoOutput(snapshotID, dominoID string) (string, error)
+	GetLatestResult(snapshotID, dominoID string) (inputHash, outputHash, output string, err error)
 	Close() error
 }
 

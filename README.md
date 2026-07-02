@@ -93,6 +93,16 @@ kubectl get snapshots,dominos -o wide
 
 See [examples/standalone-snapshot-domino/README.md](examples/standalone-snapshot-domino/README.md) and [ADR 0010](docs/adr/0010-standalone-snapshot-domino.md).
 
+### Read-replica materialization
+
+```bash
+kubectl apply -f examples/multiverse-finance/multiverse.yaml
+# After workflows complete and Multiverse routes events:
+kubectl get readreplicas -o wide
+```
+
+See [ADR 0011](docs/adr/0011-read-replica-materialization.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -117,6 +127,7 @@ See [examples/standalone-snapshot-domino/README.md](examples/standalone-snapshot
 - [ADR 0008: Node-Local TSDB](docs/adr/0008-node-local-tsdb.md)
 - [ADR 0009: Multiverse Routing](docs/adr/0009-multiverse-routing.md)
 - [ADR 0010: Standalone Snapshot/Domino](docs/adr/0010-standalone-snapshot-domino.md)
+- [ADR 0011: Read-Replica Materialization](docs/adr/0011-read-replica-materialization.md)
 
 ## Roadmap
 
@@ -129,6 +140,7 @@ See [examples/standalone-snapshot-domino/README.md](examples/standalone-snapshot
 | **Phase 5** | Node-local TSDB DaemonSet + store.Backend abstraction |
 | **Phase 6 (current)** | Multiverse routing via Kafka + PluggableUniverse |
 | **Phase 7 (current)** | Standalone Snapshot + Domino CRD reconcilers |
+| **Phase 8 (current)** | Read-replica materialization from Multiverse routing |
 
 ## License
 

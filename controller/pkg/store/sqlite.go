@@ -146,15 +146,19 @@ func (s *SQLiteBackend) SaveResult(snapshotID, dominoID, inputHash, outputHash, 
 }
 
 func (s *SQLiteBackend) GetDominoOutput(snapshotID, dominoID string) (string, error) {
+	_, _, output, err := s.GetLatestResult(snapshotID, dominoID)
+	return output, err
+}
+
+func (s *SQLiteBackend) GetLatestResult(snapshotID, dominoID string) (inputHash, outputHash, output string, err error) {
 	row := s.db.QueryRow(
-		`SELECT output FROM domino_results
+		`SELECT input_hash, output_hash, output FROM domino_results
 		 WHERE snapshot_id = ? AND domino_id = ?
 		 ORDER BY created_at DESC LIMIT 1`,
 		snapshotID, dominoID,
 	)
-	var output string
-	err := row.Scan(&output)
-	return output, err
+	err = row.Scan(&inputHash, &outputHash, &output)
+	return
 }
 
 func (s *SQLiteBackend) Close() error {
