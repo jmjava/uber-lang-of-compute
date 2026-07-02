@@ -44,11 +44,35 @@ func NewTSDBHandler(engine *TSDBEngine) http.Handler {
 		w.WriteHeader(http.StatusCreated)
 	})
 	mux.HandleFunc("/v1/snapshots/", func(w http.ResponseWriter, r *http.Request) {
-		id := strings.TrimPrefix(r.URL.Path, "/v1/snapshots/")
-		if id == "" || r.Method != http.MethodGet {
+		rest := strings.TrimPrefix(r.URL.Path, "/v1/snapshots/")
+		if rest == "" {
 			http.NotFound(w, r)
 			return
 		}
+		if strings.HasSuffix(rest, "/data") && r.Method == http.MethodGet {
+			id := strings.TrimSuffix(strings.TrimSuffix(rest, "/data"), "/")
+			if id == "" {
+				http.NotFound(w, r)
+				return
+			}
+			data, sealed, err := engine.GetSnapshotData(id)
+			if err != nil {
+				http.NotFound(w, r)
+				return
+			}
+			if !sealed {
+				http.Error(w, "snapshot not sealed", http.StatusConflict)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(data))
+			return
+		}
+		if r.Method != http.MethodGet {
+			http.NotFound(w, r)
+			return
+		}
+		id := rest
 		ts, data, sealed, err := engine.GetSnapshot(id)
 		if err != nil {
 			http.NotFound(w, r)

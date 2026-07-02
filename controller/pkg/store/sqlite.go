@@ -95,6 +95,12 @@ func (s *SQLiteBackend) GetSnapshot(snapshotID string) (timeSlice, data string, 
 	return
 }
 
+// GetSnapshotData implements SnapshotDataGetter for SQLite backends.
+func (s *SQLiteBackend) GetSnapshotData(snapshotID string) (string, bool, error) {
+	_, data, sealed, err := s.GetSnapshot(snapshotID)
+	return data, sealed, err
+}
+
 func (s *SQLiteBackend) LookupMemo(snapshotID, dominoID, inputHash string) (outputHash, output string, found bool, err error) {
 	row := s.db.QueryRow(
 		`SELECT output_hash, output FROM domino_results

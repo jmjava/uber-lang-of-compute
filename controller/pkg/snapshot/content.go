@@ -115,12 +115,9 @@ func loadHTTP(uri string) (interface{}, error) {
 }
 
 // ReadPathBytes reads snapshot file contents from a node-local path.
+// Files larger than 1 MiB use mmap on Unix to reduce heap pressure at seal time.
 func ReadPathBytes(path string) ([]byte, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("read snapshot path %q: %w", path, err)
-	}
-	return data, nil
+	return readPathBytesOptimized(path)
 }
 
 // FetchHTTPBytes downloads snapshot content from an HTTP(S) URI.
