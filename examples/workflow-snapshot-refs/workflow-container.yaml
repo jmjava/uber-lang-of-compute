@@ -1,0 +1,16 @@
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: curve-container-refs
+  namespace: default
+spec:
+  snapshotRef: curve-snap
+  dominoRefs:
+    - load-curve
+    - interpolate-curve
+  execution:
+    chain: [load-curve, interpolate-curve]
+    deterministic: true
+    runtime: kubernetes-init
+  provisioning:
+    nodeLocal: true

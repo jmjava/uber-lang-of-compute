@@ -11,6 +11,13 @@ Compose a full domino chain by referencing standalone **Snapshot** and **Domino*
 
 Inline `spec.snapshot` and `spec.dominos` remain supported for backward compatibility.
 
+Container execution with CR refs:
+
+```bash
+kubectl apply -f workflow-container.yaml
+kubectl get dominochains -w
+```
+
 ## Deploy
 
 ```bash
@@ -31,4 +38,4 @@ kubectl get configmap curve-from-refs-replay -o yaml
 2. Workflow reconciler resolves refs via `convert.ResolveEngineWorkflow`
 3. If the snapshot is not yet sealed, the workflow stays `Pending` and requeues
 
-See [ADR 0013](../../docs/adr/0013-workflow-cr-references.md).
+See [ADR 0013](../../docs/adr/0013-workflow-cr-references.md) and [ADR 0014](../../docs/adr/0014-dominochain-cr-references.md).

@@ -126,6 +126,19 @@ kubectl get workflows -o wide
 
 See [examples/workflow-snapshot-refs/README.md](examples/workflow-snapshot-refs/README.md) and [ADR 0013](docs/adr/0013-workflow-cr-references.md).
 
+### DominoChain with CR references (Phase 11)
+
+Container/hot-swap workflows can reference standalone CRs:
+
+```bash
+kubectl apply -f examples/standalone-snapshot-domino/snapshot.yaml
+kubectl apply -f examples/standalone-snapshot-domino/dominos.yaml
+kubectl apply -f examples/workflow-snapshot-refs/workflow-container.yaml
+kubectl get dominochains -w
+```
+
+See [ADR 0014](docs/adr/0014-dominochain-cr-references.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -153,6 +166,7 @@ See [examples/workflow-snapshot-refs/README.md](examples/workflow-snapshot-refs/
 - [ADR 0011: Read-Replica Materialization](docs/adr/0011-read-replica-materialization.md)
 - [ADR 0012: Debezium CDC Sync](docs/adr/0012-debezium-cdc-sync.md)
 - [ADR 0013: Workflow CR References](docs/adr/0013-workflow-cr-references.md)
+- [ADR 0014: DominoChain CR References](docs/adr/0014-dominochain-cr-references.md)
 
 ## Roadmap
 
@@ -167,7 +181,8 @@ See [examples/workflow-snapshot-refs/README.md](examples/workflow-snapshot-refs/
 | **Phase 7** | Standalone Snapshot + Domino CRD reconcilers |
 | **Phase 8** | Read-replica materialization from Multiverse routing |
 | **Phase 9** | Debezium CDC sync for cross-universe read replicas |
-| **Phase 10 (current)** | Workflow references to standalone Snapshot/Domino CRs |
+| **Phase 10** | Workflow references to standalone Snapshot/Domino CRs |
+| **Phase 11 (current)** | DominoChain container path resolves Workflow CR refs |
 
 ## License
 
