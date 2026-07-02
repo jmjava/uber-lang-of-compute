@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"io"
 	"net/http/httptest"
 	"testing"
 
@@ -80,11 +81,45 @@ func TestOpenBackendSQLite(t *testing.T) {
 
 func TestOpenBackendTSDB(t *testing.T) {
 	_, backend := startTestTSDB(t)
-	if err := backend.SaveSnapshot("s1", "2025-01-01", "{}", true); err != nil {
+	if err := backend.SaveSnapshot("s1", "2025-01-01", `{"v":1}`, true); err != nil {
 		t.Fatal(err)
 	}
 	_, data, sealed, err := backend.GetSnapshot("s1")
-	if err != nil || data != "{}" || !sealed {
+	if err != nil || data != `{"v":1}` || !sealed {
 		t.Fatalf("get snapshot: data=%s sealed=%v err=%v", data, sealed, err)
+	}
+}
+
+func TestTSDBGetSnapshotDataSidecar(t *testing.T) {
+	srv, backend := startTestTSDB(t)
+	client, ok := backend.(*store.TSDBClient)
+	if !ok {
+		t.Fatal("expected TSDBClient")
+	}
+
+	payload := `{"instruments":[{"instrument_id":"US10Y"}]}`
+	if err := backend.SaveSnapshot("sidecar-snap", "2025-01-01", payload, true); err != nil {
+		t.Fatal(err)
+	}
+
+	data, sealed, err := client.GetSnapshotData("sidecar-snap")
+	if err != nil || !sealed || data != payload {
+		t.Fatalf("GetSnapshotData: data=%q sealed=%v err=%v", data, sealed, err)
+	}
+
+	resp, err := srv.Client().Get(srv.URL + "/v1/snapshots/sidecar-snap/data")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		t.Fatalf("http status %d", resp.StatusCode)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(body) != payload {
+		t.Fatalf("streamed body %q", string(body))
 	}
 }

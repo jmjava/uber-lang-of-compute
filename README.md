@@ -188,6 +188,12 @@ Seal path/HTTP JSON in one pass — original file bytes persisted without parse�
 
 See [ADR 0019](docs/adr/0019-direct-bytes-staging.md).
 
+### mmap + TSDB streaming (Phase 18)
+
+Large path files (≥1 MiB) use mmap on Unix at seal time. TSDB stores snapshot payload sidecars and serves `GET /v1/snapshots/{id}/data` for streaming reads without envelope parsing.
+
+See [ADR 0020](docs/adr/0020-mmap-tsdb-streaming.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -221,6 +227,7 @@ See [ADR 0019](docs/adr/0019-direct-bytes-staging.md).
 - [ADR 0017: HTTP Snapshot Ingestion](docs/adr/0017-http-snapshot-ingestion.md)
 - [ADR 0018: Store-First Snapshot](docs/adr/0018-store-first-snapshot.md)
 - [ADR 0019: Direct-Bytes Staging](docs/adr/0019-direct-bytes-staging.md)
+- [ADR 0020: mmap + TSDB Streaming](docs/adr/0020-mmap-tsdb-streaming.md)
 
 ## Roadmap
 
@@ -242,12 +249,12 @@ See [ADR 0019](docs/adr/0019-direct-bytes-staging.md).
 | **Phase 14** | Pluggable execution engines — Julia, Python, and custom runtimes via PluggableUniverse |
 | **Phase 15** | HTTP/HTTPS snapshot URI ingestion |
 | **Phase 16** | Store-first snapshot reads — hot path skips re-fetching HTTP/path sources |
-| **Phase 17 (current)** | Direct-bytes snapshot staging — single-pass seal without parse→remarshal |
-| **Phase 18** | Zero-copy mmap and TSDB streaming reads |
+| **Phase 17** | Direct-bytes snapshot staging — single-pass seal without parse→remarshal |
+| **Phase 18 (current)** | mmap path reads (≥1 MiB) + TSDB snapshot data sidecars and streaming `/data` endpoint |
 
 ## Performance note
 
-Phase 15 HTTP ingestion is intended for convenience and cross-node bootstrap, not the hot compute path. **Phase 16** loads persisted snapshot JSON from the node-local store on execute; **Phase 17** seals path/HTTP sources in one pass without re-marshaling JSON. Production workloads should still prefer **node-local paths** (Phase 12) or **pre-sealed snapshots** on the TSDB/store — bring compute to the data.
+Phase 15 HTTP ingestion is intended for convenience and cross-node bootstrap, not the hot compute path. **Phase 16** loads persisted snapshot JSON from the node-local store on execute; **Phase 17** seals path/HTTP sources in one pass; **Phase 18** adds mmap for large path files and TSDB `/data` streaming sidecars. Production workloads should still prefer **node-local paths** (Phase 12) or **pre-sealed snapshots** on the TSDB/store — bring compute to the data.
 
 ## License
 

@@ -71,6 +71,26 @@ func (c *TSDBClient) GetSnapshot(snapshotID string) (timeSlice, data string, sea
 	return rec.TimeSlice, rec.Data, rec.Sealed, nil
 }
 
+// GetSnapshotData returns persisted snapshot payload bytes via the streaming /data endpoint.
+func (c *TSDBClient) GetSnapshotData(snapshotID string) (string, bool, error) {
+	resp, err := c.client.Get(c.base + "/v1/snapshots/" + url.PathEscape(snapshotID) + "/data")
+	if err != nil {
+		return "", false, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return "", false, fmt.Errorf("snapshot not found")
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", false, c.readError(resp)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", false, err
+	}
+	return string(body), true, nil
+}
+
 func (c *TSDBClient) LookupMemo(snapshotID, dominoID, inputHash string) (outputHash, output string, found bool, err error) {
 	q := url.Values{
 		"snapshot_id": {snapshotID},

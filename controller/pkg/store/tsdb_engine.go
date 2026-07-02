@@ -39,13 +39,34 @@ func (t *TSDBEngine) SaveSnapshot(snapshotID, timeSlice, data string, sealed boo
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(t.snapshotPath(snapshotID), body, 0o644)
+	if err := os.WriteFile(t.snapshotPath(snapshotID), body, 0o644); err != nil {
+		return err
+	}
+	return os.WriteFile(t.snapshotDataPath(snapshotID), []byte(data), 0o644)
+}
+
+func (t *TSDBEngine) GetSnapshotData(snapshotID string) (string, bool, error) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
+	body, err := os.ReadFile(t.snapshotDataPath(snapshotID))
+	if err != nil {
+		return "", false, err
+	}
+	_, _, sealed, err := t.getSnapshotMetaLocked(snapshotID)
+	if err != nil {
+		return "", false, err
+	}
+	return string(body), sealed, nil
 }
 
 func (t *TSDBEngine) GetSnapshot(snapshotID string) (timeSlice, data string, sealed bool, err error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
+	return t.getSnapshotMetaLocked(snapshotID)
+}
 
+func (t *TSDBEngine) getSnapshotMetaLocked(snapshotID string) (timeSlice, data string, sealed bool, err error) {
 	body, err := os.ReadFile(t.snapshotPath(snapshotID))
 	if err != nil {
 		return "", "", false, err
@@ -171,6 +192,10 @@ func (t *TSDBEngine) Stats() (snapshots, memoEntries int, err error) {
 
 func (t *TSDBEngine) snapshotPath(id string) string {
 	return filepath.Join(t.root, "snapshots", id+".json")
+}
+
+func (t *TSDBEngine) snapshotDataPath(id string) string {
+	return filepath.Join(t.root, "snapshots", id+".data.json")
 }
 
 func (t *TSDBEngine) memoPath(snapshotID, dominoID, inputHash string) string {

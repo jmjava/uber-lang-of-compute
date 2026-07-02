@@ -34,6 +34,52 @@ func TestLoadContentPreferStore(t *testing.T) {
 	}
 }
 
+func TestLoadDataPreferStoreMissFallsThrough(t *testing.T) {
+	dir := t.TempDir()
+	backend, err := store.Open(dir + "/snap.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer backend.Close()
+
+	data, ok, err := snapshot.LoadDataPreferStore(backend, "missing-snap")
+	if err != nil || ok || data != "" {
+		t.Fatalf("expected store miss, ok=%v data=%q err=%v", ok, data, err)
+	}
+}
+
+func TestResolveEngineContentPreferStoreMissUsesInline(t *testing.T) {
+	dir := t.TempDir()
+	backend, err := store.Open(dir + "/snap.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer backend.Close()
+
+	snap := types.Snapshot{
+		Spec: types.SnapshotSpec{
+			TimeSlice: "2025-04-15T00:00:00Z",
+			Source: types.SnapshotSource{
+				Inline: map[string]interface{}{"value": 7},
+			},
+			Sealed: true,
+		},
+		Status: &types.SnapshotStatus{SnapshotID: "computed-but-not-persisted"},
+	}
+
+	content, _, id, err := snapshot.ResolveEngineContentPreferStore(backend, snap, "computed-but-not-persisted")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id != "computed-but-not-persisted" {
+		t.Fatalf("expected computed-but-not-persisted, got %s", id)
+	}
+	m, ok := content.(map[string]interface{})
+	if !ok || m["value"] != 7 {
+		t.Fatalf("expected inline content value 7, got %+v", content)
+	}
+}
+
 func TestResolveEngineContentPreferStoreSkipsHTTP(t *testing.T) {
 	dir := t.TempDir()
 	backend, err := store.Open(dir + "/snap.db")

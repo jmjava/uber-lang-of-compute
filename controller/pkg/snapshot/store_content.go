@@ -8,23 +8,52 @@ import (
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
 
-// LoadContentPreferStore returns persisted snapshot JSON when available in the store.
-// The hot execution path uses this to avoid re-fetching HTTP or re-reading paths on every run.
-func LoadContentPreferStore(backend store.Backend, snapshotID string) (content interface{}, dataJSON string, ok bool, err error) {
+// LoadDataPreferStore returns persisted snapshot JSON bytes without parsing when possible.
+func LoadDataPreferStore(backend store.Backend, snapshotID string) (dataJSON string, ok bool, err error) {
 	if backend == nil || snapshotID == "" {
-		return nil, "", false, nil
+		return "", false, nil
+	}
+
+	if sg, ok := backend.(store.SnapshotDataGetter); ok {
+		data, sealed, err := sg.GetSnapshotData(snapshotID)
+		if err != nil {
+			if store.IsSnapshotNotFound(err) {
+				return "", false, nil
+			}
+			return "", false, err
+		}
+		if !sealed || data == "" {
+			return "", false, nil
+		}
+		return data, true, nil
 	}
 
 	_, data, sealed, getErr := backend.GetSnapshot(snapshotID)
-	if getErr != nil || !sealed || data == "" {
-		return nil, "", false, getErr
+	if getErr != nil {
+		if store.IsSnapshotNotFound(getErr) {
+			return "", false, nil
+		}
+		return "", false, getErr
+	}
+	if !sealed || data == "" {
+		return "", false, nil
+	}
+	return data, true, nil
+}
+
+// LoadContentPreferStore returns persisted snapshot JSON when available in the store.
+// The hot execution path uses this to avoid re-fetching HTTP or re-reading paths on every run.
+func LoadContentPreferStore(backend store.Backend, snapshotID string) (content interface{}, dataJSON string, ok bool, err error) {
+	dataJSON, ok, err = LoadDataPreferStore(backend, snapshotID)
+	if err != nil || !ok {
+		return nil, dataJSON, ok, err
 	}
 
 	var parsed interface{}
-	if err := json.Unmarshal([]byte(data), &parsed); err != nil {
+	if err := json.Unmarshal([]byte(dataJSON), &parsed); err != nil {
 		return nil, "", false, fmt.Errorf("parse stored snapshot %q: %w", snapshotID, err)
 	}
-	return parsed, data, true, nil
+	return parsed, dataJSON, true, nil
 }
 
 // ResolveEngineContentPreferStore loads snapshot content from store when snapshotID is known,
@@ -35,11 +64,14 @@ func ResolveEngineContentPreferStore(backend store.Backend, snap types.Snapshot,
 		resolvedID = snap.Status.SnapshotID
 	}
 
-	if content, dataJSON, ok, err := LoadContentPreferStore(backend, resolvedID); ok {
-		return content, dataJSON, resolvedID, err
-	}
-	if err != nil {
-		return nil, "", resolvedID, fmt.Errorf("load stored snapshot: %w", err)
+	if dataJSON, ok, loadErr := LoadDataPreferStore(backend, resolvedID); ok {
+		var parsed interface{}
+		if err := json.Unmarshal([]byte(dataJSON), &parsed); err != nil {
+			return nil, "", resolvedID, fmt.Errorf("parse stored snapshot %q: %w", resolvedID, err)
+		}
+		return parsed, dataJSON, resolvedID, nil
+	} else if loadErr != nil {
+		return nil, "", resolvedID, fmt.Errorf("load stored snapshot: %w", loadErr)
 	}
 
 	content, err = ResolveEngineContent(snap.Spec)
