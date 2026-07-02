@@ -101,7 +101,7 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 		storePath = filepath.Join(root, wf.Namespace, wf.Name+".db")
 	}
 
-	if dominochain.NeedsContainerRuntime(wf) {
+	if dominochain.NeedsContainerRuntime(ctx, r.Client, wf) {
 		return r.executeContainer(ctx, wf, logger, storePath)
 	}
 
@@ -194,7 +194,18 @@ func (r *WorkflowReconciler) executeContainer(ctx context.Context, wf *kblv1alph
 	chainKey := client.ObjectKey{Namespace: wf.Namespace, Name: chainName}
 	err := r.Get(ctx, chainKey, &chain)
 	if apierrors.IsNotFound(err) {
-		spec := dominochain.FromWorkflow(wf, storePath)
+		chainSpec, err := dominochain.FromWorkflow(ctx, r.Client, wf, storePath)
+		if err != nil {
+			if isSnapshotNotReady(err) {
+				wf.Status.Phase = kblv1alpha1.WorkflowPhasePending
+				wf.Status.Message = err.Error()
+				if uerr := r.Status().Update(ctx, wf); uerr != nil {
+					return ctrl.Result{}, uerr
+				}
+				return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+			}
+			return r.fail(ctx, wf, err)
+		}
 		chain = kblv1alpha1.DominoChain{
 			TypeMeta: metav1.TypeMeta{APIVersion: "kbl.io/v1alpha1", Kind: "DominoChain"},
 			ObjectMeta: metav1.ObjectMeta{
@@ -204,7 +215,7 @@ func (r *WorkflowReconciler) executeContainer(ctx context.Context, wf *kblv1alph
 					"kbl.io/workflow": wf.Name,
 				},
 			},
-			Spec: spec.Spec,
+			Spec: chainSpec.Spec,
 		}
 		if err := controllerutil.SetControllerReference(wf, &chain, r.Scheme); err != nil {
 			return r.fail(ctx, wf, err)
