@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -194,21 +193,17 @@ func (r *DominoChainReconciler) reconcileOpenKruise(ctx context.Context, chain *
 func (r *DominoChainReconciler) completeChain(ctx context.Context, chain *kblv1alpha1.DominoChain, logger interface {
 	Info(msg string, keysAndValues ...interface{})
 }) (ctrl.Result, error) {
-	storePath := chain.Spec.StorePath
-	if storePath == "" {
-		root := r.StoreRoot
-		if root == "" {
-			root = "/var/kbl/store"
-		}
-		storePath = filepath.Join(root, chain.Namespace, chain.Name+".db")
-	}
-
-	s, err := store.Open(storePath)
+	s, err := store.OpenForDominoChain(ctx, r.Client, chain, r.StoreRoot)
 	if err != nil {
-		return r.failChain(ctx, chain, fmt.Errorf("open store: %w", err))
+		return r.failChain(ctx, chain, err)
 	}
 	defer s.Close()
+	return r.finishChain(ctx, chain, s, logger)
+}
 
+func (r *DominoChainReconciler) finishChain(ctx context.Context, chain *kblv1alpha1.DominoChain, s store.Backend, logger interface {
+	Info(msg string, keysAndValues ...interface{})
+}) (ctrl.Result, error) {
 	eng := engine.New(s)
 	wf := dominoChainToWorkflow(chain)
 	result, err := eng.Run(wf)

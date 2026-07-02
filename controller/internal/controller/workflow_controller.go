@@ -100,7 +100,7 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 		return r.executeContainer(ctx, wf, logger, storePath)
 	}
 
-	s, err := store.Open(storePath)
+	s, err := store.OpenForWorkflow(ctx, r.Client, wf, r.StoreRoot)
 	if err != nil {
 		return r.fail(ctx, wf, fmt.Errorf("open store: %w", err))
 	}
@@ -221,11 +221,7 @@ func (r *WorkflowReconciler) executeContainer(ctx context.Context, wf *kblv1alph
 func (r *WorkflowReconciler) completeFromChain(ctx context.Context, wf *kblv1alpha1.Workflow, chain *kblv1alpha1.DominoChain, logger interface {
 	Info(msg string, keysAndValues ...interface{})
 }) (ctrl.Result, error) {
-	storePath := chain.Spec.StorePath
-	if storePath == "" {
-		storePath = filepath.Join(r.StoreRoot, wf.Namespace, wf.Name+".db")
-	}
-	s, err := store.Open(storePath)
+	s, err := store.OpenForWorkflow(ctx, r.Client, wf, r.StoreRoot)
 	if err != nil {
 		return r.fail(ctx, wf, err)
 	}

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kbl-tsdb
+  namespace: kbl-system
+  labels:
+    app.kubernetes.io/name: kbl-tsdb
+    app.kubernetes.io/component: node-local-store
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kbl-tsdb
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kbl-tsdb
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: kbl-tsdb
+          image: ghcr.io/jmjava/kbl-tsdb:latest
+          args:
+            - --addr=:9090
+            - --data-dir=/var/kbl/tsdb
+          ports:
+            - name: http
+              containerPort: 9090
+              hostPort: 9090
+          volumeMounts:
+            - name: tsdb-data
+              mountPath: /var/kbl/tsdb
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 9090
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: tsdb-data
+          hostPath:
+            path: /var/kbl/tsdb
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kbl-system

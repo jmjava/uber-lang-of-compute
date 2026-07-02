@@ -64,7 +64,9 @@ pkg/dominochain/       Init chain + OpenKruise pod builders, domino-runner hando
 cmd/domino-runner/     Container entrypoint for in-cluster domino steps
 pkg/wheel/             Time-slice rotation logic and workflow builder
 pkg/engine/            Chain execution, input resolution, memoization
-pkg/store/             SQLite: snapshots, domino_results, replay_log
+pkg/store/             SQLite + TSDB backends, resolver, HTTP TSDB client
+cmd/kbl-tsdb/          Node-local TSDB DaemonSet server
+deploy/node-local-tsdb/ DaemonSet manifest
 pkg/convert/           CRD → engine domain model
 pkg/hash/              SHA-256 input/output hashing
 pkg/builtin/           builtin:identity, interpolate, risk-dv01
@@ -87,6 +89,6 @@ See [ADR 0006](../docs/adr/0006-compute-wheel-rotation.md).
 - ~~Kubernetes controller-runtime reconciler for CRDs~~ (Workflow reconciler shipped in Phase 2)
 - ~~Compute Wheel time-slice scheduling~~ (ComputeWheel reconciler shipped in Phase 3)
 - ~~OpenKruise hot-swapped container dominos~~ (DominoChain reconciler shipped in Phase 4)
-- Node-local TSDB DaemonSet backend
+- ~~Node-local TSDB DaemonSet backend~~ (kbl-tsdb + store.Backend shipped in Phase 5)
 - Multiverse routing via Debezium/Kafka
 - Standalone Snapshot/Domino CRD reconcilers

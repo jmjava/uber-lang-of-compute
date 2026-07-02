@@ -197,6 +197,12 @@ func (in *ComputeContextList) DeepCopyObject() runtime.Object {
 
 func (in *ComputeContextStatus) DeepCopyInto(out *ComputeContextStatus) {
 	*out = *in
+	if in.Conditions != nil {
+		out.Conditions = make([]metav1.Condition, len(in.Conditions))
+		for i := range in.Conditions {
+			in.Conditions[i].DeepCopyInto(&out.Conditions[i])
+		}
+	}
 }
 
 func (in *ComputeWheel) DeepCopyInto(out *ComputeWheel) {

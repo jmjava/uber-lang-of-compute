@@ -14,11 +14,11 @@ import (
 
 // Engine executes domino chains against snapshots with memoization.
 type Engine struct {
-	store *store.Store
+	store store.Backend
 }
 
 // New creates an Engine backed by the given store.
-func New(s *store.Store) *Engine {
+func New(s store.Backend) *Engine {
 	return &Engine{store: s}
 }
 
