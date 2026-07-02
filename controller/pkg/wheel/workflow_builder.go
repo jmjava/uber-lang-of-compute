@@ -23,14 +23,6 @@ func BuildWorkflow(
 	tmpl := wheel.Spec.WorkflowTemplate
 	snapshotRef := wheel.Name + "-" + timeSliceKey
 
-	dominos := make([]kblv1alpha1.DominoSpec, len(tmpl.Dominos))
-	for i, d := range tmpl.Dominos {
-		dominos[i] = d
-		if dominos[i].SnapshotRef == "" {
-			dominos[i].SnapshotRef = snapshotRef
-		}
-	}
-
 	storePath := tmpl.Provisioning.StorePath
 	if computeCtx != nil && computeCtx.Spec.StorePath != "" {
 		storePath = filepath.Join(computeCtx.Spec.StorePath, wheel.Name, timeSliceKey+".db")
@@ -40,11 +32,41 @@ func BuildWorkflow(
 
 	wfName := WorkflowName(wheel.Name, contextName, timeSliceKey)
 
-	snapshot := tmpl.Snapshot
-	snapshot.TimeSlice = timeSliceStr
-	snapshot.Sealed = true
-	if snapshot.ComputeContextRef == "" {
-		snapshot.ComputeContextRef = contextName
+	spec := kblv1alpha1.WorkflowSpec{
+		Execution: tmpl.Execution,
+		Provisioning: kblv1alpha1.ProvisioningSpec{
+			StorePath: storePath,
+			NodeLocal: true,
+		},
+		Routing: kblv1alpha1.RoutingSpec{
+			Universe:          tmpl.Routing.Universe,
+			ComputeContextRef: contextName,
+		},
+	}
+
+	if tmpl.SnapshotRef != "" {
+		spec.SnapshotRef = tmpl.SnapshotRef
+	} else {
+		snapshot := tmpl.Snapshot
+		snapshot.TimeSlice = timeSliceStr
+		snapshot.Sealed = true
+		if snapshot.ComputeContextRef == "" {
+			snapshot.ComputeContextRef = contextName
+		}
+		spec.Snapshot = snapshot
+	}
+
+	if len(tmpl.DominoRefs) > 0 {
+		spec.DominoRefs = append([]string(nil), tmpl.DominoRefs...)
+	} else {
+		dominos := make([]kblv1alpha1.DominoSpec, len(tmpl.Dominos))
+		for i, d := range tmpl.Dominos {
+			dominos[i] = d
+			if dominos[i].SnapshotRef == "" {
+				dominos[i].SnapshotRef = snapshotRef
+			}
+		}
+		spec.Dominos = dominos
 	}
 
 	return &kblv1alpha1.Workflow{
@@ -56,25 +78,13 @@ func BuildWorkflow(
 			Name:      wfName,
 			Namespace: wheel.Namespace,
 			Labels: map[string]string{
-				"kbl.io/computewheel":        wheel.Name,
-				"kbl.io/compute-context":     contextName,
-				"kbl.io/time-slice":          timeSliceKey,
+				"kbl.io/computewheel":          wheel.Name,
+				"kbl.io/compute-context":       contextName,
+				"kbl.io/time-slice":            timeSliceKey,
 				"app.kubernetes.io/managed-by": "kbl-controller",
 			},
 		},
-		Spec: kblv1alpha1.WorkflowSpec{
-			Snapshot:  snapshot,
-			Dominos:   dominos,
-			Execution: tmpl.Execution,
-			Provisioning: kblv1alpha1.ProvisioningSpec{
-				StorePath: storePath,
-				NodeLocal: true,
-			},
-			Routing: kblv1alpha1.RoutingSpec{
-				Universe:          tmpl.Routing.Universe,
-				ComputeContextRef: contextName,
-			},
-		},
+		Spec: spec,
 	}
 }
 

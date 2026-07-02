@@ -45,3 +45,15 @@ kubectl get workflows -l kbl.io/computewheel=finance-wheel
 ## Demo With Limited Rotations
 
 Set `maxRotations: 1` to process one full slice across all contexts then stop (useful for tests).
+
+## CR references (Phase 13)
+
+Use shared Snapshot/Domino CRs in the wheel template:
+
+```bash
+kubectl apply -f ../standalone-snapshot-domino/snapshot.yaml
+kubectl apply -f ../standalone-snapshot-domino/dominos.yaml
+kubectl apply -f wheel-refs.yaml
+```
+
+See [ADR 0016](../../docs/adr/0016-computewheel-cr-references.md).
