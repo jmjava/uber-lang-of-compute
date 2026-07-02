@@ -182,6 +182,12 @@ Once a snapshot is sealed into the node-local store, workflow execution reads pe
 
 See [ADR 0018](docs/adr/0018-store-first-snapshot.md).
 
+### Direct-bytes staging (Phase 17)
+
+Seal path/HTTP JSON in one pass — original file bytes persisted without parse→remarshal.
+
+See [ADR 0019](docs/adr/0019-direct-bytes-staging.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -214,6 +220,7 @@ See [ADR 0018](docs/adr/0018-store-first-snapshot.md).
 - [ADR 0016: ComputeWheel CR References](docs/adr/0016-computewheel-cr-references.md)
 - [ADR 0017: HTTP Snapshot Ingestion](docs/adr/0017-http-snapshot-ingestion.md)
 - [ADR 0018: Store-First Snapshot](docs/adr/0018-store-first-snapshot.md)
+- [ADR 0019: Direct-Bytes Staging](docs/adr/0019-direct-bytes-staging.md)
 
 ## Roadmap
 
@@ -234,12 +241,13 @@ See [ADR 0018](docs/adr/0018-store-first-snapshot.md).
 | **Phase 13** | ComputeWheel workflow template CR references |
 | **Phase 14** | Pluggable execution engines — Julia, Python, and custom runtimes via PluggableUniverse |
 | **Phase 15** | HTTP/HTTPS snapshot URI ingestion |
-| **Phase 16 (current)** | Store-first snapshot reads — hot path skips re-fetching HTTP/path sources |
-| **Phase 17** | Zero-copy / mmap snapshot staging and TSDB streaming reads |
+| **Phase 16** | Store-first snapshot reads — hot path skips re-fetching HTTP/path sources |
+| **Phase 17 (current)** | Direct-bytes snapshot staging — single-pass seal without parse→remarshal |
+| **Phase 18** | Zero-copy mmap and TSDB streaming reads |
 
 ## Performance note
 
-Phase 15 HTTP ingestion is intended for convenience and cross-node bootstrap, not the hot compute path. **Phase 16** loads persisted snapshot JSON from the node-local store on execute, skipping repeat HTTP/path reads. Production workloads should still prefer **node-local paths** (Phase 12) or **pre-sealed snapshots** on the TSDB/store — bring compute to the data.
+Phase 15 HTTP ingestion is intended for convenience and cross-node bootstrap, not the hot compute path. **Phase 16** loads persisted snapshot JSON from the node-local store on execute; **Phase 17** seals path/HTTP sources in one pass without re-marshaling JSON. Production workloads should still prefer **node-local paths** (Phase 12) or **pre-sealed snapshots** on the TSDB/store — bring compute to the data.
 
 ## License
 

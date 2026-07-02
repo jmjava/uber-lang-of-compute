@@ -1,11 +1,9 @@
 package snapshot
 
 import (
-	"encoding/json"
 	"fmt"
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
-	"github.com/jmjava/uber-lang-of-compute/controller/pkg/hash"
 )
 
 // Validate checks that a snapshot spec has enough source material to seal.
@@ -26,25 +24,12 @@ func ContentData(spec kblv1alpha1.SnapshotSpec) (interface{}, error) {
 
 // ComputeID returns a deterministic snapshot ID for the spec.
 func ComputeID(spec kblv1alpha1.SnapshotSpec) (string, error) {
-	if err := Validate(spec); err != nil {
-		return "", err
-	}
-	content, err := ContentData(spec)
-	if err != nil {
-		return "", err
-	}
-	return hash.SnapshotID(spec.TimeSlice, content)
+	id, _, err := SealPayload(spec)
+	return id, err
 }
 
 // MarshalData serializes resolved snapshot content for store persistence.
 func MarshalData(spec kblv1alpha1.SnapshotSpec) (string, error) {
-	content, err := ContentData(spec)
-	if err != nil {
-		return "", err
-	}
-	data, err := json.Marshal(content)
-	if err != nil {
-		return "", fmt.Errorf("marshal snapshot data: %w", err)
-	}
-	return string(data), nil
+	_, data, err := SealPayload(spec)
+	return data, err
 }

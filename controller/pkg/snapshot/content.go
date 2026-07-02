@@ -99,14 +99,32 @@ func fileURIPath(uri string) (string, bool) {
 }
 
 func loadPath(path string) (interface{}, error) {
-	data, err := os.ReadFile(path)
+	data, err := ReadPathBytes(path)
 	if err != nil {
-		return nil, fmt.Errorf("read snapshot path %q: %w", path, err)
+		return nil, err
 	}
 	return parseSnapshotBytes(data, path, "path")
 }
 
 func loadHTTP(uri string) (interface{}, error) {
+	data, err := FetchHTTPBytes(uri)
+	if err != nil {
+		return nil, err
+	}
+	return parseSnapshotBytes(data, uri, "uri")
+}
+
+// ReadPathBytes reads snapshot file contents from a node-local path.
+func ReadPathBytes(path string) ([]byte, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("read snapshot path %q: %w", path, err)
+	}
+	return data, nil
+}
+
+// FetchHTTPBytes downloads snapshot content from an HTTP(S) URI.
+func FetchHTTPBytes(uri string) ([]byte, error) {
 	resp, err := snapshotHTTPClient.Get(uri)
 	if err != nil {
 		return nil, fmt.Errorf("fetch snapshot uri %q: %w", uri, err)
@@ -124,8 +142,7 @@ func loadHTTP(uri string) (interface{}, error) {
 	if len(data) > maxSnapshotFetchBytes {
 		return nil, fmt.Errorf("fetch snapshot uri %q: body exceeds %d bytes", uri, maxSnapshotFetchBytes)
 	}
-
-	return parseSnapshotBytes(data, uri, "uri")
+	return data, nil
 }
 
 func parseSnapshotBytes(data []byte, source, sourceType string) (interface{}, error) {
