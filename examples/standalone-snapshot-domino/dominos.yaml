@@ -1,0 +1,32 @@
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: load-curve
+  namespace: default
+spec:
+  snapshotRef: curve-snap
+  command: builtin:identity
+---
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: interpolate-curve
+  namespace: default
+spec:
+  snapshotRef: curve-snap
+  command: builtin:interpolate
+  dependsOn: [load-curve]
+  inputs:
+    - fromDomino: load-curve
+---
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: compute-risk
+  namespace: default
+spec:
+  snapshotRef: curve-snap
+  command: builtin:risk-dv01
+  dependsOn: [interpolate-curve]
+  inputs:
+    - fromDomino: interpolate-curve

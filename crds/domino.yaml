@@ -45,9 +45,15 @@ spec:
                 image:
                   type: string
                   description: Container image (post-MVP hot-swap)
+                storePath:
+                  type: string
+                  description: Node-local SQLite path or TSDB HTTP endpoint
             status:
               type: object
               properties:
+                observedGeneration:
+                  type: integer
+                  format: int64
                 phase:
                   type: string
                   enum: [Pending, Running, Completed, Cached, Error]

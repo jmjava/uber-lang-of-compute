@@ -125,7 +125,7 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 
 func (e *Engine) resolveInputs(d *types.Domino, snap types.Snapshot, priorOutputs map[string]string) (string, error) {
 	if len(d.Spec.Inputs) == 0 {
-		data, err := json.Marshal(snap.Spec.Source.Inline)
+		data, err := json.Marshal(snapshotContent(snap))
 		return string(data), err
 	}
 
@@ -144,7 +144,7 @@ func (e *Engine) resolveInputs(d *types.Domino, snap types.Snapshot, priorOutput
 			}
 		}
 		if input.FromSnapshot != "" {
-			data, err := json.Marshal(snap.Spec.Source.Inline)
+			data, err := json.Marshal(snapshotContent(snap))
 			if err != nil {
 				return "", err
 			}
@@ -171,4 +171,75 @@ func (e *Engine) executeDomino(d *types.Domino, inputJSON string) (string, error
 		return builtin.Execute(cmd, inputJSON)
 	}
 	return "", fmt.Errorf("unsupported command %q (only builtin: commands supported in MVP)", cmd)
+}
+
+// RunSingle executes one domino against a sealed snapshot with optional dependency outputs.
+func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.Domino, priorOutputs map[string]string) (*types.ReplayLogEntry, error) {
+	if !snap.Spec.Sealed {
+		return nil, fmt.Errorf("snapshot %q is not sealed", snap.Metadata.Name)
+	}
+	if snapshotID == "" {
+		return nil, fmt.Errorf("snapshot ID is required")
+	}
+
+	d := &domino
+	inputJSON, err := e.resolveInputs(d, snap, priorOutputs)
+	if err != nil {
+		return nil, fmt.Errorf("resolve inputs: %w", err)
+	}
+
+	inputHash, err := hash.Compute(inputJSON)
+	if err != nil {
+		return nil, fmt.Errorf("hash inputs: %w", err)
+	}
+
+	entry := types.ReplayLogEntry{
+		Timestamp:  time.Now().UTC(),
+		SnapshotID: snapshotID,
+		DominoID:   domino.Metadata.Name,
+		InputHash:  inputHash,
+	}
+
+	if outHash, out, found, err := e.store.LookupMemo(snapshotID, domino.Metadata.Name, inputHash); err != nil {
+		return nil, fmt.Errorf("memo lookup: %w", err)
+	} else if found {
+		entry.OutputHash = outHash
+		entry.Reused = true
+		entry.Output = out
+		if err := e.store.SaveResult(snapshotID, domino.Metadata.Name, inputHash, outHash, out, true); err != nil {
+			return nil, fmt.Errorf("save replay: %w", err)
+		}
+		return &entry, nil
+	}
+
+	out, err := e.executeDomino(d, inputJSON)
+	if err != nil {
+		return nil, err
+	}
+
+	outputHash, err := hash.Compute(out)
+	if err != nil {
+		return nil, fmt.Errorf("hash output: %w", err)
+	}
+
+	entry.OutputHash = outputHash
+	entry.Reused = false
+	entry.Output = out
+	if err := e.store.SaveResult(snapshotID, domino.Metadata.Name, inputHash, outputHash, out, false); err != nil {
+		return nil, fmt.Errorf("save result: %w", err)
+	}
+	return &entry, nil
+}
+
+func snapshotContent(snap types.Snapshot) interface{} {
+	if snap.Spec.Source.Inline != nil {
+		return snap.Spec.Source.Inline
+	}
+	if snap.Spec.Source.Path != "" {
+		return map[string]string{"path": snap.Spec.Source.Path}
+	}
+	if snap.Spec.Source.URI != "" {
+		return map[string]string{"uri": snap.Spec.Source.URI}
+	}
+	return map[string]interface{}{}
 }

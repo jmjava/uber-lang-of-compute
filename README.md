@@ -82,6 +82,17 @@ kubectl get multiverses -o yaml   # status.routedEvents
 
 See [examples/multiverse-finance/README.md](examples/multiverse-finance/README.md) and [ADR 0009](docs/adr/0009-multiverse-routing.md).
 
+### Standalone Snapshot + Domino
+
+```bash
+kubectl apply -f examples/standalone-snapshot-domino/snapshot.yaml
+kubectl apply -f examples/standalone-snapshot-domino/dominos.yaml
+./controller/bin/kbl-controller --store-root /tmp/kbl-store
+kubectl get snapshots,dominos -o wide
+```
+
+See [examples/standalone-snapshot-domino/README.md](examples/standalone-snapshot-domino/README.md) and [ADR 0010](docs/adr/0010-standalone-snapshot-domino.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -105,6 +116,7 @@ See [examples/multiverse-finance/README.md](examples/multiverse-finance/README.m
 - [ADR 0007: Hot-Swapped Dominos](docs/adr/0007-hot-swapped-dominos-implementation.md)
 - [ADR 0008: Node-Local TSDB](docs/adr/0008-node-local-tsdb.md)
 - [ADR 0009: Multiverse Routing](docs/adr/0009-multiverse-routing.md)
+- [ADR 0010: Standalone Snapshot/Domino](docs/adr/0010-standalone-snapshot-domino.md)
 
 ## Roadmap
 
@@ -116,6 +128,7 @@ See [examples/multiverse-finance/README.md](examples/multiverse-finance/README.m
 | **Phase 4** | Hot-swapped dominos — DominoChain CRD, init chain + OpenKruise |
 | **Phase 5** | Node-local TSDB DaemonSet + store.Backend abstraction |
 | **Phase 6 (current)** | Multiverse routing via Kafka + PluggableUniverse |
+| **Phase 7 (current)** | Standalone Snapshot + Domino CRD reconcilers |
 
 ## License
 

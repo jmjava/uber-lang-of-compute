@@ -1,0 +1,17 @@
+apiVersion: kbl.io/v1alpha1
+kind: Snapshot
+metadata:
+  name: curve-snap
+  namespace: default
+spec:
+  timeSlice: "2025-04-15T00:00:00Z"
+  source:
+    inline:
+      instruments:
+        - instrument_id: US10Y
+          rate: 4.25
+          maturity: "2035-02-15"
+        - instrument_id: US2Y
+          rate: 4.80
+          maturity: "2027-02-15"
+  sealed: true

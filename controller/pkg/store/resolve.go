@@ -139,3 +139,40 @@ func OpenForWorkflow(ctx context.Context, c client.Client, wf *kblv1alpha1.Workf
 	}
 	return b, nil
 }
+
+// ConfigFromSnapshot builds resolve config from a Snapshot CR.
+func ConfigFromSnapshot(snap *kblv1alpha1.Snapshot, storeRoot string) ResolveConfig {
+	return ResolveConfig{
+		ComputeContextRef: snap.Spec.ComputeContextRef,
+		Namespace:         snap.Namespace,
+		StoreRoot:         storeRoot,
+	}
+}
+
+// OpenForSnapshot opens the store for a standalone Snapshot CR.
+func OpenForSnapshot(ctx context.Context, c client.Client, snap *kblv1alpha1.Snapshot, storeRoot string) (Backend, error) {
+	cfg := ConfigFromSnapshot(snap, storeRoot)
+	if cfg.StorePath == "" {
+		cfg.StorePath = filepath.Join(storeRoot, snap.Namespace, snap.Name+".db")
+	}
+	return OpenResolved(ctx, c, cfg)
+}
+
+// OpenForDomino opens the shared store for a Domino CR (keyed by snapshot ref).
+func OpenForDomino(ctx context.Context, c client.Client, d *kblv1alpha1.Domino, snap *kblv1alpha1.Snapshot, storeRoot string) (Backend, error) {
+	if d.Spec.StorePath != "" {
+		if isTSDBPath(d.Spec.StorePath) {
+			return OpenBackend(Config{Type: TypeTSDB, Endpoint: d.Spec.StorePath})
+		}
+		return OpenBackend(Config{Type: TypeSQLite, Path: d.Spec.StorePath})
+	}
+	if snap != nil {
+		return OpenForSnapshot(ctx, c, snap, storeRoot)
+	}
+	root := storeRoot
+	if root == "" {
+		root = "/var/kbl/store"
+	}
+	path := filepath.Join(root, d.Namespace, d.Spec.SnapshotRef+".db")
+	return OpenBackend(Config{Type: TypeSQLite, Path: path})
+}
