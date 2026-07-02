@@ -63,9 +63,10 @@ type SyncSpec struct {
 }
 
 type KafkaSyncSpec struct {
-	Brokers []string `json:"brokers"`
-	Topic   string   `json:"topic"`
-	GroupID string   `json:"groupId,omitempty"`
+	Brokers  []string `json:"brokers"`
+	Topic    string   `json:"topic"`
+	GroupID  string   `json:"groupId,omitempty"`
+	CDCTopic string   `json:"cdcTopic,omitempty"`
 }
 
 type MultiverseStatus struct {

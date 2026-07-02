@@ -55,6 +55,21 @@ spec:
                   type: object
                   additionalProperties:
                     type: string
+                replicationMode:
+                  type: string
+                  enum: [direct, cdc]
+                  description: direct store copy (default) or Debezium CDC via Kafka
+                cdcSync:
+                  type: object
+                  properties:
+                    brokers:
+                      type: array
+                      items:
+                        type: string
+                    topic:
+                      type: string
+                    groupId:
+                      type: string
             status:
               type: object
               properties:

@@ -79,6 +79,9 @@ spec:
                           type: string
                         groupId:
                           type: string
+                        cdcTopic:
+                          type: string
+                          description: Kafka topic for Debezium CDC snapshot replication
             status:
               type: object
               properties:

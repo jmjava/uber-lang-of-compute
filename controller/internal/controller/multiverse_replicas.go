@@ -53,7 +53,13 @@ func (r *MultiverseReconciler) ensureReadReplica(ctx context.Context, mv *kblv1a
 			PluggableUniverseRef:    target.PluggableUniverse,
 			FinalOutputHash:         evt.FinalOutput,
 			Partitions:              evt.Partitions,
+			ReplicationMode:         kblv1alpha1.ReplicationModeDirect,
 		},
+	}
+
+	if mv.Spec.Sync != nil && mv.Spec.Sync.Enabled {
+		rr.Spec.ReplicationMode = kblv1alpha1.ReplicationModeCDC
+		rr.Spec.CDCSync = cdcSyncSpecFromMultiverse(mv)
 	}
 
 	if err := controllerutil.SetControllerReference(mv, rr, r.Scheme); err != nil {

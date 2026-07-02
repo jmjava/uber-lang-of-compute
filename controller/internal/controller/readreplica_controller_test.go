@@ -16,8 +16,10 @@ import (
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
 	kblcontroller "github.com/jmjava/uber-lang-of-compute/controller/internal/controller"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/cdc"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/events"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
+	kbltypes "github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
 
 func TestReadReplicaMaterializesFromWorkflow(t *testing.T) {
@@ -178,5 +180,86 @@ func TestMultiverseCreatesReadReplica(t *testing.T) {
 	}
 	if rrList.Items[0].Spec.TargetUniverse != "finance-local" {
 		t.Fatalf("expected finance-local, got %s", rrList.Items[0].Spec.TargetUniverse)
+	}
+}
+
+func TestReadReplicaMaterializesViaCDC(t *testing.T) {
+	cdc.DefaultMemory().Reset()
+
+	scheme := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = kblv1alpha1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	storeDir := t.TempDir()
+	targetPath := filepath.Join(storeDir, "default", "replicas", "finance-local.db")
+	snapshotID := "cdc-snap-99"
+
+	wf := &kblv1alpha1.Workflow{
+		ObjectMeta: metav1.ObjectMeta{Name: "rates-curve", Namespace: "default", Generation: 1},
+		Spec: kblv1alpha1.WorkflowSpec{
+			Snapshot: kblv1alpha1.SnapshotSpec{
+				TimeSlice: "2025-04-15T00:00:00Z",
+				Source: kblv1alpha1.SnapshotSource{
+					Inline: map[string]interface{}{"instruments": []interface{}{map[string]interface{}{"instrument_id": "US10Y"}}},
+				},
+				Sealed: true,
+			},
+			Dominos:      []kblv1alpha1.DominoSpec{{Name: "load", Command: "builtin:identity"}},
+			Execution:    kblv1alpha1.ExecutionSpec{Chain: []string{"load"}, Deterministic: true},
+			Provisioning: kblv1alpha1.ProvisioningSpec{StorePath: filepath.Join(storeDir, "source.db"), NodeLocal: true},
+		},
+	}
+
+	result := &kbltypes.RunResult{
+		SnapshotID: snapshotID,
+		Entries: []kbltypes.ReplayLogEntry{{
+			DominoID: "load", InputHash: "in1", OutputHash: "out1", Output: `{"ok":true}`,
+		}},
+	}
+	envs := cdc.ExportFromWorkflow(wf, result)
+	if err := cdc.DefaultMemory().PublishBatch(context.Background(), snapshotID, envs); err != nil {
+		t.Fatal(err)
+	}
+
+	rr := &kblv1alpha1.ReadReplica{
+		ObjectMeta: metav1.ObjectMeta{Name: "replica-cdc", Namespace: "default", Generation: 1},
+		Spec: kblv1alpha1.ReadReplicaSpec{
+			SourceSnapshotID: snapshotID,
+			SourceWorkflow:   "rates-curve",
+			SourceNamespace:  "default",
+			TargetUniverse:   "finance-local",
+			ReplicationMode:  kblv1alpha1.ReplicationModeCDC,
+			CDCSync:          &kblv1alpha1.CDCSyncSpec{Topic: cdc.DefaultTopic},
+		},
+	}
+
+	cl := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(&kblv1alpha1.ReadReplica{}, wf).
+		WithObjects(wf, rr).
+		Build()
+
+	rrRec := &kblcontroller.ReadReplicaReconciler{Client: cl, Scheme: scheme, StoreRoot: storeDir}
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: "replica-cdc", Namespace: "default"}}
+	if _, err := rrRec.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("cdc reconcile: %v", err)
+	}
+
+	var updated kblv1alpha1.ReadReplica
+	if err := cl.Get(context.Background(), req.NamespacedName, &updated); err != nil {
+		t.Fatal(err)
+	}
+	if updated.Status.Phase != kblv1alpha1.ReadReplicaPhaseReady {
+		t.Fatalf("expected Ready, got %s: %s", updated.Status.Phase, updated.Status.Message)
+	}
+
+	target, err := store.OpenSQLite(targetPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+	if _, err := target.GetDominoOutput(snapshotID, "load"); err != nil {
+		t.Fatalf("expected domino on target: %v", err)
 	}
 }

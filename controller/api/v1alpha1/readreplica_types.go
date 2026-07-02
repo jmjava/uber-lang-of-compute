@@ -14,6 +14,11 @@ const (
 	ReadReplicaPhaseError         ReadReplicaPhase = "Error"
 )
 
+const (
+	ReplicationModeDirect = "direct"
+	ReplicationModeCDC    = "cdc"
+)
+
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:shortName=rr
@@ -43,6 +48,15 @@ type ReadReplicaSpec struct {
 	PluggableUniverseRef      string            `json:"pluggableUniverseRef,omitempty"`
 	FinalOutputHash           string            `json:"finalOutputHash,omitempty"`
 	Partitions                map[string]string `json:"partitions,omitempty"`
+	ReplicationMode           string            `json:"replicationMode,omitempty"`
+	CDCSync                   *CDCSyncSpec      `json:"cdcSync,omitempty"`
+}
+
+// CDCSyncSpec configures Debezium-compatible Kafka CDC replication.
+type CDCSyncSpec struct {
+	Brokers []string `json:"brokers,omitempty"`
+	Topic   string   `json:"topic,omitempty"`
+	GroupID string   `json:"groupId,omitempty"`
 }
 
 // ReadReplicaStatus defines observed materialization state.

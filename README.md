@@ -103,6 +103,16 @@ kubectl get readreplicas -o wide
 
 See [ADR 0011](docs/adr/0011-read-replica-materialization.md).
 
+### Debezium CDC sync (Phase 9)
+
+When Multiverse `spec.sync.enabled: true`, workflows publish CDC events and ReadReplicas use `replicationMode: cdc`:
+
+```bash
+kubectl get readreplicas -o jsonpath='{.items[*].spec.replicationMode}'
+```
+
+See [ADR 0012](docs/adr/0012-debezium-cdc-sync.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -128,6 +138,7 @@ See [ADR 0011](docs/adr/0011-read-replica-materialization.md).
 - [ADR 0009: Multiverse Routing](docs/adr/0009-multiverse-routing.md)
 - [ADR 0010: Standalone Snapshot/Domino](docs/adr/0010-standalone-snapshot-domino.md)
 - [ADR 0011: Read-Replica Materialization](docs/adr/0011-read-replica-materialization.md)
+- [ADR 0012: Debezium CDC Sync](docs/adr/0012-debezium-cdc-sync.md)
 
 ## Roadmap
 
@@ -141,6 +152,7 @@ See [ADR 0011](docs/adr/0011-read-replica-materialization.md).
 | **Phase 6 (current)** | Multiverse routing via Kafka + PluggableUniverse |
 | **Phase 7 (current)** | Standalone Snapshot + Domino CRD reconcilers |
 | **Phase 8 (current)** | Read-replica materialization from Multiverse routing |
+| **Phase 9 (current)** | Debezium CDC sync for cross-universe read replicas |
 
 ## License
 

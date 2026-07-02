@@ -745,6 +745,14 @@ func (in *ReadReplicaSpec) DeepCopyInto(out *ReadReplicaSpec) {
 			out.Partitions[k] = v
 		}
 	}
+	if in.CDCSync != nil {
+		s := *in.CDCSync
+		out.CDCSync = &s
+		if in.CDCSync.Brokers != nil {
+			out.CDCSync.Brokers = make([]string, len(in.CDCSync.Brokers))
+			copy(out.CDCSync.Brokers, in.CDCSync.Brokers)
+		}
+	}
 }
 
 func (in *ReadReplicaStatus) DeepCopyInto(out *ReadReplicaStatus) {

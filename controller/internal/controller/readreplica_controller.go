@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/cdc"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/replica"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
 )
@@ -48,12 +49,6 @@ func (r *ReadReplicaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		return r.fail(ctx, &rr, fmt.Errorf("source workflow: %w", err))
 	}
 
-	sourceStore, err := store.OpenForWorkflow(ctx, r.Client, &wf, r.StoreRoot)
-	if err != nil {
-		return r.fail(ctx, &rr, fmt.Errorf("open source store: %w", err))
-	}
-	defer sourceStore.Close()
-
 	targetStore, targetPath, err := r.openTargetStore(ctx, &rr)
 	if err != nil {
 		return r.fail(ctx, &rr, fmt.Errorf("open target store: %w", err))
@@ -61,29 +56,57 @@ func (r *ReadReplicaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	defer targetStore.Close()
 
 	rr.Status.Phase = kblv1alpha1.ReadReplicaPhaseMaterializing
-	rr.Status.Message = "copying snapshot and domino results"
+	mode := rr.Spec.ReplicationMode
+	if mode == "" {
+		mode = kblv1alpha1.ReplicationModeDirect
+	}
+	rr.Status.Message = fmt.Sprintf("materializing via %s", mode)
 	if err := r.Status().Update(ctx, &rr); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	result, err := replica.Materialize(replica.MaterializeConfig{
-		SnapshotID:  rr.Spec.SourceSnapshotID,
-		DominoChain: wf.Spec.Execution.Chain,
-		Source:      sourceStore,
-		Target:      targetStore,
-	})
-	if err != nil {
-		return r.fail(ctx, &rr, err)
+	var dominoCount int
+	switch mode {
+	case kblv1alpha1.ReplicationModeCDC:
+		consumer := cdcConsumerForReplica(&rr)
+		defer consumer.Close()
+		readCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		progress, err := cdc.SyncFromConsumer(readCtx, consumer, targetStore, rr.Spec.SourceSnapshotID, wf.Spec.Execution.Chain)
+		if err != nil {
+			rr.Status.Phase = kblv1alpha1.ReadReplicaPhasePending
+			rr.Status.Message = fmt.Sprintf("waiting for cdc events: %v", err)
+			_ = r.Status().Update(ctx, &rr)
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+		dominoCount = progress.DominoCount
+	default:
+		sourceStore, err := store.OpenForWorkflow(ctx, r.Client, &wf, r.StoreRoot)
+		if err != nil {
+			return r.fail(ctx, &rr, fmt.Errorf("open source store: %w", err))
+		}
+		defer sourceStore.Close()
+
+		result, err := replica.Materialize(replica.MaterializeConfig{
+			SnapshotID:  rr.Spec.SourceSnapshotID,
+			DominoChain: wf.Spec.Execution.Chain,
+			Source:      sourceStore,
+			Target:      targetStore,
+		})
+		if err != nil {
+			return r.fail(ctx, &rr, err)
+		}
+		dominoCount = result.DominoCount
 	}
 
 	now := metav1.Now()
 	rr.Status.ObservedGeneration = rr.Generation
 	rr.Status.Phase = kblv1alpha1.ReadReplicaPhaseReady
-	rr.Status.DominoCount = result.DominoCount
+	rr.Status.DominoCount = dominoCount
 	rr.Status.TargetStorePath = targetPath
 	rr.Status.MaterializedAt = &now
-	rr.Status.Message = fmt.Sprintf("materialized snapshot %s with %d dominos to %s",
-		rr.Spec.SourceSnapshotID, result.DominoCount, targetPath)
+	rr.Status.Message = fmt.Sprintf("%s: snapshot %s with %d dominos to %s",
+		mode, rr.Spec.SourceSnapshotID, dominoCount, targetPath)
 	rr.Status.Conditions = []metav1.Condition{{
 		Type:               "Ready",
 		Status:             metav1.ConditionTrue,
@@ -98,9 +121,10 @@ func (r *ReadReplicaReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	logger.Info("read replica materialized",
 		"replica", rr.Name,
+		"mode", mode,
 		"snapshot", rr.Spec.SourceSnapshotID,
 		"universe", rr.Spec.TargetUniverse,
-		"dominos", result.DominoCount,
+		"dominos", dominoCount,
 	)
 	return ctrl.Result{}, nil
 }
@@ -138,6 +162,11 @@ func (r *ReadReplicaReconciler) openTargetStore(ctx context.Context, rr *kblv1al
 }
 
 func (r *ReadReplicaReconciler) fail(ctx context.Context, rr *kblv1alpha1.ReadReplica, err error) (ctrl.Result, error) {
+	_ = r.failStatus(ctx, rr, err)
+	return ctrl.Result{RequeueAfter: 30 * time.Second}, err
+}
+
+func (r *ReadReplicaReconciler) failStatus(ctx context.Context, rr *kblv1alpha1.ReadReplica, err error) error {
 	rr.Status.Phase = kblv1alpha1.ReadReplicaPhaseError
 	rr.Status.Message = err.Error()
 	rr.Status.Conditions = []metav1.Condition{{
@@ -147,8 +176,7 @@ func (r *ReadReplicaReconciler) fail(ctx context.Context, rr *kblv1alpha1.ReadRe
 		Message:            err.Error(),
 		LastTransitionTime: metav1.Now(),
 	}}
-	_ = r.Status().Update(ctx, rr)
-	return ctrl.Result{RequeueAfter: 30 * time.Second}, err
+	return r.Status().Update(ctx, rr)
 }
 
 func (r *ReadReplicaReconciler) SetupWithManager(mgr ctrl.Manager) error {
