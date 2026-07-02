@@ -1,0 +1,10 @@
+apiVersion: kbl.io/v1alpha1
+kind: Snapshot
+metadata:
+  name: curve-http
+  namespace: default
+spec:
+  timeSlice: "2025-04-15T00:00:00Z"
+  source:
+    uri: http://127.0.0.1:8080/curve.json
+  sealed: true

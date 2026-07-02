@@ -30,20 +30,11 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 		return nil, fmt.Errorf("snapshot %q is not sealed; cannot execute deterministically", snap.Metadata.Name)
 	}
 
-	content, err := snapshot.ResolveEngineContent(snap.Spec)
+	content, snapshotData, snapshotID, err := snapshot.ResolveEngineContentPreferStore(e.store, snap, "")
 	if err != nil {
 		return nil, fmt.Errorf("resolve snapshot content: %w", err)
 	}
 
-	snapshotData, err := json.Marshal(content)
-	if err != nil {
-		return nil, fmt.Errorf("marshal snapshot data: %w", err)
-	}
-
-	snapshotID := ""
-	if snap.Status != nil && snap.Status.SnapshotID != "" {
-		snapshotID = snap.Status.SnapshotID
-	}
 	if snapshotID == "" {
 		snapshotID, err = hash.SnapshotID(snap.Spec.TimeSlice, content)
 		if err != nil {
@@ -51,7 +42,7 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 		}
 	}
 
-	if err := e.store.SaveSnapshot(snapshotID, snap.Spec.TimeSlice, string(snapshotData), true); err != nil {
+	if err := e.store.SaveSnapshot(snapshotID, snap.Spec.TimeSlice, snapshotData, true); err != nil {
 		return nil, fmt.Errorf("save snapshot: %w", err)
 	}
 
@@ -75,7 +66,7 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 			return nil, fmt.Errorf("domino %q not found in workflow", dominoName)
 		}
 
-		inputJSON, err := e.resolveInputs(d, snap, outputs)
+		inputJSON, err := e.resolveInputs(d, snap, snapshotID, outputs)
 		if err != nil {
 			return nil, fmt.Errorf("domino %q resolve inputs: %w", dominoName, err)
 		}
@@ -135,8 +126,8 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 	}, nil
 }
 
-func (e *Engine) resolveInputs(d *types.Domino, snap types.Snapshot, priorOutputs map[string]string) (string, error) {
-	content, err := snapshot.ResolveEngineContent(snap.Spec)
+func (e *Engine) resolveInputs(d *types.Domino, snap types.Snapshot, snapshotID string, priorOutputs map[string]string) (string, error) {
+	content, _, _, err := snapshot.ResolveEngineContentPreferStore(e.store, snap, snapshotID)
 	if err != nil {
 		return "", fmt.Errorf("resolve snapshot content: %w", err)
 	}
@@ -200,7 +191,7 @@ func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.
 	}
 
 	d := &domino
-	inputJSON, err := e.resolveInputs(d, snap, priorOutputs)
+	inputJSON, err := e.resolveInputs(d, snap, snapshotID, priorOutputs)
 	if err != nil {
 		return nil, fmt.Errorf("resolve inputs: %w", err)
 	}
