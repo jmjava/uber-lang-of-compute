@@ -3,6 +3,9 @@ package store_test
 import (
 	"io"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/engine"
@@ -87,6 +90,32 @@ func TestOpenBackendTSDB(t *testing.T) {
 	_, data, sealed, err := backend.GetSnapshot("s1")
 	if err != nil || data != `{"v":1}` || !sealed {
 		t.Fatalf("get snapshot: data=%s sealed=%v err=%v", data, sealed, err)
+	}
+}
+
+func TestTSDBEnvelopePayloadDedup(t *testing.T) {
+	dir := t.TempDir()
+	engine, err := store.OpenTSDBEngine(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	payload := `{"instruments":[{"instrument_id":"US10Y"}]}`
+	if err := engine.SaveSnapshotPayload("dedup-snap", "2025-01-01", []byte(payload), true); err != nil {
+		t.Fatal(err)
+	}
+
+	envelope, err := os.ReadFile(filepath.Join(dir, "snapshots", "dedup-snap.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(envelope), "US10Y") {
+		t.Fatalf("envelope should not embed payload: %s", envelope)
+	}
+
+	_, data, sealed, err := engine.GetSnapshot("dedup-snap")
+	if err != nil || !sealed || data != payload {
+		t.Fatalf("get snapshot: data=%q sealed=%v err=%v", data, sealed, err)
 	}
 }
 

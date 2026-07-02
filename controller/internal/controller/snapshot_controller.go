@@ -49,7 +49,13 @@ func (r *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return r.fail(ctx, &snap, err)
 	}
 
-	snapshotID, data, err := snapshot.SealPayload(snap.Spec)
+	backend, err := store.OpenForSnapshot(ctx, r.Client, &snap, r.StoreRoot)
+	if err != nil {
+		return r.fail(ctx, &snap, fmt.Errorf("open store: %w", err))
+	}
+	defer backend.Close()
+
+	snapshotID, err := snapshot.SealToBackend(snap.Spec, backend)
 	if err != nil {
 		if snapshot.IsSourceNotReady(err) {
 			if _, uerr := r.updateStatus(ctx, &snap, kblv1alpha1.SnapshotPhasePending, "", err.Error()); uerr != nil {
@@ -58,16 +64,6 @@ func (r *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 		}
 		return r.fail(ctx, &snap, err)
-	}
-
-	backend, err := store.OpenForSnapshot(ctx, r.Client, &snap, r.StoreRoot)
-	if err != nil {
-		return r.fail(ctx, &snap, fmt.Errorf("open store: %w", err))
-	}
-	defer backend.Close()
-
-	if err := backend.SaveSnapshot(snapshotID, snap.Spec.TimeSlice, data, true); err != nil {
-		return r.fail(ctx, &snap, fmt.Errorf("persist snapshot: %w", err))
 	}
 
 	now := metav1.Now()

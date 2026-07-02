@@ -4,10 +4,14 @@ package snapshot
 
 import "os"
 
-func readPathBytesOptimized(path string) ([]byte, error) {
+func readPathBytesForSeal(path string) (pathBytesView, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return pathBytesView{}, err
 	}
-	return data, nil
+	return pathBytesView{data: data}, nil
+}
+
+func readPathBytesOptimized(path string) ([]byte, error) {
+	return os.ReadFile(path)
 }

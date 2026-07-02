@@ -55,17 +55,18 @@ func NewTSDBHandler(engine *TSDBEngine) http.Handler {
 				http.NotFound(w, r)
 				return
 			}
-			data, sealed, err := engine.GetSnapshotData(id)
+			rc, sealed, err := engine.OpenSnapshotData(id)
 			if err != nil {
 				http.NotFound(w, r)
 				return
 			}
+			defer rc.Close()
 			if !sealed {
 				http.Error(w, "snapshot not sealed", http.StatusConflict)
 				return
 			}
 			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(data))
+			_, _ = io.Copy(w, rc)
 			return
 		}
 		if r.Method != http.MethodGet {
