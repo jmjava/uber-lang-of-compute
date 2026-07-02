@@ -1,0 +1,30 @@
+# Provisioning DSL — describes resource allocation for compute and storage.
+apiVersion: kbl.io/v1alpha1
+kind: ProvisioningSpec
+metadata:
+  name: example-provisioning
+spec:
+  computeContext:
+    nodeSelector:
+      kbl.io/compute-enabled: "true"
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "2"
+        memory: "2Gi"
+  storage:
+    nodeLocal:
+      type: emptyDir
+      sizeLimit: 10Gi
+    persistent:
+      enabled: false        # MVP uses ephemeral node-local only
+  containers:
+    dominoRuntime:
+      image: kbl/domino-runtime:latest
+      pullPolicy: IfNotPresent
+  # Player-piano: pre-provision next domino container before current finishes
+  preProvision:
+    enabled: false          # Post-MVP with OpenKruise hot-swap
+    lookahead: 1

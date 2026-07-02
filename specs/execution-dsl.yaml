@@ -1,0 +1,19 @@
+# Execution DSL — describes what compute steps run and in what order.
+apiVersion: kbl.io/v1alpha1
+kind: ExecutionSpec
+metadata:
+  name: example-execution
+spec:
+  # Ordered list of domino references forming a compute chain
+  chain:
+    - dominoRef: load-curve-data
+    - dominoRef: interpolate-curve
+    - dominoRef: compute-risk
+  # Execution constraints
+  constraints:
+    maxParallel: 1          # MVP: sequential only
+    timeout: 300s
+    retryPolicy:
+      maxRetries: 0         # Deterministic: no retries on failure
+  # Referential transparency requirement
+  deterministic: true

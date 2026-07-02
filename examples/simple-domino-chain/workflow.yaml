@@ -1,0 +1,46 @@
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: simple-domino-chain
+spec:
+  snapshot:
+    apiVersion: kbl.io/v1alpha1
+    kind: Snapshot
+    metadata:
+      name: demo-snapshot
+    spec:
+      timeSlice: "2025-07-02T00:00:00Z"
+      source:
+        inline:
+          message: hello-kbl
+          value: 42
+      sealed: true
+
+  dominos:
+    - apiVersion: kbl.io/v1alpha1
+      kind: Domino
+      metadata:
+        name: step-one
+      spec:
+        snapshotRef: demo-snapshot
+        command: builtin:identity
+        inputs: []
+
+    - apiVersion: kbl.io/v1alpha1
+      kind: Domino
+      metadata:
+        name: step-two
+      spec:
+        snapshotRef: demo-snapshot
+        command: builtin:identity
+        dependsOn: [step-one]
+        inputs:
+          - fromDomino: step-one
+
+  execution:
+    chain: [step-one, step-two]
+    deterministic: true
+
+  provisioning:
+    storePath: /tmp/kbl-simple/store.db
+    nodeLocal: true

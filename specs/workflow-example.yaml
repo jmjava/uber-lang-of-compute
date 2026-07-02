@@ -1,0 +1,76 @@
+# Unified workflow example — composes all four DSLs for a finance curve calculation.
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: finance-curve-workflow
+  labels:
+    kbl.io/domain: finance
+spec:
+  # --- Data ---
+  snapshot:
+    apiVersion: kbl.io/v1alpha1
+    kind: Snapshot
+    metadata:
+      name: curve-snapshot-2025-04-15
+    spec:
+      timeSlice: "2025-04-15T00:00:00Z"
+      source:
+        inline:
+          instruments:
+            - instrument_id: US10Y
+              rate: 4.25
+              maturity: "2035-02-15"
+            - instrument_id: US2Y
+              rate: 4.80
+              maturity: "2027-02-15"
+            - instrument_id: US5Y
+              rate: 4.45
+              maturity: "2030-02-15"
+      sealed: true
+
+  # --- Execution ---
+  dominos:
+    - apiVersion: kbl.io/v1alpha1
+      kind: Domino
+      metadata:
+        name: load-curve-data
+      spec:
+        snapshotRef: curve-snapshot-2025-04-15
+        command: builtin:identity
+        inputs: []
+
+    - apiVersion: kbl.io/v1alpha1
+      kind: Domino
+      metadata:
+        name: interpolate-curve
+      spec:
+        snapshotRef: curve-snapshot-2025-04-15
+        command: builtin:interpolate
+        dependsOn: [load-curve-data]
+        inputs:
+          - fromDomino: load-curve-data
+
+    - apiVersion: kbl.io/v1alpha1
+      kind: Domino
+      metadata:
+        name: compute-risk
+      spec:
+        snapshotRef: curve-snapshot-2025-04-15
+        command: builtin:risk-dv01
+        dependsOn: [interpolate-curve]
+        inputs:
+          - fromDomino: interpolate-curve
+
+  execution:
+    chain: [load-curve-data, interpolate-curve, compute-risk]
+    deterministic: true
+
+  # --- Provisioning ---
+  provisioning:
+    storePath: /var/kbl/store/finance-curve.db
+    nodeLocal: true
+
+  # --- Routing ---
+  routing:
+    universe: finance-local
+    computeContextRef: default-context

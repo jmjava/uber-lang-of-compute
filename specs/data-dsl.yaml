@@ -1,0 +1,32 @@
+# Data DSL — describes where data lives and immutability guarantees.
+apiVersion: kbl.io/v1alpha1
+kind: DataSpec
+metadata:
+  name: example-data
+spec:
+  snapshots:
+    - name: curve-snapshot-2025-04-15
+      timeSlice: "2025-04-15T00:00:00Z"
+      source:
+        type: node-local
+        path: /var/kbl/snapshots/curve-2025-04-15
+      schema:
+        format: json
+        fields:
+          - name: instrument_id
+            type: string
+          - name: rate
+            type: float64
+          - name: maturity
+            type: string
+      immutability:
+        sealed: true
+        sealedAt: "2025-04-15T08:00:00Z"
+  stores:
+    - name: node-local-cache
+      type: sqlite          # MVP; target: tsdb
+      path: /var/kbl/store/cache.db
+    - name: memo-table
+      type: hash-cache
+      backend: node-local-cache
+      keyFields: [snapshot_id, domino_id, input_hash]

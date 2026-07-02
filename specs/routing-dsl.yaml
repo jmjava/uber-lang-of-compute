@@ -1,0 +1,25 @@
+# Routing DSL — describes how work is directed across universes and time slices.
+apiVersion: kbl.io/v1alpha1
+kind: RoutingSpec
+metadata:
+  name: example-routing
+spec:
+  multiverse:
+    defaultUniverse: finance-local
+  universes:
+    - name: finance-local
+      pluggableUniverseRef: finance-universe
+      partitions:
+        - key: asset_class
+          values: [rates, credit, equity]
+  timeSlices:
+    granularity: 1d
+    routing:
+      - timeSlice: "2025-04-15"
+        universe: finance-local
+        computeContextRef: node-01-context
+  # Future: Debezium/Kafka sync for cross-universe data routing
+  sync:
+    enabled: false
+    source: debezium
+    topic: kbl.snapshot.events

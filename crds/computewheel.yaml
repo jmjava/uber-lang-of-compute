@@ -1,0 +1,63 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: computewheels.kbl.io
+spec:
+  group: kbl.io
+  names:
+    kind: ComputeWheel
+    listKind: ComputeWheelList
+    plural: computewheels
+    singular: computewheel
+    shortNames:
+      - wheel
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [contexts, timeSliceInterval]
+              properties:
+                contexts:
+                  type: array
+                  items:
+                    type: string
+                  description: ComputeContext names forming the wheel
+                timeSliceInterval:
+                  type: string
+                  description: Duration between time slice rotations (e.g. 1h, 1d)
+                currentTimeSlice:
+                  type: string
+                  description: Active time slice being processed
+                dominoChainTemplate:
+                  type: string
+                  description: Reference to Execution DSL chain applied per context
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  enum: [Idle, Rotating, Processing, Error]
+                activeContext:
+                  type: string
+                lastRotation:
+                  type: string
+                  format: date-time
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: TimeSlice
+          type: string
+          jsonPath: .spec.currentTimeSlice
+        - name: Contexts
+          type: integer
+          jsonPath: .spec.contexts
+        - name: Phase
+          type: string
+          jsonPath: .status.phase
