@@ -6,9 +6,19 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
 )
+
+// ContainerRecreateRequestGVK is the GroupVersionKind for OpenKruise CRRs.
+func ContainerRecreateRequestGVK() schema.GroupVersionKind {
+	return schema.GroupVersionKind{
+		Group:   "apps.kruise.io",
+		Version: "v1alpha1",
+		Kind:    "ContainerRecreateRequest",
+	}
+}
 
 // ContainerRecreateRequest builds an OpenKruise CRR to hot-swap a placeholder slot.
 func ContainerRecreateRequest(chain *kblv1alpha1.DominoChain, b *Builder, stepIndex int) *unstructured.Unstructured {
@@ -17,8 +27,7 @@ func ContainerRecreateRequest(chain *kblv1alpha1.DominoChain, b *Builder, stepIn
 	image := b.stepImage(chain, step)
 
 	crr := &unstructured.Unstructured{}
-	crr.SetAPIVersion("apps.kruise.io/v1alpha1")
-	crr.SetKind("ContainerRecreateRequest")
+	crr.SetGroupVersionKind(ContainerRecreateRequestGVK())
 	crr.SetName(fmt.Sprintf("%s-slot-%d", chain.Name, stepIndex))
 	crr.SetNamespace(chain.Namespace)
 	crr.SetLabels(map[string]string{

@@ -74,13 +74,17 @@ type DominoInput struct {
 type ExecutionSpec struct {
 	Chain         []string `json:"chain"`
 	Deterministic bool     `json:"deterministic"`
-	// Runtime selects execution backend: local (default), kubernetes-init, openkruise.
+	// Runtime selects execution backend: local (default), kubernetes-init, openkruise, volcano-init.
 	Runtime string `json:"runtime,omitempty"`
+	// VolcanoQueue assigns volcano-init chains to a Volcano queue (default: default).
+	VolcanoQueue string `json:"volcanoQueue,omitempty"`
 }
 
 type ProvisioningSpec struct {
-	StorePath string `json:"storePath,omitempty"`
-	NodeLocal bool   `json:"nodeLocal,omitempty"`
+	StorePath    string            `json:"storePath,omitempty"`
+	NodeLocal    bool              `json:"nodeLocal,omitempty"`
+	RunnerImage  string            `json:"runnerImage,omitempty"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 type RoutingSpec struct {

@@ -23,21 +23,31 @@ func BuildWorkflow(
 	tmpl := wheel.Spec.WorkflowTemplate
 	snapshotRef := wheel.Name + "-" + timeSliceKey
 
-	storePath := tmpl.Provisioning.StorePath
+	execution := tmpl.Execution
+	if execution.VolcanoQueue == "" && wheel.Spec.VolcanoQueue != "" {
+		execution.VolcanoQueue = wheel.Spec.VolcanoQueue
+	}
+
+	provisioning := kblv1alpha1.ProvisioningSpec{
+		StorePath:    tmpl.Provisioning.StorePath,
+		NodeLocal:    true,
+		RunnerImage:  tmpl.Provisioning.RunnerImage,
+		NodeSelector: tmpl.Provisioning.NodeSelector,
+	}
+	if len(provisioning.NodeSelector) == 0 && len(wheel.Spec.NodeSelector) > 0 {
+		provisioning.NodeSelector = wheel.Spec.NodeSelector
+	}
 	if computeCtx != nil && computeCtx.Spec.StorePath != "" {
-		storePath = filepath.Join(computeCtx.Spec.StorePath, wheel.Name, timeSliceKey+".db")
-	} else if storePath == "" {
-		storePath = filepath.Join(storeRoot, wheel.Namespace, wheel.Name, contextName, timeSliceKey+".db")
+		provisioning.StorePath = filepath.Join(computeCtx.Spec.StorePath, wheel.Name, timeSliceKey+".db")
+	} else if provisioning.StorePath == "" {
+		provisioning.StorePath = filepath.Join(storeRoot, wheel.Namespace, wheel.Name, contextName, timeSliceKey+".db")
 	}
 
 	wfName := WorkflowName(wheel.Name, contextName, timeSliceKey)
 
 	spec := kblv1alpha1.WorkflowSpec{
-		Execution: tmpl.Execution,
-		Provisioning: kblv1alpha1.ProvisioningSpec{
-			StorePath: storePath,
-			NodeLocal: true,
-		},
+		Execution:    execution,
+		Provisioning: provisioning,
 		Routing: kblv1alpha1.RoutingSpec{
 			Universe:          tmpl.Routing.Universe,
 			ComputeContextRef: contextName,
@@ -69,6 +79,16 @@ func BuildWorkflow(
 		spec.Dominos = dominos
 	}
 
+	labels := map[string]string{
+		"kbl.io/computewheel":          wheel.Name,
+		"kbl.io/compute-context":       contextName,
+		"kbl.io/time-slice":            timeSliceKey,
+		"app.kubernetes.io/managed-by": "kbl-controller",
+	}
+	if execution.VolcanoQueue != "" {
+		labels["kbl.io/volcano-queue"] = execution.VolcanoQueue
+	}
+
 	return &kblv1alpha1.Workflow{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "kbl.io/v1alpha1",
@@ -77,12 +97,7 @@ func BuildWorkflow(
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      wfName,
 			Namespace: wheel.Namespace,
-			Labels: map[string]string{
-				"kbl.io/computewheel":          wheel.Name,
-				"kbl.io/compute-context":       contextName,
-				"kbl.io/time-slice":            timeSliceKey,
-				"app.kubernetes.io/managed-by": "kbl-controller",
-			},
+			Labels:    labels,
 		},
 		Spec: spec,
 	}

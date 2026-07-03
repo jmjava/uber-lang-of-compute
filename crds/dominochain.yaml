@@ -57,7 +57,7 @@ spec:
                           type: string
                 runtime:
                   type: string
-                  enum: [local, kubernetes-init, openkruise]
+                  enum: [local, kubernetes-init, openkruise, volcano-init]
                 storePath:
                   type: string
                 runnerImage:
@@ -66,6 +66,9 @@ spec:
                   type: object
                   additionalProperties:
                     type: string
+                volcanoQueue:
+                  type: string
+                  description: Volcano queue for runtime volcano-init (default default)
             status:
               type: object
               properties:

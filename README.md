@@ -232,6 +232,33 @@ cd infra/aws/cdk && npm run deploy
 
 See [lab/README.md](lab/README.md), [infra/aws/cdk/README.md](infra/aws/cdk/README.md), and [ADR 0026](docs/adr/0026-kind-lab-aws-cdk.md).
 
+### Volcano batch scheduler (Phase 25–27)
+
+Multi-node Kind lab with [Volcano](https://volcano.sh/). **Phase 26:** controller emits VCJobs from `DominoChain` (`runtime: volcano-init`). **Phase 27:** `ComputeWheel` assigns Volcano queue + node affinity per time slice → Workflow → DominoChain → VCJob:
+
+```bash
+make lab-up
+kubectl get wheel julia-finance-wheel -o wide
+kubectl get wf -l kbl.io/computewheel=julia-finance-wheel
+kubectl get vcjob -l kbl.io/volcano-demo=true
+KBL_LAB_VOLCANO=0 make lab-up   # skip Volcano
+```
+
+See [ADR 0029](docs/adr/0029-volcano-kind-lab.md), [ADR 0030](docs/adr/0030-controller-volcano-emission.md), and [ADR 0031](docs/adr/0031-computewheel-volcano-queue.md).
+
+### OpenKruise hot-swap dominos (Phase 28)
+
+Multi-node Kind lab with [OpenKruise](https://openkruise.io/) installed by default. Demo **DominoChain** `julia-finance-openkruise` runs the Julia chain via placeholder Pod slots + ContainerRecreateRequest hot-swap:
+
+```bash
+make lab-up
+kubectl get dchain julia-finance-openkruise -o wide
+kubectl get containerrecreaterequests.apps.kruise.io -l kbl.io/dominochain=julia-finance-openkruise
+KBL_LAB_OPENKURISE=0 make lab-up   # skip OpenKruise
+```
+
+See [ADR 0032](docs/adr/0032-openkruise-kind-lab.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -275,6 +302,10 @@ See [lab/README.md](lab/README.md), [infra/aws/cdk/README.md](infra/aws/cdk/READ
 - [ADR 0026: Kind Lab and AWS CDK](docs/adr/0026-kind-lab-aws-cdk.md)
 - [ADR 0027: Julia FinanceModels Curves](docs/adr/0027-julia-financemodels-curves.md)
 - [ADR 0028: Julia Greeks](docs/adr/0028-julia-greeks.md)
+- [ADR 0029: Volcano Kind Lab](docs/adr/0029-volcano-kind-lab.md)
+- [ADR 0030: Controller Volcano Emission](docs/adr/0030-controller-volcano-emission.md)
+- [ADR 0031: ComputeWheel Volcano Queue](docs/adr/0031-computewheel-volcano-queue.md)
+- [ADR 0032: OpenKruise Kind Lab](docs/adr/0032-openkruise-kind-lab.md)
 
 ## Roadmap
 
@@ -303,7 +334,11 @@ See [lab/README.md](lab/README.md), [infra/aws/cdk/README.md](infra/aws/cdk/READ
 | **Phase 21** | Julia production wiring — Docker CI, multiverse Julia universe, OpenKruise env parity |
 | **Phase 22** | Kind local lab — controller + TSDB images, kustomize, up/down scripts; AWS CDK scaffold (VPC, ECR, EKS) |
 | **Phase 23** | Julia FinanceModels curve dominos — `ZeroRateCurve` interpolation, bump-and-reprice DV01, locked Manifest |
-| **Phase 24 (current)** | Julia Greeks — bond duration/convexity, rate-bucket DV01, Black–Scholes option greeks via `julia:greeks` |
+| **Phase 24** | Julia Greeks — bond duration/convexity, rate-bucket DV01, Black–Scholes option greeks via `julia:greeks` |
+| **Phase 25** | Volcano Kind lab — multi-node cluster, Volcano install, queue + TSDB Data Pond node pin |
+| **Phase 26** | Controller Volcano emission — `runtime: volcano-init` on DominoChain, reconciler creates VCJob |
+| **Phase 27** | ComputeWheel Volcano queue — wheel assigns queue/nodeSelector/runner per time slice → Workflow → VCJob |
+| **Phase 28 (current)** | OpenKruise Kind lab — Helm install, Julia hot-swap DominoChain demo via ContainerRecreateRequest |
 
 ## Performance note
 

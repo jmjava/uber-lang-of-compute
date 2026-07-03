@@ -39,11 +39,13 @@ func FromEngineWorkflow(engineWF *types.Workflow, wf *kblv1alpha1.Workflow, stor
 
 	return &kblv1alpha1.DominoChain{
 		Spec: kblv1alpha1.DominoChainSpec{
-			Snapshot:    convert.ToCRSnapshotSpec(engineWF.Spec.Snapshot),
-			Steps:       steps,
-			Runtime:     runtime,
-			StorePath:   storePath,
-			RunnerImage: "",
+			Snapshot:     convert.ToCRSnapshotSpec(engineWF.Spec.Snapshot),
+			Steps:        steps,
+			Runtime:      runtime,
+			StorePath:    storePath,
+			RunnerImage:  wf.Spec.Provisioning.RunnerImage,
+			NodeSelector: wf.Spec.Provisioning.NodeSelector,
+			VolcanoQueue: wf.Spec.Execution.VolcanoQueue,
 		},
 	}
 }
