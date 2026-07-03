@@ -204,14 +204,14 @@ See [ADR 0021](docs/adr/0021-zero-copy-staging.md).
 
 ### Julia pluggable execution (Phase 14)
 
-Run dominos via Julia subprocess using `julia:<script>` commands:
+Run dominos via Julia subprocess using `julia:<script>` commands. Curve interpolation and DV01 use **[FinanceModels.jl](https://github.com/JuliaActuary/FinanceModels.jl)** (ADR 0027):
 
 ```bash
 julia --project=controller/julia -e 'using Pkg; Pkg.instantiate()'
 ./controller/bin/kbl-compute --workflow examples/julia-domino-chain/workflow.yaml
 ```
 
-See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) and [ADR 0022](docs/adr/0022-julia-pluggable-execution.md). For in-cluster deployment choices (multi-container vs single-container multi-process), see [ADR 0023](docs/adr/0023-julia-deployment-models.md). Build the Julia runner image with `make docker-domino-runner-julia` (ADR 0024). CI builds both runner images on every relevant PR (ADR 0025).
+See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) and [ADR 0022](docs/adr/0022-julia-pluggable-execution.md). For in-cluster deployment choices (multi-container vs single-container multi-process), see [ADR 0023](docs/adr/0023-julia-deployment-models.md). Build the Julia runner image with `make docker-domino-runner-julia` (ADR 0024). CI builds both runner images on every relevant PR (ADR 0025). Curve math uses FinanceModels.jl (ADR 0027).
 
 ### Kind lab + AWS CDK (Phase 22)
 
@@ -272,6 +272,7 @@ See [lab/README.md](lab/README.md), [infra/aws/cdk/README.md](infra/aws/cdk/READ
 - [ADR 0024: Julia In-Cluster Execution](docs/adr/0024-julia-in-cluster.md)
 - [ADR 0025: Julia Production Wiring](docs/adr/0025-julia-production-wiring.md)
 - [ADR 0026: Kind Lab and AWS CDK](docs/adr/0026-kind-lab-aws-cdk.md)
+- [ADR 0027: Julia FinanceModels Curves](docs/adr/0027-julia-financemodels-curves.md)
 
 ## Roadmap
 
@@ -298,7 +299,8 @@ See [lab/README.md](lab/README.md), [infra/aws/cdk/README.md](infra/aws/cdk/READ
 | **Phase 19** | Zero-copy path staging — metadata-only TSDB envelopes, mmap seal-to-sidecar, streaming `/data` reads |
 | **Phase 20** | Julia in-cluster — Julia domino-runner image, DominoChain env wiring, kubernetes-init examples |
 | **Phase 21** | Julia production wiring — Docker CI, multiverse Julia universe, OpenKruise env parity |
-| **Phase 22 (current)** | Kind local lab — controller + TSDB images, kustomize, up/down scripts; AWS CDK scaffold (VPC, ECR, EKS) |
+| **Phase 22** | Kind local lab — controller + TSDB images, kustomize, up/down scripts; AWS CDK scaffold (VPC, ECR, EKS) |
+| **Phase 23 (current)** | Julia FinanceModels curve dominos — `ZeroRateCurve` interpolation, bump-and-reprice DV01, locked Manifest |
 
 ## Performance note
 

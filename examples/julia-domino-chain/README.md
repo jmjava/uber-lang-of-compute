@@ -1,11 +1,11 @@
 # Julia domino chain example
 
-Runs the finance curve workflow using **Julia subprocess dominos** instead of Go builtins.
+Runs the finance curve workflow using **Julia subprocess dominos** backed by [FinanceModels.jl](https://github.com/JuliaActuary/FinanceModels.jl) (ADR 0027).
 
 ## Prerequisites
 
-1. [Julia](https://julialang.org/downloads/) 1.9+
-2. Install domino script dependencies once:
+1. [Julia](https://julialang.org/downloads/) 1.10+
+2. Install domino script dependencies once (includes FinanceModels + locked `Manifest.toml`):
 
 ```bash
 julia --project=controller/julia -e 'using Pkg; Pkg.instantiate()'
@@ -23,17 +23,23 @@ Optional environment:
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `KBL_JULIA_BIN` | `julia` | Julia executable |
-| `KBL_JULIA_PROJECT` | `controller/julia` | Project with `JSON.jl` |
+| `KBL_JULIA_PROJECT` | `controller/julia` | Project with `JSON.jl` + `FinanceModels.jl` |
 
 ## Commands
 
 Domino commands use the `julia:<script>` prefix:
 
-| Command | Script |
-|---------|--------|
-| `julia:identity` | `scripts/identity.jl` |
-| `julia:interpolate` | `scripts/interpolate.jl` |
-| `julia:risk_dv01` | `scripts/risk_dv01.jl` |
+| Command | Script | FinanceModels usage |
+|---------|--------|-------------------|
+| `julia:identity` | `scripts/identity.jl` | Pass-through |
+| `julia:interpolate` | `scripts/interpolate.jl` | `ZeroRateCurve(..., Spline.Linear())`, sample 3Y/7Y |
+| `julia:risk_dv01` | `scripts/risk_dv01.jl` | Parallel +1bp bump, `present_value` on zero-coupon flows |
+
+Rates in snapshot JSON are **percent quotes** (e.g. `4.25`); scripts convert to decimals internally.
+
+## Sample output
+
+After `interpolate`, `method` is `FinanceModels.ZeroRateCurve/Spline.Linear`. After `risk_dv01`, `method` is `FinanceModels.present_value/parallel_1bp`. Numeric results differ from Go `builtin:*` dominos (by design).
 
 ## In-cluster deployment
 
@@ -50,6 +56,15 @@ From repo root:
 make docker-domino-runner-julia
 # or: docker build -f controller/docker/domino-runner-julia/Dockerfile \
 #      -t ghcr.io/jmjava/kbl-domino-runner-julia:latest .
+```
+
+### Kind lab
+
+After `make lab-up`:
+
+```bash
+kubectl apply -f examples/julia-domino-chain/dominochain-init.yaml
+# Ensure runnerImage is kbl-domino-runner-julia:lab
 ```
 
 ### Deploy init chain (kubernetes-init)
