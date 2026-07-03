@@ -2,7 +2,7 @@
 
 Runnable local lab for the full in-cluster stack: **CRDs**, **kbl-controller**, **kbl-tsdb**, **Volcano** batch scheduling, **OpenKruise** hot-swap dominos, and sample finance workloads.
 
-AWS production deployment is scaffolded separately under `infra/aws/cdk/` (see [ADR 0026](../docs/adr/0026-kind-lab-aws-cdk.md)). Volcano integration is in [ADR 0029](../docs/adr/0029-volcano-kind-lab.md); OpenKruise in [ADR 0032](../docs/adr/0032-openkruise-kind-lab.md).
+AWS production deployment is scaffolded separately under `infra/aws/cdk/` (see [ADR 0026](../docs/adr/0026-kind-lab-aws-cdk.md)). See [docs/getting-started.md](../docs/getting-started.md) and [docs/provisioning-runtimes.md](../docs/provisioning-runtimes.md).
 
 ## Prerequisites
 
