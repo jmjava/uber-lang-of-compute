@@ -17,12 +17,12 @@ RUN go mod download
 COPY controller/ ./
 RUN CGO_ENABLED=0 go build -o /domino-runner ./cmd/domino-runner
 
-FROM julia:1.10-bookworm AS julia-deps
+FROM julia:1.12-bookworm AS julia-deps
 WORKDIR /opt/kbl/julia
 COPY controller/julia/ ./
 RUN julia --project=. -e 'using Pkg; Pkg.instantiate(); using JSON; using FinanceModels'
 
-FROM julia:1.10-bookworm
+FROM julia:1.12-bookworm
 WORKDIR /opt/kbl/julia
 COPY --from=julia-deps /opt/kbl/julia /opt/kbl/julia
 COPY --from=go-build /domino-runner /usr/local/bin/domino-runner
