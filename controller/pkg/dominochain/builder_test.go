@@ -39,6 +39,54 @@ func TestBuildInitChainPod(t *testing.T) {
 	}
 }
 
+func TestBuildInitChainPodJuliaEnv(t *testing.T) {
+	chain := &kblv1alpha1.DominoChain{
+		Spec: kblv1alpha1.DominoChainSpec{
+			Runtime: kblv1alpha1.DominoChainRuntimeKubernetesInit,
+			Steps: []kblv1alpha1.DominoStepSpec{
+				{Name: "load", Command: "julia:identity"},
+				{Name: "interp", Command: "julia:interpolate"},
+			},
+			RunnerImage: dominochain.DefaultJuliaRunnerImage,
+		},
+	}
+	chain.Name = "julia-chain"
+	chain.Namespace = "default"
+
+	pod := (&dominochain.Builder{}).BuildInitChainPod(chain)
+	if pod.Spec.InitContainers[0].Image != dominochain.DefaultJuliaRunnerImage {
+		t.Fatalf("expected julia runner image, got %s", pod.Spec.InitContainers[0].Image)
+	}
+
+	env := map[string]string{}
+	for _, e := range pod.Spec.InitContainers[0].Env {
+		env[e.Name] = e.Value
+	}
+	if env["KBL_COMMAND"] != "julia:identity" {
+		t.Fatalf("unexpected KBL_COMMAND: %q", env["KBL_COMMAND"])
+	}
+	if env["KBL_JULIA_PROJECT"] != dominochain.JuliaProjectContainerPath {
+		t.Fatalf("expected KBL_JULIA_PROJECT=%q, got %q", dominochain.JuliaProjectContainerPath, env["KBL_JULIA_PROJECT"])
+	}
+	if env["KBL_JULIA_BIN"] != "julia" {
+		t.Fatalf("expected KBL_JULIA_BIN=julia, got %q", env["KBL_JULIA_BIN"])
+	}
+
+	// Second step reads handoff from prior init container.
+	if pod.Spec.InitContainers[1].Env[1].Value != "/kbl/handoff/output.json" {
+		t.Fatalf("expected handoff input on step 2, got %s", pod.Spec.InitContainers[1].Env[1].Value)
+	}
+}
+
+func TestIsJuliaCommand(t *testing.T) {
+	if !dominochain.IsJuliaCommand("julia:identity") {
+		t.Fatal("expected julia command")
+	}
+	if dominochain.IsJuliaCommand("builtin:identity") {
+		t.Fatal("builtin should not be julia")
+	}
+}
+
 func TestBuildOpenKruisePodPlaceholders(t *testing.T) {
 	chain := &kblv1alpha1.DominoChain{
 		Spec: kblv1alpha1.DominoChainSpec{

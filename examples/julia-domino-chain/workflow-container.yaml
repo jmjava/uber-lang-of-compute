@@ -1,0 +1,46 @@
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: julia-finance-container
+  namespace: default
+  labels:
+    kbl.io/engine: julia
+spec:
+  snapshot:
+    timeSlice: "2025-04-15T00:00:00Z"
+    source:
+      inline:
+        instruments:
+          - instrument_id: US10Y
+            rate: 4.25
+            maturity: "2035-02-15"
+          - instrument_id: US2Y
+            rate: 4.80
+            maturity: "2027-02-15"
+          - instrument_id: US5Y
+            rate: 4.45
+            maturity: "2030-02-15"
+    sealed: true
+  dominos:
+    - name: load-curve-data
+      snapshotRef: snap
+      command: julia:identity
+    - name: interpolate-curve
+      snapshotRef: snap
+      command: julia:interpolate
+      dependsOn: [load-curve-data]
+      inputs:
+        - fromDomino: load-curve-data
+    - name: compute-risk
+      snapshotRef: snap
+      command: julia:risk_dv01
+      dependsOn: [interpolate-curve]
+      inputs:
+        - fromDomino: interpolate-curve
+  execution:
+    chain: [load-curve-data, interpolate-curve, compute-risk]
+    deterministic: true
+    runtime: kubernetes-init
+  provisioning:
+    storePath: /var/kbl/store/julia-finance-container.db
+    nodeLocal: true

@@ -22,7 +22,7 @@ Python execution remains unimplemented (`python:` returns a clear error).
 
 - Julia must be installed on nodes running `julia:` dominos (or baked into `runtimeImage`)
 - First run requires `Pkg.instantiate()` for the bundled Julia project
-- Container/long-running Julia workers deferred; subprocess model is simple and deterministic
+- Container/long-running Julia workers deferred; subprocess model is simple and deterministic — see ADR 0023 for multi-container vs pooled in-cluster models
 - Independent of snapshot mmap/TSDB phases — Julia receives JSON strings like builtins
 
 ## References

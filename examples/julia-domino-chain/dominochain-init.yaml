@@ -1,0 +1,31 @@
+apiVersion: kbl.io/v1alpha1
+kind: DominoChain
+metadata:
+  name: julia-finance-init-chain
+  namespace: default
+spec:
+  runtime: kubernetes-init
+  snapshot:
+    timeSlice: "2025-04-15T00:00:00Z"
+    source:
+      inline:
+        instruments:
+          - instrument_id: US10Y
+            rate: 4.25
+            maturity: "2035-02-15"
+          - instrument_id: US2Y
+            rate: 4.80
+            maturity: "2027-02-15"
+          - instrument_id: US5Y
+            rate: 4.45
+            maturity: "2030-02-15"
+    sealed: true
+  steps:
+    - name: load-curve-data
+      command: julia:identity
+    - name: interpolate-curve
+      command: julia:interpolate
+    - name: compute-risk
+      command: julia:risk_dv01
+  storePath: /var/kbl/store/julia-finance-init.db
+  runnerImage: ghcr.io/jmjava/kbl-domino-runner-julia:latest

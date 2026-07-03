@@ -35,7 +35,40 @@ Domino commands use the `julia:<script>` prefix:
 | `julia:interpolate` | `scripts/interpolate.jl` |
 | `julia:risk_dv01` | `scripts/risk_dv01.jl` |
 
-These mirror the Go `builtin:*` finance chain for deterministic comparison.
+## In-cluster deployment
+
+Phase 14 runs Julia as a **local subprocess** (dev/CI). For Kubernetes, see [ADR 0023](../../docs/adr/0023-julia-deployment-models.md):
+
+- **Recommended:** multi-container — one domino step per container via `domino-runner` + DominoChain (extends ADR 0007)
+- **Optional spike:** single-container multi-process — shared Julia supervisor for lower step latency
+
+### Build Julia runner image
+
+From repo root:
+
+```bash
+make docker-domino-runner-julia
+# or: docker build -f controller/docker/domino-runner-julia/Dockerfile \
+#      -t ghcr.io/jmjava/kbl-domino-runner-julia:latest .
+```
+
+### Deploy init chain (kubernetes-init)
+
+```bash
+kubectl apply -f ../../crds/
+kubectl apply -f dominochain-init.yaml
+./../../controller/bin/kbl-controller --store-root /var/kbl/store
+kubectl get dominochains julia-finance-init-chain -w
+```
+
+Or via Workflow with container runtime:
+
+```bash
+kubectl apply -f workflow-container.yaml
+kubectl get dominochains -l kbl.io/dominochain -w
+```
+
+Each init container runs `domino-runner` with `KBL_JULIA_PROJECT=/opt/kbl/julia` injected automatically for `julia:*` commands.
 
 ## PluggableUniverse
 
