@@ -44,26 +44,37 @@ func TestJuliaFinanceModelsWorkflowRuns(t *testing.T) {
 		t.Fatalf("julia run: %v", err)
 	}
 
-	var risk struct {
+	var greeks struct {
 		Method      string `json:"method"`
-		RiskMetrics []struct {
+		BondGreeks  struct {
+			DV01              float64 `json:"dv01"`
+			ModifiedDuration  float64 `json:"modified_duration"`
+			Convexity         float64 `json:"convexity"`
+		} `json:"bond_greeks"`
+		RateGreeks []struct {
 			Tenor string  `json:"tenor"`
 			DV01  float64 `json:"dv01"`
-		} `json:"risk_metrics"`
+		} `json:"rate_greeks"`
+		OptionGreeks struct {
+			Delta float64 `json:"delta"`
+			Gamma float64 `json:"gamma"`
+			Vega  float64 `json:"vega"`
+		} `json:"option_greeks"`
 	}
-	if err := json.Unmarshal([]byte(result.FinalOutput), &risk); err != nil {
+	if err := json.Unmarshal([]byte(result.FinalOutput), &greeks); err != nil {
 		t.Fatalf("parse final output: %v", err)
 	}
-	if !strings.Contains(risk.Method, "FinanceModels") {
-		t.Fatalf("expected FinanceModels risk method, got %q", risk.Method)
+	if !strings.Contains(greeks.Method, "FinanceModels") {
+		t.Fatalf("expected FinanceModels greeks method, got %q", greeks.Method)
 	}
-	if len(risk.RiskMetrics) != 2 {
-		t.Fatalf("expected 2 risk metrics, got %d", len(risk.RiskMetrics))
+	if greeks.BondGreeks.DV01 <= 0 || greeks.BondGreeks.ModifiedDuration <= 0 {
+		t.Fatalf("unexpected bond greeks: %+v", greeks.BondGreeks)
 	}
-	for _, m := range risk.RiskMetrics {
-		if m.DV01 <= 0 {
-			t.Fatalf("expected positive dv01 for %s, got %v", m.Tenor, m.DV01)
-		}
+	if len(greeks.RateGreeks) != 2 {
+		t.Fatalf("expected 2 rate greeks, got %d", len(greeks.RateGreeks))
+	}
+	if greeks.OptionGreeks.Delta <= 0 || greeks.OptionGreeks.Gamma <= 0 {
+		t.Fatalf("unexpected option greeks: %+v", greeks.OptionGreeks)
 	}
 }
 

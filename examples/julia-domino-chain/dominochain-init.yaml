@@ -25,7 +25,7 @@ spec:
       command: julia:identity
     - name: interpolate-curve
       command: julia:interpolate
-    - name: compute-risk
-      command: julia:risk_dv01
+    - name: compute-greeks
+      command: julia:greeks
   storePath: /var/kbl/store/julia-finance-init.db
   runnerImage: ghcr.io/jmjava/kbl-domino-runner-julia:latest

@@ -20,7 +20,7 @@ RUN CGO_ENABLED=0 go build -o /domino-runner ./cmd/domino-runner
 FROM julia:1.12-bookworm AS julia-deps
 WORKDIR /opt/kbl/julia
 COPY controller/julia/ ./
-RUN julia --project=. -e 'using Pkg; Pkg.instantiate(); using JSON; using FinanceModels'
+RUN julia --project=. -e 'using Pkg; Pkg.instantiate(); using JSON; using FinanceModels; using SpecialFunctions'
 
 FROM julia:1.12-bookworm
 WORKDIR /opt/kbl/julia
