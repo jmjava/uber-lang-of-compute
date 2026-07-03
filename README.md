@@ -1,13 +1,17 @@
 # KBL Compute Engine
 
 ```mermaid
-flowchart LR
-  DSL["Describe<br/>4 DSLs"] --> K8S["Orchestrate<br/>CRDs + controller"]
-  K8S --> FAB["Execute locally<br/>wheel · memo · store"]
-  FAB --> UA["Universe A"]
-  UA -->|sealed events · CDC| KFK[(Kafka)]
-  KFK --> UB["Universe B …N"]
+flowchart TB
+  subgraph r1 [Single fabric]
+    direction LR
+    DSL["Describe<br/>4 DSLs"] --> K8S["Orchestrate<br/>CRDs + controller"] --> FAB["Execute locally<br/>wheel · memo · store"]
+  end
+  subgraph r2 [Cross-fabric · event-driven]
+    direction LR
+    UA["Universe A"] -->|sealed events · CDC| KFK[(Kafka)] --> UB["Universe B …N"]
+  end
   MV["Multiverse<br/>routing rules"] -.-> KFK
+  FAB --> UA
 ```
 
 *Multiple KBL fabrics (**Pluggable Universes**) coordinate **event-driven via Kafka** — not direct controller RPC. Compute stays node-local; only sealed events and replicated results cross universes. See [Multiverse communication](docs/architecture.md#multiverse-communication).*
