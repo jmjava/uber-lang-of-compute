@@ -35,7 +35,12 @@ Domino commands use the `julia:<script>` prefix:
 | `julia:interpolate` | `scripts/interpolate.jl` |
 | `julia:risk_dv01` | `scripts/risk_dv01.jl` |
 
-These mirror the Go `builtin:*` finance chain for deterministic comparison.
+## In-cluster deployment
+
+Phase 14 runs Julia as a **local subprocess** (dev/CI). For Kubernetes, see [ADR 0023](../../docs/adr/0023-julia-deployment-models.md):
+
+- **Recommended:** multi-container — one domino step per container via `domino-runner` + DominoChain (extends ADR 0007)
+- **Optional spike:** single-container multi-process — shared Julia supervisor for lower step latency
 
 ## PluggableUniverse
 

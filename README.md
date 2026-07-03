@@ -209,7 +209,7 @@ julia --project=controller/julia -e 'using Pkg; Pkg.instantiate()'
 ./controller/bin/kbl-compute --workflow examples/julia-domino-chain/workflow.yaml
 ```
 
-See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) and [ADR 0022](docs/adr/0022-julia-pluggable-execution.md).
+See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) and [ADR 0022](docs/adr/0022-julia-pluggable-execution.md). For in-cluster deployment choices (multi-container vs single-container multi-process), see [ADR 0023](docs/adr/0023-julia-deployment-models.md).
 
 ## What the MVP Proves
 
@@ -247,6 +247,7 @@ See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.m
 - [ADR 0020: mmap + TSDB Streaming](docs/adr/0020-mmap-tsdb-streaming.md)
 - [ADR 0021: Zero-Copy Staging](docs/adr/0021-zero-copy-staging.md)
 - [ADR 0022: Julia Pluggable Execution](docs/adr/0022-julia-pluggable-execution.md)
+- [ADR 0023: Julia Deployment Models](docs/adr/0023-julia-deployment-models.md)
 
 ## Roadmap
 
@@ -271,6 +272,7 @@ See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.m
 | **Phase 17** | Direct-bytes snapshot staging — single-pass seal without parse→remarshal |
 | **Phase 18** | mmap path reads (≥1 MiB) + TSDB snapshot data sidecars and streaming `/data` endpoint |
 | **Phase 19** | Zero-copy path staging — metadata-only TSDB envelopes, mmap seal-to-sidecar, streaming `/data` reads |
+| **Phase 20 (next)** | Julia in-cluster — Julia-enabled domino-runner image + E2E DominoChain; optional pooled-runtime spike (ADR 0023) |
 
 ## Performance note
 

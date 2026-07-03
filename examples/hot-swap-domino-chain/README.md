@@ -14,7 +14,7 @@ In-cluster domino execution with emptyDir handoff between steps (ADR 0004 / 0007
 
 Container entrypoint at `controller/cmd/domino-runner`. Reads:
 
-- `KBL_COMMAND` — e.g. `builtin:identity`, `builtin:interpolate`
+- `KBL_COMMAND` — e.g. `builtin:identity`, `julia:interpolate`
 - `KBL_INPUT` — input JSON path
 - `KBL_OUTPUT` — output JSON path
 
@@ -52,6 +52,8 @@ kubectl apply -f workflow-container.yaml
 ```
 
 When `spec.execution.runtime` is set, the Workflow reconciler creates an owned `DominoChain` and waits for completion.
+
+Julia dominos (`julia:*` commands) follow the multi-container model in [ADR 0023](../../docs/adr/0023-julia-deployment-models.md): each step runs `domino-runner` in its own container with Julia installed in the runner image.
 
 ## Handoff layout
 
