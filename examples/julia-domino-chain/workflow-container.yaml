@@ -33,7 +33,7 @@ spec:
         - fromDomino: load-curve-data
     - name: compute-risk
       snapshotRef: snap
-      command: julia:risk_dv01
+      command: julia:greeks
       dependsOn: [interpolate-curve]
       inputs:
         - fromDomino: interpolate-curve

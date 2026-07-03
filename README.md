@@ -204,14 +204,14 @@ See [ADR 0021](docs/adr/0021-zero-copy-staging.md).
 
 ### Julia pluggable execution (Phase 14)
 
-Run dominos via Julia subprocess using `julia:<script>` commands. Curve interpolation and DV01 use **[FinanceModels.jl](https://github.com/JuliaActuary/FinanceModels.jl)** (ADR 0027):
+Run dominos via Julia subprocess using `julia:<script>` commands. Curve math uses **[FinanceModels.jl](https://github.com/JuliaActuary/FinanceModels.jl)**; Greeks (DV01, duration, convexity, Black–Scholes delta/gamma/vega) via `julia:greeks` (ADR 0027, ADR 0028):
 
 ```bash
 julia --project=controller/julia -e 'using Pkg; Pkg.instantiate()'
 ./controller/bin/kbl-compute --workflow examples/julia-domino-chain/workflow.yaml
 ```
 
-See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) and [ADR 0022](docs/adr/0022-julia-pluggable-execution.md). For in-cluster deployment choices (multi-container vs single-container multi-process), see [ADR 0023](docs/adr/0023-julia-deployment-models.md). Build the Julia runner image with `make docker-domino-runner-julia` (ADR 0024). CI builds both runner images on every relevant PR (ADR 0025). Curve math uses FinanceModels.jl (ADR 0027).
+See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) and [ADR 0022](docs/adr/0022-julia-pluggable-execution.md). For in-cluster deployment choices (multi-container vs single-container multi-process), see [ADR 0023](docs/adr/0023-julia-deployment-models.md). Build the Julia runner image with `make docker-domino-runner-julia` (ADR 0024). CI builds both runner images on every relevant PR (ADR 0025).
 
 ### Kind lab + AWS CDK (Phase 22)
 
@@ -273,6 +273,7 @@ See [lab/README.md](lab/README.md), [infra/aws/cdk/README.md](infra/aws/cdk/READ
 - [ADR 0025: Julia Production Wiring](docs/adr/0025-julia-production-wiring.md)
 - [ADR 0026: Kind Lab and AWS CDK](docs/adr/0026-kind-lab-aws-cdk.md)
 - [ADR 0027: Julia FinanceModels Curves](docs/adr/0027-julia-financemodels-curves.md)
+- [ADR 0028: Julia Greeks](docs/adr/0028-julia-greeks.md)
 
 ## Roadmap
 
@@ -300,7 +301,8 @@ See [lab/README.md](lab/README.md), [infra/aws/cdk/README.md](infra/aws/cdk/READ
 | **Phase 20** | Julia in-cluster — Julia domino-runner image, DominoChain env wiring, kubernetes-init examples |
 | **Phase 21** | Julia production wiring — Docker CI, multiverse Julia universe, OpenKruise env parity |
 | **Phase 22** | Kind local lab — controller + TSDB images, kustomize, up/down scripts; AWS CDK scaffold (VPC, ECR, EKS) |
-| **Phase 23 (current)** | Julia FinanceModels curve dominos — `ZeroRateCurve` interpolation, bump-and-reprice DV01, locked Manifest |
+| **Phase 23** | Julia FinanceModels curve dominos — `ZeroRateCurve` interpolation, bump-and-reprice DV01, locked Manifest |
+| **Phase 24 (current)** | Julia Greeks — bond duration/convexity, rate-bucket DV01, Black–Scholes option greeks via `julia:greeks` |
 
 ## Performance note
 

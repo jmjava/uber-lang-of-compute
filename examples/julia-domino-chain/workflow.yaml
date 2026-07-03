@@ -39,6 +39,17 @@ spec:
             - instrument_id: US5Y
               rate: 4.45
               maturity: "2030-02-15"
+          bond:
+            coupon_pct: 4.5
+            frequency: 2
+            maturity_years: 5
+          option:
+            type: call
+            spot: 100
+            strike: 100
+            maturity_years: 1
+            rate_pct: 5
+            volatility: 0.2
       sealed: true
 
   dominos:
@@ -65,16 +76,16 @@ spec:
     - apiVersion: kbl.io/v1alpha1
       kind: Domino
       metadata:
-        name: compute-risk
+        name: compute-greeks
       spec:
         snapshotRef: curve-snapshot-julia
-        command: julia:risk_dv01
+        command: julia:greeks
         dependsOn: [interpolate-curve]
         inputs:
           - fromDomino: interpolate-curve
 
   execution:
-    chain: [load-curve-data, interpolate-curve, compute-risk]
+    chain: [load-curve-data, interpolate-curve, compute-greeks]
     deterministic: true
 
   provisioning:

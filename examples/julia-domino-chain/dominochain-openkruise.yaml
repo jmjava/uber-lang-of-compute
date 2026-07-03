@@ -23,5 +23,5 @@ spec:
     - name: interpolate-curve
       command: julia:interpolate
     - name: compute-risk
-      command: julia:risk_dv01
+      command: julia:greeks
   runnerImage: ghcr.io/jmjava/kbl-domino-runner-julia:latest

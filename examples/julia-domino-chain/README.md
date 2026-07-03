@@ -33,13 +33,14 @@ Domino commands use the `julia:<script>` prefix:
 |---------|--------|-------------------|
 | `julia:identity` | `scripts/identity.jl` | Pass-through |
 | `julia:interpolate` | `scripts/interpolate.jl` | `ZeroRateCurve(..., Spline.Linear())`, sample 3Y/7Y |
-| `julia:risk_dv01` | `scripts/risk_dv01.jl` | Parallel +1bp bump, `present_value` on zero-coupon flows |
+| `julia:greeks` | `scripts/greeks.jl` | Bond DV01/duration/convexity, zero-bucket DV01, Black–Scholes delta/gamma/vega/theta/rho |
+| `julia:risk_dv01` | `scripts/risk_dv01.jl` | Legacy: parallel +1bp DV01 only |
 
 Rates in snapshot JSON are **percent quotes** (e.g. `4.25`); scripts convert to decimals internally.
 
 ## Sample output
 
-After `interpolate`, `method` is `FinanceModels.ZeroRateCurve/Spline.Linear`. After `risk_dv01`, `method` is `FinanceModels.present_value/parallel_1bp`. Numeric results differ from Go `builtin:*` dominos (by design).
+After `interpolate`, `method` is `FinanceModels.ZeroRateCurve/Spline.Linear`. After `greeks`, output includes `bond_greeks`, `rate_greeks`, and `option_greeks` (ADR 0028).
 
 ## In-cluster deployment
 

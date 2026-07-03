@@ -58,5 +58,10 @@ result = Dict(
         "pillars" => [Dict("tenor_years" => t, "rate_pct" => round(r * 100; digits=6)) for (t, r) in zip(tenors, rates)],
     ),
 )
+for key in ("bond", "option")
+    if haskey(payload, key)
+        result[key] = payload[key]
+    end
+end
 
 write(output_path, JSON.json(result))
