@@ -1,4 +1,5 @@
-.PHONY: build test tidy clean docker-domino-runner docker-domino-runner-julia
+.PHONY: build test tidy clean docker-domino-runner docker-domino-runner-julia \
+	docker-kbl-controller docker-kbl-tsdb lab-up lab-down cdk-synth
 
 build:
 	cd controller && go build -o bin/kbl-compute ./cmd/kbl-compute
@@ -16,6 +17,25 @@ docker-domino-runner:
 docker-domino-runner-julia:
 	docker build -f controller/docker/domino-runner-julia/Dockerfile \
 		-t ghcr.io/jmjava/kbl-domino-runner-julia:latest .
+
+docker-kbl-controller:
+	docker build -f controller/docker/kbl-controller/Dockerfile \
+		-t kbl-controller:lab .
+
+docker-kbl-tsdb:
+	docker build -f controller/docker/kbl-tsdb/Dockerfile \
+		-t kbl-tsdb:lab .
+
+lab-up:
+	chmod +x lab/scripts/*.sh
+	./lab/scripts/up.sh
+
+lab-down:
+	chmod +x lab/scripts/*.sh
+	./lab/scripts/down.sh
+
+cdk-synth:
+	cd infra/aws/cdk && npm install && npm run build && npm run synth
 
 tidy:
 	cd controller && go mod tidy

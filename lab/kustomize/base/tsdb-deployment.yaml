@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kbl-tsdb
+  namespace: kbl-system
+  labels:
+    app.kubernetes.io/name: kbl-tsdb
+    app.kubernetes.io/component: node-local-store
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kbl-tsdb
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kbl-tsdb
+    spec:
+      containers:
+        - name: kbl-tsdb
+          image: kbl-tsdb:lab
+          imagePullPolicy: IfNotPresent
+          args:
+            - --addr=:9090
+            - --data-dir=/var/kbl/tsdb
+          ports:
+            - name: http
+              containerPort: 9090
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          volumeMounts:
+            - name: tsdb-data
+              mountPath: /var/kbl/tsdb
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: tsdb-data
+          emptyDir: {}

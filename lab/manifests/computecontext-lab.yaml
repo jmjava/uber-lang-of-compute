@@ -1,0 +1,9 @@
+apiVersion: kbl.io/v1alpha1
+kind: ComputeContext
+metadata:
+  name: default-context
+  namespace: default
+spec:
+  storeType: tsdb
+  storeEndpoint: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+  dataPath: /var/kbl/tsdb

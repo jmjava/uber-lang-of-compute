@@ -1,0 +1,49 @@
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: finance-lab
+  namespace: default
+  labels:
+    kbl.io/domain: finance
+    kbl.io/lab: kind
+spec:
+  snapshot:
+    timeSlice: "2025-04-15T00:00:00Z"
+    source:
+      inline:
+        instruments:
+          - instrument_id: US10Y
+            rate: 4.25
+            maturity: "2035-02-15"
+          - instrument_id: US2Y
+            rate: 4.80
+            maturity: "2027-02-15"
+          - instrument_id: US5Y
+            rate: 4.45
+            maturity: "2030-02-15"
+    sealed: true
+  dominos:
+    - name: load-curve-data
+      snapshotRef: curve-snapshot-2025-04-15
+      command: builtin:identity
+    - name: interpolate-curve
+      snapshotRef: curve-snapshot-2025-04-15
+      command: builtin:interpolate
+      dependsOn: [load-curve-data]
+      inputs:
+        - fromDomino: load-curve-data
+    - name: compute-risk
+      snapshotRef: curve-snapshot-2025-04-15
+      command: builtin:risk-dv01
+      dependsOn: [interpolate-curve]
+      inputs:
+        - fromDomino: interpolate-curve
+  execution:
+    chain: [load-curve-data, interpolate-curve, compute-risk]
+    deterministic: true
+  provisioning:
+    storePath: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+    nodeLocal: true
+  routing:
+    universe: finance-local
+    computeContextRef: default-context
