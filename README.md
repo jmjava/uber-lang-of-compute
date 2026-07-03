@@ -1,28 +1,13 @@
 # KBL Compute Engine
 
 ```mermaid
-flowchart TB
-  subgraph dsl [DSL Layer]
-    direction LR
-    E[Execution]
-    D[Data]
-    P[Provisioning]
-    R[Routing]
-  end
+flowchart LR
+  DSL["Describe<br/>4 DSLs"]
+  K8S["Orchestrate<br/>CRDs + controller"]
+  FAB["Execute<br/>wheel · dominos · memo · store"]
+  RT["Route<br/>multiverse · Kafka"]
 
-  subgraph k8s [CRD + Controller]
-    CRD[Workflow Snapshot DominoChain ComputeWheel …]
-    C[kbl-controller reconcilers]
-  end
-
-  subgraph fabric [Compute Fabric]
-    W[Compute Wheel time slices]
-    M[Memoization + replay log]
-    N[Node-local store / TSDB]
-  end
-
-  dsl --> CRD --> C --> fabric
-  fabric --> MV[Multiverse / Kafka routing]
+  DSL --> K8S --> FAB --> RT
 ```
 
 *System layers — [full diagram set](docs/diagrams.md) (CRDs, runtimes, Kind lab, sequences)*
