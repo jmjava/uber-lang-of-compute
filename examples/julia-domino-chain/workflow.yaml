@@ -1,0 +1,86 @@
+apiVersion: kbl.io/v1alpha1
+kind: PluggableUniverse
+metadata:
+  name: julia-finance-universe
+spec:
+  name: Julia Finance Universe
+  executionEngine:
+    type: julia
+    runtimeImage: ghcr.io/jmjava/kbl-domino-runner:latest
+  dataLayer:
+    type: tsdb
+    config:
+      endpoint: http://127.0.0.1:9090
+---
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: julia-finance-curve-workflow
+  labels:
+    kbl.io/domain: finance
+    kbl.io/engine: julia
+spec:
+  snapshot:
+    apiVersion: kbl.io/v1alpha1
+    kind: Snapshot
+    metadata:
+      name: curve-snapshot-julia
+    spec:
+      timeSlice: "2025-04-15T00:00:00Z"
+      source:
+        inline:
+          instruments:
+            - instrument_id: US10Y
+              rate: 4.25
+              maturity: "2035-02-15"
+            - instrument_id: US2Y
+              rate: 4.80
+              maturity: "2027-02-15"
+            - instrument_id: US5Y
+              rate: 4.45
+              maturity: "2030-02-15"
+      sealed: true
+
+  dominos:
+    - apiVersion: kbl.io/v1alpha1
+      kind: Domino
+      metadata:
+        name: load-curve-data
+      spec:
+        snapshotRef: curve-snapshot-julia
+        command: julia:identity
+        inputs: []
+
+    - apiVersion: kbl.io/v1alpha1
+      kind: Domino
+      metadata:
+        name: interpolate-curve
+      spec:
+        snapshotRef: curve-snapshot-julia
+        command: julia:interpolate
+        dependsOn: [load-curve-data]
+        inputs:
+          - fromDomino: load-curve-data
+
+    - apiVersion: kbl.io/v1alpha1
+      kind: Domino
+      metadata:
+        name: compute-risk
+      spec:
+        snapshotRef: curve-snapshot-julia
+        command: julia:risk_dv01
+        dependsOn: [interpolate-curve]
+        inputs:
+          - fromDomino: interpolate-curve
+
+  execution:
+    chain: [load-curve-data, interpolate-curve, compute-risk]
+    deterministic: true
+
+  provisioning:
+    storePath: /tmp/kbl-julia/store.db
+    nodeLocal: true
+
+  routing:
+    universe: julia-finance-universe
+    computeContextRef: default-context

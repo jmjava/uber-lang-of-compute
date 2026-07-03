@@ -200,6 +200,17 @@ Large path seals write mmap-backed bytes directly to TSDB sidecars without a hea
 
 See [ADR 0021](docs/adr/0021-zero-copy-staging.md).
 
+### Julia pluggable execution (Phase 14)
+
+Run dominos via Julia subprocess using `julia:<script>` commands:
+
+```bash
+julia --project=controller/julia -e 'using Pkg; Pkg.instantiate()'
+./controller/bin/kbl-compute --workflow examples/julia-domino-chain/workflow.yaml
+```
+
+See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) and [ADR 0022](docs/adr/0022-julia-pluggable-execution.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -235,6 +246,7 @@ See [ADR 0021](docs/adr/0021-zero-copy-staging.md).
 - [ADR 0019: Direct-Bytes Staging](docs/adr/0019-direct-bytes-staging.md)
 - [ADR 0020: mmap + TSDB Streaming](docs/adr/0020-mmap-tsdb-streaming.md)
 - [ADR 0021: Zero-Copy Staging](docs/adr/0021-zero-copy-staging.md)
+- [ADR 0022: Julia Pluggable Execution](docs/adr/0022-julia-pluggable-execution.md)
 
 ## Roadmap
 
@@ -253,12 +265,12 @@ See [ADR 0021](docs/adr/0021-zero-copy-staging.md).
 | **Phase 11** | DominoChain container path resolves Workflow CR refs |
 | **Phase 12** | Node-local path snapshot ingestion |
 | **Phase 13** | ComputeWheel workflow template CR references |
-| **Phase 14** | Pluggable execution engines — Julia, Python, and custom runtimes via PluggableUniverse |
+| **Phase 14** | Julia pluggable execution — `julia:` domino commands via subprocess + bundled scripts |
 | **Phase 15** | HTTP/HTTPS snapshot URI ingestion |
 | **Phase 16** | Store-first snapshot reads — hot path skips re-fetching HTTP/path sources |
 | **Phase 17** | Direct-bytes snapshot staging — single-pass seal without parse→remarshal |
 | **Phase 18** | mmap path reads (≥1 MiB) + TSDB snapshot data sidecars and streaming `/data` endpoint |
-| **Phase 19 (current)** | Zero-copy path staging — metadata-only TSDB envelopes, mmap seal-to-sidecar, streaming `/data` reads |
+| **Phase 19** | Zero-copy path staging — metadata-only TSDB envelopes, mmap seal-to-sidecar, streaming `/data` reads |
 
 ## Performance note
 
