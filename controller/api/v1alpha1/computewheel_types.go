@@ -45,6 +45,10 @@ type ComputeWheelSpec struct {
 	MaxRotations int `json:"maxRotations,omitempty"`
 	// PreProvisionNext pre-creates the next slot's Workflow while the current one runs.
 	PreProvisionNext bool `json:"preProvisionNext,omitempty"`
+	// VolcanoQueue is the default Volcano queue for child Workflows using volcano-init (overridable in workflowTemplate.execution).
+	VolcanoQueue string `json:"volcanoQueue,omitempty"`
+	// NodeSelector pins volcano-init domino chains to nodes (overridable in workflowTemplate.provisioning).
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 }
 
 // WorkflowTemplateSpec is the workflow template stamped per context/time slice.

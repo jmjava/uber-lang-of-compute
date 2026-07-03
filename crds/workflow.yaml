@@ -89,6 +89,11 @@ spec:
                         type: string
                     deterministic:
                       type: boolean
+                    runtime:
+                      type: string
+                      enum: [local, kubernetes-init, openkruise, volcano-init]
+                    volcanoQueue:
+                      type: string
                 provisioning:
                   type: object
                   properties:
@@ -96,6 +101,12 @@ spec:
                       type: string
                     nodeLocal:
                       type: boolean
+                    runnerImage:
+                      type: string
+                    nodeSelector:
+                      type: object
+                      additionalProperties:
+                        type: string
                 routing:
                   type: object
                   properties:

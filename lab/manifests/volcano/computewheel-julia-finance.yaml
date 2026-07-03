@@ -1,0 +1,52 @@
+# ComputeWheel drives Julia finance chains via Volcano per time slice (Phase 27).
+apiVersion: kbl.io/v1alpha1
+kind: ComputeWheel
+metadata:
+  name: julia-finance-wheel
+  namespace: default
+  labels:
+    kbl.io/volcano-demo: "true"
+spec:
+  contexts:
+    - default-context
+  timeSliceInterval: 24h
+  maxRotations: 1
+  volcanoQueue: kbl-lab
+  nodeSelector:
+    kbl.io/lab-role: compute
+  schedule:
+    startTimeSlice: "2025-04-15T00:00:00Z"
+  workflowTemplate:
+    snapshot:
+      source:
+        inline:
+          instruments:
+            - instrument_id: US10Y
+              rate: 4.25
+              maturity: "2035-02-15"
+            - instrument_id: US2Y
+              rate: 4.80
+              maturity: "2027-02-15"
+            - instrument_id: US5Y
+              rate: 4.45
+              maturity: "2030-02-15"
+      sealed: true
+    dominos:
+      - name: load-curve-data
+        command: julia:identity
+      - name: interpolate-curve
+        command: julia:interpolate
+        dependsOn: [load-curve-data]
+        inputs:
+          - fromDomino: load-curve-data
+      - name: compute-greeks
+        command: julia:greeks
+        dependsOn: [interpolate-curve]
+        inputs:
+          - fromDomino: interpolate-curve
+    execution:
+      chain: [load-curve-data, interpolate-curve, compute-greeks]
+      deterministic: true
+      runtime: volcano-init
+    provisioning:
+      runnerImage: kbl-domino-runner-julia:lab

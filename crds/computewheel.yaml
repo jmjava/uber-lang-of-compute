@@ -100,6 +100,11 @@ spec:
                             type: string
                         deterministic:
                           type: boolean
+                        runtime:
+                          type: string
+                          enum: [local, kubernetes-init, openkruise, volcano-init]
+                        volcanoQueue:
+                          type: string
                     provisioning:
                       type: object
                       properties:
@@ -107,6 +112,12 @@ spec:
                           type: string
                         nodeLocal:
                           type: boolean
+                        runnerImage:
+                          type: string
+                        nodeSelector:
+                          type: object
+                          additionalProperties:
+                            type: string
                     routing:
                       type: object
                       properties:
@@ -125,6 +136,14 @@ spec:
                   minimum: 0
                 preProvisionNext:
                   type: boolean
+                volcanoQueue:
+                  type: string
+                  description: Default Volcano queue for child Workflows (overridable in workflowTemplate.execution)
+                nodeSelector:
+                  type: object
+                  additionalProperties:
+                    type: string
+                  description: Default nodeSelector for volcano-init chains (overridable in workflowTemplate.provisioning)
             status:
               type: object
               properties:

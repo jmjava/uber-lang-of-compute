@@ -54,7 +54,7 @@ The controller creates the snapshot ConfigMap and Volcano Job on reconcile.
 - Lab and production can drive Volcano from DominoChain CRs — no duplicate manifest maintenance
 - Volcano CRD must be installed (`lab/scripts/install-volcano.sh` or Helm on EKS)
 - `status.podName` stores the Volcano Job name for volcano-init chains (same field as Pod name for other runtimes)
-- ComputeWheel → Volcano queue assignment remains future work (Phase 27+)
+- ComputeWheel → Volcano queue assignment implemented in Phase 27 (ADR 0031)
 
 ## References
 
