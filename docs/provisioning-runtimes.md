@@ -99,13 +99,7 @@ spec:
     - { name: load, command: julia:identity }
 ```
 
-Lab demo: `DominoChain/julia-finance-openkruise` (applied by `make lab-up`).
-
-Flow:
-
-```
-Pod (placeholders) → CRR slot-0 → step completes → CRR slot-1 → … → Completed
-```
+Lab demo: `DominoChain/julia-finance-openkruise` (applied by `make lab-up`). Sequence: [diagrams.md §7](diagrams.md#7-openkruise-hot-swap-sequence).
 
 ## `volcano-init`
 
@@ -150,7 +144,7 @@ spec:
 
 Pipeline: **ComputeWheel → Workflow → DominoChain → VCJob**.
 
-Example: [examples/compute-wheel/wheel-volcano.yaml](../examples/compute-wheel/wheel-volcano.yaml).
+Example: [examples/compute-wheel/wheel-volcano.yaml](../examples/compute-wheel/wheel-volcano.yaml). Pipeline: [diagrams.md §8](diagrams.md#8-volcano-batch-path-lab-demo).
 
 ## Workflow → DominoChain bridge
 

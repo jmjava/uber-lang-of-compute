@@ -1,271 +1,37 @@
 # KBL Compute Engine
 
+```mermaid
+flowchart TB
+  subgraph dsl [DSL Layer]
+    direction LR
+    E[Execution]
+    D[Data]
+    P[Provisioning]
+    R[Routing]
+  end
+
+  subgraph k8s [CRD + Controller]
+    CRD[Workflow Snapshot DominoChain ComputeWheel …]
+    C[kbl-controller reconcilers]
+  end
+
+  subgraph fabric [Compute Fabric]
+    W[Compute Wheel time slices]
+    M[Memoization + replay log]
+    N[Node-local store / TSDB]
+  end
+
+  dsl --> CRD --> C --> fabric
+  fabric --> MV[Multiverse / Kafka routing]
+```
+
+*System layers — [full diagram set](docs/diagrams.md) (CRDs, runtimes, Kind lab, sequences)*
+
 **A time-sliced, data-local, Kubernetes-native compute fabric**
 
 The KBL Compute Engine processes immutable time-sliced data snapshots through modular, deterministic compute dominos placed near local data stores. It uses DSLs/CRDs to describe execution, data, provisioning, and routing — minimizing entropy through snapshot isolation and maximizing reuse through memoized intermediate results.
 
 Derived from the [Uber Language of Compute](https://github.com/jmjava/uber-lang-of-compute) blog series (2020–2025), originally published at **[jmenke.blogspot.com](https://jmenke.blogspot.com/)**.
-
-## Core Concepts
-
-| Term | Role |
-|------|------|
-| **Snapshot** | Immutable data view for a time slice |
-| **Domino** | Single deterministic, referentially transparent compute step |
-| **Compute Context** | Node-associated unit of compute + data locality |
-| **Compute Wheel** | Rotating set of contexts processing time slices |
-| **Pluggable Universe** | Swappable compute environment with its own execution/data/provisioning laws |
-
-See [docs/vocabulary.md](docs/vocabulary.md) for the full glossary.
-
-## Repository Structure
-
-```
-docs/           Vision, architecture, guides, vocabulary, ADRs (start at docs/README.md)
-specs/          Four DSL schemas + workflow example
-crds/           Kubernetes CRD definitions (Snapshot, Domino, Workflow, …)
-controller/     Go runtime — CLI + Kubernetes controller
-lab/            Kind local lab — kustomize, scripts, sample manifests
-infra/          AWS CDK scaffold (EKS + ECR)
-examples/       Finance curve, simple domino chain, node-local TSDB target
-tests/          Snapshot replay, memoization, scheduling (planned)
-```
-
-## MVP: Quick Start
-
-### CLI (local)
-
-```bash
-make build
-
-./controller/bin/kbl-compute \
-  --workflow examples/finance-curve-snapshot/workflow.yaml \
-  --replay-log /tmp/replay.json
-
-# Run again — all dominos reused from memo cache
-./controller/bin/kbl-compute \
-  --workflow examples/finance-curve-snapshot/workflow.yaml \
-  --replay-log /tmp/replay-2.json
-```
-
-### Kubernetes Controller
-
-```bash
-kubectl apply -f crds/
-kubectl apply -f examples/finance-curve-snapshot/workflow-crd.yaml
-./controller/bin/kbl-controller --store-root /tmp/kbl-store
-kubectl get workflows -o wide
-kubectl get configmap finance-curve-replay -o yaml
-```
-
-### Compute Wheel (time-slice rotation)
-
-```bash
-kubectl apply -f examples/compute-wheel/computecontexts.yaml
-kubectl apply -f examples/compute-wheel/wheel.yaml
-kubectl get computewheels -w
-kubectl get workflows -l kbl.io/computewheel=finance-wheel
-```
-
-Run tests:
-
-```bash
-make test
-```
-
-### Multiverse routing (cross-universe)
-
-```bash
-kubectl apply -f examples/multiverse-finance/multiverse.yaml
-kubectl apply -f examples/multiverse-finance/workflow-rates.yaml
-./controller/bin/kbl-controller --store-root /tmp/kbl-store --kafka-brokers kafka:9092
-kubectl get multiverses -o yaml   # status.routedEvents
-```
-
-See [examples/multiverse-finance/README.md](examples/multiverse-finance/README.md) and [ADR 0009](docs/adr/0009-multiverse-routing.md).
-
-### Standalone Snapshot + Domino
-
-```bash
-kubectl apply -f examples/standalone-snapshot-domino/snapshot.yaml
-kubectl apply -f examples/standalone-snapshot-domino/dominos.yaml
-./controller/bin/kbl-controller --store-root /tmp/kbl-store
-kubectl get snapshots,dominos -o wide
-```
-
-See [examples/standalone-snapshot-domino/README.md](examples/standalone-snapshot-domino/README.md) and [ADR 0010](docs/adr/0010-standalone-snapshot-domino.md).
-
-### Read-replica materialization
-
-```bash
-kubectl apply -f examples/multiverse-finance/multiverse.yaml
-# After workflows complete and Multiverse routes events:
-kubectl get readreplicas -o wide
-```
-
-See [ADR 0011](docs/adr/0011-read-replica-materialization.md).
-
-### Debezium CDC sync (Phase 9)
-
-When Multiverse `spec.sync.enabled: true`, workflows publish CDC events and ReadReplicas use `replicationMode: cdc`:
-
-```bash
-kubectl get readreplicas -o jsonpath='{.items[*].spec.replicationMode}'
-```
-
-See [ADR 0012](docs/adr/0012-debezium-cdc-sync.md).
-
-### Workflow CR references (Phase 10)
-
-Reference standalone Snapshot and Domino CRs instead of inline specs:
-
-```bash
-kubectl apply -f examples/standalone-snapshot-domino/snapshot.yaml
-kubectl apply -f examples/standalone-snapshot-domino/dominos.yaml
-kubectl apply -f examples/workflow-snapshot-refs/workflow.yaml
-kubectl get workflows -o wide
-```
-
-See [examples/workflow-snapshot-refs/README.md](examples/workflow-snapshot-refs/README.md) and [ADR 0013](docs/adr/0013-workflow-cr-references.md).
-
-### DominoChain with CR references (Phase 11)
-
-Container/hot-swap workflows can reference standalone CRs:
-
-```bash
-kubectl apply -f examples/standalone-snapshot-domino/snapshot.yaml
-kubectl apply -f examples/standalone-snapshot-domino/dominos.yaml
-kubectl apply -f examples/workflow-snapshot-refs/workflow-container.yaml
-kubectl get dominochains -w
-```
-
-See [ADR 0014](docs/adr/0014-dominochain-cr-references.md).
-
-### Path snapshot ingestion (Phase 12)
-
-Load snapshot data from node-local files for content-addressed sealing:
-
-```bash
-sudo mkdir -p /var/kbl/data && sudo cp examples/path-snapshot/data/curve.json /var/kbl/data/
-kubectl apply -f examples/path-snapshot/snapshot.yaml
-kubectl get snapshots curve-file -o wide
-```
-
-See [examples/path-snapshot/README.md](examples/path-snapshot/README.md) and [ADR 0015](docs/adr/0015-path-snapshot-ingestion.md).
-
-### ComputeWheel CR references (Phase 13)
-
-Wheels can stamp Workflows that reference standalone Snapshot/Domino CRs:
-
-```bash
-kubectl apply -f examples/standalone-snapshot-domino/snapshot.yaml
-kubectl apply -f examples/standalone-snapshot-domino/dominos.yaml
-kubectl apply -f examples/compute-wheel/wheel-refs.yaml
-kubectl get computewheels,workflows -l kbl.io/computewheel=finance-wheel-refs
-```
-
-See [ADR 0016](docs/adr/0016-computewheel-cr-references.md).
-
-### HTTP snapshot ingestion (Phase 15)
-
-Fetch snapshot data from HTTP/HTTPS URIs:
-
-```bash
-cd examples/http-snapshot/data && python3 -m http.server 8080 &
-kubectl apply -f examples/http-snapshot/snapshot.yaml
-kubectl get snapshots curve-http -o wide
-```
-
-See [ADR 0017](docs/adr/0017-http-snapshot-ingestion.md). After seal, domino runs use **store-first** reads (ADR 0018) and do not re-fetch the URI.
-
-### Store-first hot path (Phase 16)
-
-Once a snapshot is sealed into the node-local store, workflow execution reads persisted JSON from the store — no repeat HTTP or path resolution on the hot path.
-
-See [ADR 0018](docs/adr/0018-store-first-snapshot.md).
-
-### Direct-bytes staging (Phase 17)
-
-Seal path/HTTP JSON in one pass — original file bytes persisted without parse→remarshal.
-
-See [ADR 0019](docs/adr/0019-direct-bytes-staging.md).
-
-### mmap + TSDB streaming (Phase 18)
-
-Large path files (≥1 MiB) use mmap on Unix at seal time. TSDB stores snapshot payload sidecars and serves `GET /v1/snapshots/{id}/data` for streaming reads without envelope parsing.
-
-See [ADR 0020](docs/adr/0020-mmap-tsdb-streaming.md).
-
-### Zero-copy snapshot staging (Phase 19)
-
-Large path seals write mmap-backed bytes directly to TSDB sidecars without a heap copy. TSDB envelopes store metadata only; `GET /v1/snapshots/{id}/data` streams sidecar files with `io.Copy`.
-
-See [ADR 0021](docs/adr/0021-zero-copy-staging.md).
-
-### Julia pluggable execution (Phase 14)
-
-Run dominos via Julia subprocess using `julia:<script>` commands. Curve math uses **[FinanceModels.jl](https://github.com/JuliaActuary/FinanceModels.jl)**; Greeks (DV01, duration, convexity, Black–Scholes delta/gamma/vega) via `julia:greeks` (ADR 0027, ADR 0028):
-
-```bash
-julia --project=controller/julia -e 'using Pkg; Pkg.instantiate()'
-./controller/bin/kbl-compute --workflow examples/julia-domino-chain/workflow.yaml
-```
-
-See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) and [ADR 0022](docs/adr/0022-julia-pluggable-execution.md). For in-cluster deployment choices (multi-container vs single-container multi-process), see [ADR 0023](docs/adr/0023-julia-deployment-models.md). Build the Julia runner image with `make docker-domino-runner-julia` (ADR 0024). CI builds both runner images on every relevant PR (ADR 0025).
-
-### Kind lab + AWS CDK (Phase 22)
-
-Runnable in-cluster stack on Kind (controller, TSDB, sample workflow) and AWS CDK scaffold for EKS + ECR:
-
-```bash
-make lab-up          # Kind cluster + images + CRDs + finance-lab workflow
-kubectl get workflows finance-lab -o wide
-make lab-down        # delete Kind cluster
-```
-
-AWS foundation (VPC, ECR, EKS):
-
-```bash
-make cdk-synth       # npm install + CDK synth
-cd infra/aws/cdk && npm run deploy
-```
-
-See [lab/README.md](lab/README.md), [infra/aws/cdk/README.md](infra/aws/cdk/README.md), and [ADR 0026](docs/adr/0026-kind-lab-aws-cdk.md).
-
-### Volcano batch scheduler (Phase 25–27)
-
-Multi-node Kind lab with [Volcano](https://volcano.sh/). **Phase 26:** controller emits VCJobs from `DominoChain` (`runtime: volcano-init`). **Phase 27:** `ComputeWheel` assigns Volcano queue + node affinity per time slice → Workflow → DominoChain → VCJob:
-
-```bash
-make lab-up
-kubectl get wheel julia-finance-wheel -o wide
-kubectl get wf -l kbl.io/computewheel=julia-finance-wheel
-kubectl get vcjob -l kbl.io/volcano-demo=true
-KBL_LAB_VOLCANO=0 make lab-up   # skip Volcano
-```
-
-See [ADR 0029](docs/adr/0029-volcano-kind-lab.md), [ADR 0030](docs/adr/0030-controller-volcano-emission.md), and [ADR 0031](docs/adr/0031-computewheel-volcano-queue.md).
-
-### OpenKruise hot-swap dominos (Phase 28)
-
-Multi-node Kind lab with [OpenKruise](https://openkruise.io/) installed by default. Demo **DominoChain** `julia-finance-openkruise` runs the Julia chain via placeholder Pod slots + ContainerRecreateRequest hot-swap:
-
-```bash
-make lab-up
-kubectl get dchain julia-finance-openkruise -o wide
-kubectl get containerrecreaterequests.apps.kruise.io -l kbl.io/dominochain=julia-finance-openkruise
-KBL_LAB_OPENKURISE=0 make lab-up   # skip OpenKruise
-```
-
-See [ADR 0032](docs/adr/0032-openkruise-kind-lab.md).
-
-## What the MVP Proves
-
-1. **Snapshot isolation** — sealed snapshots gate execution
-2. **Deterministic dominos** — same inputs → same outputs, always
-3. **Node-local storage** — SQLite store at configurable path
-4. **Memoization** — input hash lookup skips recomputation
-5. **Replay log** — audit trail with snapshot ID, domino ID, hashes, reused/recomputed
 
 ## Documentation
 
@@ -282,49 +48,7 @@ See [ADR 0032](docs/adr/0032-openkruise-kind-lab.md).
 | [Kind Lab](lab/README.md) | Local multi-node cluster operations |
 | [Blog — jmenke.blogspot.com](https://jmenke.blogspot.com/) | Original Uber Language of Compute series |
 
-### ADRs (Architecture Decision Records)
-
-All ADRs: [docs/README.md#adrs-by-topic](docs/README.md#adrs-by-topic). Foundation:
-
-- [ADR 0001: Four-DSL Model](docs/adr/0001-four-dsl-model.md)
-- [ADR 0002: Snapshot Isolation](docs/adr/0002-snapshot-isolation.md)
-- [ADR 0003: Node-Local Data](docs/adr/0003-node-local-data.md)
-- [ADR 0004: Hot-Swapped Dominos](docs/adr/0004-hot-swapped-dominos.md)
-
-- [ADR 0005: Kubernetes Controller](docs/adr/0005-kubernetes-controller.md)
-- [ADR 0006: Compute Wheel Rotation](docs/adr/0006-compute-wheel-rotation.md)
-- [ADR 0007: Hot-Swapped Dominos](docs/adr/0007-hot-swapped-dominos-implementation.md)
-- [ADR 0008: Node-Local TSDB](docs/adr/0008-node-local-tsdb.md)
-- [ADR 0009: Multiverse Routing](docs/adr/0009-multiverse-routing.md)
-- [ADR 0010: Standalone Snapshot/Domino](docs/adr/0010-standalone-snapshot-domino.md)
-- [ADR 0011: Read-Replica Materialization](docs/adr/0011-read-replica-materialization.md)
-- [ADR 0012: Debezium CDC Sync](docs/adr/0012-debezium-cdc-sync.md)
-- [ADR 0013: Workflow CR References](docs/adr/0013-workflow-cr-references.md)
-- [ADR 0014: DominoChain CR References](docs/adr/0014-dominochain-cr-references.md)
-- [ADR 0015: Path Snapshot Ingestion](docs/adr/0015-path-snapshot-ingestion.md)
-- [ADR 0016: ComputeWheel CR References](docs/adr/0016-computewheel-cr-references.md)
-- [ADR 0017: HTTP Snapshot Ingestion](docs/adr/0017-http-snapshot-ingestion.md)
-- [ADR 0018: Store-First Snapshot](docs/adr/0018-store-first-snapshot.md)
-- [ADR 0019: Direct-Bytes Staging](docs/adr/0019-direct-bytes-staging.md)
-- [ADR 0020: mmap + TSDB Streaming](docs/adr/0020-mmap-tsdb-streaming.md)
-- [ADR 0021: Zero-Copy Staging](docs/adr/0021-zero-copy-staging.md)
-- [ADR 0022: Julia Pluggable Execution](docs/adr/0022-julia-pluggable-execution.md)
-- [ADR 0023: Julia Deployment Models](docs/adr/0023-julia-deployment-models.md)
-- [ADR 0024: Julia In-Cluster Execution](docs/adr/0024-julia-in-cluster.md)
-- [ADR 0025: Julia Production Wiring](docs/adr/0025-julia-production-wiring.md)
-- [ADR 0026: Kind Lab and AWS CDK](docs/adr/0026-kind-lab-aws-cdk.md)
-- [ADR 0027: Julia FinanceModels Curves](docs/adr/0027-julia-financemodels-curves.md)
-- [ADR 0028: Julia Greeks](docs/adr/0028-julia-greeks.md)
-- [ADR 0029: Volcano Kind Lab](docs/adr/0029-volcano-kind-lab.md)
-- [ADR 0030: Controller Volcano Emission](docs/adr/0030-controller-volcano-emission.md)
-- [ADR 0031: ComputeWheel Volcano Queue](docs/adr/0031-computewheel-volcano-queue.md)
-- [ADR 0032: OpenKruise Kind Lab](docs/adr/0032-openkruise-kind-lab.md)
-- [ADR 0033: Documentation Phase](docs/adr/0033-documentation-phase.md)
-- [ADR 0034: Architecture Diagrams](docs/adr/0034-documentation-diagrams.md)
-
-### Documentation diagrams (Phase 30)
-
-Visual reference with 13 Mermaid diagrams: [docs/diagrams.md](docs/diagrams.md)
+All ADRs: [docs/README.md#adrs-by-topic](docs/README.md#adrs-by-topic). Foundation: [ADR 0001](docs/adr/0001-four-dsl-model.md) (Four-DSL Model), [ADR 0002](docs/adr/0002-snapshot-isolation.md) (Snapshot Isolation), [ADR 0003](docs/adr/0003-node-local-data.md) (Node-Local Data), [ADR 0004](docs/adr/0004-hot-swapped-dominos.md) (Hot-Swapped Dominos).
 
 ## Roadmap
 
@@ -360,6 +84,90 @@ Visual reference with 13 Mermaid diagrams: [docs/diagrams.md](docs/diagrams.md)
 | **Phase 28** | OpenKruise Kind lab — Helm install, Julia hot-swap DominoChain demo via ContainerRecreateRequest |
 | **Phase 29** | Documentation hub — getting-started, provisioning-runtimes guide, architecture refresh |
 | **Phase 30 (current)** | Architecture diagrams — Mermaid visual reference (topology, sequences, troubleshooting) |
+
+## Core Concepts
+
+| Term | Role |
+|------|------|
+| **Snapshot** | Immutable data view for a time slice |
+| **Domino** | Single deterministic, referentially transparent compute step |
+| **Compute Context** | Node-associated unit of compute + data locality |
+| **Compute Wheel** | Rotating set of contexts processing time slices |
+| **Pluggable Universe** | Swappable compute environment with its own execution/data/provisioning laws |
+
+See [docs/vocabulary.md](docs/vocabulary.md) for the full glossary.
+
+## Repository Structure
+
+```
+docs/           Vision, architecture, guides, vocabulary, ADRs (start at docs/README.md)
+specs/          Four DSL schemas + workflow example
+crds/           Kubernetes CRD definitions (Snapshot, Domino, Workflow, …)
+controller/     Go runtime — CLI + Kubernetes controller
+lab/            Kind local lab — kustomize, scripts, sample manifests
+infra/          AWS CDK scaffold (EKS + ECR)
+examples/       Finance curve, simple domino chain, node-local TSDB target
+tests/          Snapshot replay, memoization, scheduling (planned)
+```
+
+## Quick Start
+
+For step-by-step paths (CLI, controller, Kind lab, Volcano, OpenKruise), see **[docs/getting-started.md](docs/getting-started.md)**.
+
+### CLI (local)
+
+```bash
+make build
+
+./controller/bin/kbl-compute \
+  --workflow examples/finance-curve-snapshot/workflow.yaml \
+  --replay-log /tmp/replay.json
+
+# Run again — all dominos reused from memo cache
+./controller/bin/kbl-compute \
+  --workflow examples/finance-curve-snapshot/workflow.yaml \
+  --replay-log /tmp/replay-2.json
+```
+
+### Kind lab (recommended)
+
+```bash
+make lab-up          # Kind cluster + controller + TSDB + Volcano + OpenKruise demos
+kubectl get workflows finance-lab -o wide
+make lab-down        # delete Kind cluster
+```
+
+See [lab/README.md](lab/README.md) for flags (`KBL_LAB_VOLCANO=0`, `KBL_LAB_OPENKURISE=0`) and manifests.
+
+### Kubernetes controller
+
+```bash
+kubectl apply -f crds/
+kubectl apply -f examples/finance-curve-snapshot/workflow-crd.yaml
+./controller/bin/kbl-controller --store-root /tmp/kbl-store
+kubectl get workflows -o wide
+```
+
+Run tests: `make test`
+
+### Examples by topic
+
+| Topic | Example README |
+|-------|----------------|
+| Multiverse routing | [examples/multiverse-finance/README.md](examples/multiverse-finance/README.md) |
+| Standalone Snapshot/Domino | [examples/standalone-snapshot-domino/README.md](examples/standalone-snapshot-domino/README.md) |
+| Workflow CR references | [examples/workflow-snapshot-refs/README.md](examples/workflow-snapshot-refs/README.md) |
+| Path snapshot ingestion | [examples/path-snapshot/README.md](examples/path-snapshot/README.md) |
+| Julia domino chain | [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) |
+| AWS CDK (EKS + ECR) | [infra/aws/cdk/README.md](infra/aws/cdk/README.md) |
+
+## What the MVP Proves
+
+1. **Snapshot isolation** — sealed snapshots gate execution
+2. **Deterministic dominos** — same inputs → same outputs, always
+3. **Node-local storage** — SQLite store at configurable path
+4. **Memoization** — input hash lookup skips recomputation
+5. **Replay log** — audit trail with snapshot ID, domino ID, hashes, reused/recomputed
 
 ## Performance note
 
