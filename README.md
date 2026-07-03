@@ -1,5 +1,32 @@
 # KBL Compute Engine
 
+```mermaid
+flowchart TB
+  subgraph dsl [DSL Layer]
+    direction LR
+    E[Execution]
+    D[Data]
+    P[Provisioning]
+    R[Routing]
+  end
+
+  subgraph k8s [CRD + Controller]
+    CRD[Workflow Snapshot DominoChain ComputeWheel …]
+    C[kbl-controller reconcilers]
+  end
+
+  subgraph fabric [Compute Fabric]
+    W[Compute Wheel time slices]
+    M[Memoization + replay log]
+    N[Node-local store / TSDB]
+  end
+
+  dsl --> CRD --> C --> fabric
+  fabric --> MV[Multiverse / Kafka routing]
+```
+
+*System layers — [full diagram set](docs/diagrams.md) (CRDs, runtimes, Kind lab, sequences)*
+
 **A time-sliced, data-local, Kubernetes-native compute fabric**
 
 The KBL Compute Engine processes immutable time-sliced data snapshots through modular, deterministic compute dominos placed near local data stores. It uses DSLs/CRDs to describe execution, data, provisioning, and routing — minimizing entropy through snapshot isolation and maximizing reuse through memoized intermediate results.
