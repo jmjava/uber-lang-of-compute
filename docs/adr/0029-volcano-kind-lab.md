@@ -39,14 +39,9 @@ The Kind overlay pins **kbl-tsdb** to `kbl.io/tsdb-node=true`, modeling node-loc
 | Resource | Purpose |
 |----------|---------|
 | `Queue` `kbl-lab` | Lab queue with 20 CPU / 64 GiB capability |
-| `ConfigMap` snapshot | Sealed inline instruments JSON (same shape as DominoChain ConfigMap) |
-| `Job` `julia-finance-volcano` | Volcano Job with init-container Julia chain (`julia:identity` → `julia:interpolate` → `julia:greeks`), `schedulerName: volcano`, `nodeSelector: kbl.io/lab-role=compute` |
+| `DominoChain` `julia-finance-volcano` | `runtime: volcano-init` — controller emits Volcano Job + snapshot ConfigMap (Phase 26) |
 
-The Job mirrors `BuildInitChainPod` env/volume layout from `controller/pkg/dominochain/builder.go` but is applied directly in the lab (controller Volcano emission deferred).
-
-### 4. Scope boundary
-
-This phase is **lab-only**. The DominoChain reconciler continues to emit standard Pods. Future work may translate SyncSet/Generation CRs into Volcano Jobs and PodGroups from the controller.
+The emitted Volcano Job mirrors `BuildInitChainPod` env/volume layout from `controller/pkg/dominochain/builder.go`. Phase 26 moved emission into the controller; static VCJob manifests were removed from the lab.
 
 ## Consequences
 
@@ -60,5 +55,6 @@ This phase is **lab-only**. The DominoChain reconciler continues to emit standar
 - ADR 0006 — Compute Wheel Rotation
 - ADR 0007 — Hot-Swapped Dominos Implementation
 - ADR 0026 — Kind Lab and AWS CDK
+- ADR 0030 — Controller Volcano Emission
 - [Volcano documentation](https://volcano.sh/)
 - [Blog: Volcano search](https://jmenke.blogspot.com/search?q=volcano)

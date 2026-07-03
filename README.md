@@ -232,18 +232,19 @@ cd infra/aws/cdk && npm run deploy
 
 See [lab/README.md](lab/README.md), [infra/aws/cdk/README.md](infra/aws/cdk/README.md), and [ADR 0026](docs/adr/0026-kind-lab-aws-cdk.md).
 
-### Volcano batch scheduler (Phase 25)
+### Volcano batch scheduler (Phase 25–26)
 
-Multi-node Kind lab (1 control-plane + 2 workers) with [Volcano](https://volcano.sh/) installed by default. TSDB pins to the Data Pond worker; a demo **VCJob** runs the Julia finance init chain (`julia:identity` → `julia:interpolate` → `julia:greeks`) via `schedulerName: volcano` and queue `kbl-lab`:
+Multi-node Kind lab (1 control-plane + 2 workers) with [Volcano](https://volcano.sh/) installed by default. TSDB pins to the Data Pond worker. **Phase 26:** the controller emits Volcano Jobs from `DominoChain` with `runtime: volcano-init` (no static VCJob manifest):
 
 ```bash
 make lab-up
 kubectl get nodes -L kbl.io/lab-role,kbl.io/tsdb-node
-kubectl get vcjob julia-finance-volcano -o wide
+kubectl get dchain julia-finance-volcano -o wide
+kubectl get vcjob julia-finance-volcano-chain -o wide
 KBL_LAB_VOLCANO=0 make lab-up   # skip Volcano
 ```
 
-See [ADR 0029](docs/adr/0029-volcano-kind-lab.md).
+See [ADR 0029](docs/adr/0029-volcano-kind-lab.md) and [ADR 0030](docs/adr/0030-controller-volcano-emission.md).
 
 ## What the MVP Proves
 
@@ -289,6 +290,7 @@ See [ADR 0029](docs/adr/0029-volcano-kind-lab.md).
 - [ADR 0027: Julia FinanceModels Curves](docs/adr/0027-julia-financemodels-curves.md)
 - [ADR 0028: Julia Greeks](docs/adr/0028-julia-greeks.md)
 - [ADR 0029: Volcano Kind Lab](docs/adr/0029-volcano-kind-lab.md)
+- [ADR 0030: Controller Volcano Emission](docs/adr/0030-controller-volcano-emission.md)
 
 ## Roadmap
 
@@ -318,7 +320,8 @@ See [ADR 0029](docs/adr/0029-volcano-kind-lab.md).
 | **Phase 22** | Kind local lab — controller + TSDB images, kustomize, up/down scripts; AWS CDK scaffold (VPC, ECR, EKS) |
 | **Phase 23** | Julia FinanceModels curve dominos — `ZeroRateCurve` interpolation, bump-and-reprice DV01, locked Manifest |
 | **Phase 24** | Julia Greeks — bond duration/convexity, rate-bucket DV01, Black–Scholes option greeks via `julia:greeks` |
-| **Phase 25 (current)** | Volcano Kind lab — multi-node cluster, Volcano install, queue + Julia finance VCJob, TSDB Data Pond node pin |
+| **Phase 25** | Volcano Kind lab — multi-node cluster, Volcano install, queue + TSDB Data Pond node pin |
+| **Phase 26 (current)** | Controller Volcano emission — `runtime: volcano-init` on DominoChain, reconciler creates VCJob |
 
 ## Performance note
 

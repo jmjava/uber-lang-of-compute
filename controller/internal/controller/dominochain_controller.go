@@ -85,9 +85,41 @@ func (r *DominoChainReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	switch runtime {
 	case kblv1alpha1.DominoChainRuntimeOpenKruise:
 		return r.reconcileOpenKruise(ctx, &chain, logger)
+	case kblv1alpha1.DominoChainRuntimeVolcanoInit:
+		return r.reconcileVolcano(ctx, &chain, logger)
 	default:
 		return r.reconcileInitChain(ctx, &chain, logger)
 	}
+}
+
+func (r *DominoChainReconciler) reconcileVolcano(ctx context.Context, chain *kblv1alpha1.DominoChain, logger interface {
+	Info(msg string, keysAndValues ...interface{})
+}) (ctrl.Result, error) {
+	job := r.builder().BuildVolcanoJob(chain)
+	if err := r.ensureVolcanoJob(ctx, chain, job); err != nil {
+		return r.failChain(ctx, chain, err)
+	}
+
+	chain.Status.PodName = job.GetName()
+	chain.Status.Phase = kblv1alpha1.DominoChainPhaseRunning
+
+	var live unstructured.Unstructured
+	live.SetGroupVersionKind(dominochain.VolcanoJobGVK)
+	if err := r.Get(ctx, client.ObjectKeyFromObject(job), &live); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	if dominochain.IsVolcanoJobComplete(&live) {
+		return r.completeChain(ctx, chain, logger)
+	}
+	if dominochain.IsVolcanoJobFailed(&live) {
+		return r.failChain(ctx, chain, fmt.Errorf("volcano job %s: %s", live.GetName(), dominochain.VolcanoJobStatusMessage(&live)))
+	}
+
+	if err := r.Status().Update(ctx, chain); err != nil {
+		return ctrl.Result{}, err
+	}
+	return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 }
 
 func (r *DominoChainReconciler) reconcileInitChain(ctx context.Context, chain *kblv1alpha1.DominoChain, logger interface {
@@ -284,6 +316,31 @@ func (r *DominoChainReconciler) ensureConfigMap(ctx context.Context, owner *kblv
 	}
 	existing.Data = cm.Data
 	return r.Update(ctx, &existing)
+}
+
+func (r *DominoChainReconciler) ensureVolcanoJob(ctx context.Context, owner *kblv1alpha1.DominoChain, job *unstructured.Unstructured) error {
+	if owner.UID != "" {
+		job.SetOwnerReferences([]metav1.OwnerReference{{
+			APIVersion: "kbl.io/v1alpha1",
+			Kind:       "DominoChain",
+			Name:       owner.Name,
+			UID:        owner.UID,
+		}})
+	}
+
+	var existing unstructured.Unstructured
+	existing.SetGroupVersionKind(dominochain.VolcanoJobGVK)
+	err := r.Get(ctx, client.ObjectKeyFromObject(job), &existing)
+	if apierrors.IsNotFound(err) {
+		if err := r.Create(ctx, job); err != nil {
+			if meta.IsNoMatchError(err) {
+				return fmt.Errorf("volcano Job CRD not installed: %w", err)
+			}
+			return fmt.Errorf("create volcano job: %w", err)
+		}
+		return nil
+	}
+	return err
 }
 
 func (r *DominoChainReconciler) ensurePod(ctx context.Context, owner *kblv1alpha1.DominoChain, pod *corev1.Pod) error {

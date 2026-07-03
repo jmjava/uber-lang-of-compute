@@ -63,12 +63,12 @@ kubectl apply -f "$ROOT/lab/manifests/computecontext-lab.yaml"
 kubectl apply -f "$ROOT/lab/manifests/workflow-lab.yaml"
 
 if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
-  echo "Applying Volcano demo (queue + Julia finance VCJob)..."
+  echo "Applying Volcano demo (queue + DominoChain volcano-init)..."
   kubectl apply -k "$ROOT/lab/manifests/volcano/"
-  echo "Waiting for Volcano Job julia-finance-volcano..."
-  kubectl wait --for=jsonpath='{.status.state.phase}'=Completed \
-    jobs.batch.volcano.sh/julia-finance-volcano --timeout=300s 2>/dev/null || {
-    echo "Volcano Job still running or pending — check: kubectl get vcjob,pods -l kbl.io/volcano-demo=true"
+  echo "Waiting for DominoChain julia-finance-volcano (controller emits VCJob)..."
+  kubectl wait --for=jsonpath='{.status.phase}'=Completed \
+    dominochain/julia-finance-volcano --timeout=300s 2>/dev/null || {
+    echo "DominoChain still running — check: kubectl get dchain,vcjob,pods -l kbl.io/volcano-demo=true"
   }
 fi
 
@@ -78,7 +78,8 @@ echo "  kubectl get nodes -L kbl.io/lab-role,kbl.io/tsdb-node"
 echo "  kubectl get workflows -o wide"
 echo "  kubectl -n kbl-system get pods -o wide"
 if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
-  echo "  kubectl get vcjob julia-finance-volcano -o wide"
+  echo "  kubectl get dchain julia-finance-volcano -o wide"
+  echo "  kubectl get vcjob julia-finance-volcano-chain -o wide"
   echo "  kubectl get pods -l kbl.io/volcano-demo=true"
   echo "  kubectl -n volcano-system get pods"
 fi

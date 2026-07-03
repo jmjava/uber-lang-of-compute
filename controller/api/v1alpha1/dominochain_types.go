@@ -11,6 +11,7 @@ const (
 	DominoChainRuntimeLocal          DominoChainRuntime = "local"
 	DominoChainRuntimeKubernetesInit DominoChainRuntime = "kubernetes-init"
 	DominoChainRuntimeOpenKruise     DominoChainRuntime = "openkruise"
+	DominoChainRuntimeVolcanoInit    DominoChainRuntime = "volcano-init"
 )
 
 // DominoChainPhase represents reconciler lifecycle phase.
@@ -48,6 +49,8 @@ type DominoChainSpec struct {
 	StorePath    string             `json:"storePath,omitempty"`
 	RunnerImage  string             `json:"runnerImage,omitempty"`
 	NodeSelector map[string]string  `json:"nodeSelector,omitempty"`
+	// VolcanoQueue assigns volcano-init Jobs to a Volcano queue (default: "default").
+	VolcanoQueue string `json:"volcanoQueue,omitempty"`
 }
 
 // DominoStepSpec is one domino step in the chain.
