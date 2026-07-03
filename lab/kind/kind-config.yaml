@@ -1,5 +1,7 @@
-# Kind cluster config for the KBL local lab (single control-plane node).
-# Extra mounts persist TSDB/controller store data under /var/kbl on the node.
+# Kind cluster config for the KBL local lab.
+# 1 control-plane + 2 workers sized for a ~64 GiB / 20 CPU host.
+# Workers carry compute labels; one worker is designated for node-local TSDB.
+# Extra mounts persist TSDB/controller store data under /var/kbl on each node.
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: kbl-lab
@@ -10,9 +12,33 @@ nodes:
         kind: InitConfiguration
         nodeRegistration:
           kubeletExtraArgs:
-            node-labels: "kbl.io/lab-node=true"
+            node-labels: "kbl.io/lab-node=true,kbl.io/lab-role=control-plane"
     extraMounts:
-      - hostPath: /tmp/kbl-lab
+      - hostPath: /tmp/kbl-lab/cp
+        containerPath: /var/kbl
+        readOnly: false
+        selinuxRelabel: false
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "kbl.io/lab-node=true,kbl.io/lab-role=compute"
+    extraMounts:
+      - hostPath: /tmp/kbl-lab/w1
+        containerPath: /var/kbl
+        readOnly: false
+        selinuxRelabel: false
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "kbl.io/lab-node=true,kbl.io/lab-role=compute,kbl.io/tsdb-node=true"
+    extraMounts:
+      - hostPath: /tmp/kbl-lab/w2
         containerPath: /var/kbl
         readOnly: false
         selinuxRelabel: false

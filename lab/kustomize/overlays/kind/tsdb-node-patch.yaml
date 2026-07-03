@@ -1,0 +1,11 @@
+# Pin TSDB to the worker labeled kbl.io/tsdb-node=true (node-local data pond).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kbl-tsdb
+  namespace: kbl-system
+spec:
+  template:
+    spec:
+      nodeSelector:
+        kbl.io/tsdb-node: "true"
