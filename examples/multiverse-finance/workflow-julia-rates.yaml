@@ -1,0 +1,40 @@
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: julia-rates-curve
+  namespace: default
+  labels:
+    kbl.io/partition-engine: julia
+spec:
+  snapshot:
+    timeSlice: "2025-04-16T00:00:00Z"
+    source:
+      inline:
+        instruments:
+          - instrument_id: US10Y
+            rate: 4.25
+            maturity: "2035-02-15"
+          - instrument_id: US2Y
+            rate: 4.80
+            maturity: "2027-02-15"
+    sealed: true
+  dominos:
+    - name: load-curve-data
+      snapshotRef: snap
+      command: julia:identity
+    - name: interpolate-curve
+      snapshotRef: snap
+      command: julia:interpolate
+      dependsOn: [load-curve-data]
+      inputs:
+        - fromDomino: load-curve-data
+  execution:
+    chain: [load-curve-data, interpolate-curve]
+    deterministic: true
+    runtime: kubernetes-init
+  provisioning:
+    storePath: http://127.0.0.1:9090
+    nodeLocal: true
+  routing:
+    multiverseRef: finance-multiverse
+    universe: julia-finance

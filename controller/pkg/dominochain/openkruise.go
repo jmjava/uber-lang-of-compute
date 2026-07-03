@@ -3,6 +3,7 @@ package dominochain
 import (
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -36,12 +37,7 @@ func ContainerRecreateRequest(chain *kblv1alpha1.DominoChain, b *Builder, stepIn
 			map[string]interface{}{
 				"name":  containerName,
 				"image": image,
-				"env": []interface{}{
-					map[string]interface{}{"name": "KBL_COMMAND", "value": step.Command},
-					map[string]interface{}{"name": "KBL_INPUT", "value": inputPath(stepIndex)},
-					map[string]interface{}{"name": "KBL_OUTPUT", "value": HandoffMountPath + "/output.json"},
-					map[string]interface{}{"name": "KBL_STEP_NAME", "value": step.Name},
-				},
+				"env":   envVarsToCRR(b.stepEnv(step, inputPath(stepIndex))),
 			},
 		},
 	}, "spec", "template")
@@ -61,6 +57,14 @@ func inputPath(stepIndex int) string {
 		return SnapshotMountPath + "/snapshot.json"
 	}
 	return HandoffMountPath + "/output.json"
+}
+
+func envVarsToCRR(env []corev1.EnvVar) []interface{} {
+	out := make([]interface{}, len(env))
+	for i, e := range env {
+		out[i] = map[string]interface{}{"name": e.Name, "value": e.Value}
+	}
+	return out
 }
 
 // CRRPhase extracts phase from an unstructured CRR status.

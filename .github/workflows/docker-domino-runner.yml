@@ -1,0 +1,37 @@
+name: Docker domino-runner
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'controller/docker/**'
+      - 'controller/cmd/domino-runner/**'
+      - 'controller/julia/**'
+      - 'controller/pkg/**'
+      - '.github/workflows/docker-domino-runner.yml'
+  pull_request:
+    paths:
+      - 'controller/docker/**'
+      - 'controller/cmd/domino-runner/**'
+      - 'controller/julia/**'
+      - 'controller/pkg/**'
+      - '.github/workflows/docker-domino-runner.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build standard domino-runner
+        run: |
+          docker build -f controller/docker/domino-runner/Dockerfile \
+            -t ghcr.io/jmjava/kbl-domino-runner:ci .
+
+      - name: Build Julia domino-runner
+        run: |
+          docker build -f controller/docker/domino-runner-julia/Dockerfile \
+            -t ghcr.io/jmjava/kbl-domino-runner-julia:ci .

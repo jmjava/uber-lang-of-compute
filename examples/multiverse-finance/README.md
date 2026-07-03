@@ -22,6 +22,8 @@ Routes snapshot completion events across **Pluggable Universes** via in-process 
 kubectl apply -f ../../crds/
 kubectl apply -f multiverse.yaml
 kubectl apply -f workflow-rates.yaml
+# Julia partition route (label kbl.io/partition-engine: julia):
+kubectl apply -f workflow-julia-rates.yaml
 
 ./../../controller/bin/kbl-controller \
   --store-root /var/kbl/store \
@@ -29,6 +31,16 @@ kubectl apply -f workflow-rates.yaml
 
 kubectl get multiverses -o yaml
 # status.routedEvents shows routed snapshot completions
+```
+
+## Julia universe
+
+`julia-finance-universe` uses `executionEngine.type: julia` with the Julia domino-runner image. Workflows labeled `kbl.io/partition-engine: julia` route to that universe. Domino steps use `julia:*` commands and run via DominoChain init containers (see [ADR 0024](../../docs/adr/0024-julia-in-cluster.md)).
+
+Build the runner image locally or via CI:
+
+```bash
+make docker-domino-runner-julia
 ```
 
 ## Kafka / Debezium sync

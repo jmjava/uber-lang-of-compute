@@ -68,6 +68,13 @@ kubectl apply -f workflow-container.yaml
 kubectl get dominochains -l kbl.io/dominochain -w
 ```
 
+OpenKruise hot-swap (requires OpenKruise installed):
+
+```bash
+kubectl apply -f dominochain-openkruise.yaml
+kubectl get dominochains julia-finance-openkruise-chain -w
+```
+
 Each init container runs `domino-runner` with `KBL_JULIA_PROJECT=/opt/kbl/julia` injected automatically for `julia:*` commands.
 
 ## PluggableUniverse

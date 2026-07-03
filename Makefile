@@ -1,4 +1,4 @@
-.PHONY: build test tidy clean docker-domino-runner-julia
+.PHONY: build test tidy clean docker-domino-runner docker-domino-runner-julia
 
 build:
 	cd controller && go build -o bin/kbl-compute ./cmd/kbl-compute
@@ -8,6 +8,10 @@ build:
 
 test:
 	cd controller && go test ./...
+
+docker-domino-runner:
+	docker build -f controller/docker/domino-runner/Dockerfile \
+		-t ghcr.io/jmjava/kbl-domino-runner:latest .
 
 docker-domino-runner-julia:
 	docker build -f controller/docker/domino-runner-julia/Dockerfile \
