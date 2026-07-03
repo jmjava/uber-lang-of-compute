@@ -1,6 +1,8 @@
 package engine_test
 
 import (
+	"bytes"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,11 +20,22 @@ func loadTestWorkflow(t *testing.T, name string) *types.Workflow {
 	if err != nil {
 		t.Fatalf("read workflow: %v", err)
 	}
-	var wf types.Workflow
-	if err := yaml.Unmarshal(data, &wf); err != nil {
-		t.Fatalf("parse workflow: %v", err)
+	dec := yaml.NewDecoder(bytes.NewReader(data))
+	for {
+		var wf types.Workflow
+		err := dec.Decode(&wf)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("parse workflow: %v", err)
+		}
+		if wf.Kind == "Workflow" {
+			return &wf
+		}
 	}
-	return &wf
+	t.Fatalf("no Workflow document in %s", path)
+	return nil
 }
 
 func TestSnapshotReplayDeterministic(t *testing.T) {

@@ -1,59 +1,62 @@
 #!/usr/bin/env julia
+# Build a zero-rate curve with FinanceModels.jl and sample 3Y / 7Y tenors.
 using JSON
+using FinanceModels
 
-input_path, output_path = ARGS[1], ARGS[2]
-payload = JSON.parse(read(input_path, String))
+const REFERENCE_YEAR = 2025
 
-instruments = get(payload, "instruments", nothing)
-if instruments === nothing
-    error("interpolate: missing instruments")
+function parse_instruments(payload)
+    instruments = get(payload, "instruments", nothing)
+    instruments === nothing && error("interpolate: missing instruments")
+    return instruments
 end
 
 function maturity_to_years(maturity::AbstractString)
     length(maturity) >= 4 || return 0.0
     year = parse(Int, maturity[1:4])
-    return float(year - 2025)
+    return float(year - REFERENCE_YEAR)
 end
 
-function linear_interp(points, target_tenor)
-    isempty(points) && return 0.0
-    sorted = sort(points, by = p -> p["tenor_years"])
-    if target_tenor <= sorted[1]["tenor_years"]
-        return sorted[1]["rate"]
-    end
-    if target_tenor >= sorted[end]["tenor_years"]
-        return sorted[end]["rate"]
-    end
-    for i in 1:length(sorted)-1
-        a, b = sorted[i], sorted[i+1]
-        if target_tenor >= a["tenor_years"] && target_tenor <= b["tenor_years"]
-            denom = b["tenor_years"] - a["tenor_years"]
-            denom == 0 && return a["rate"]
-            t = (target_tenor - a["tenor_years"]) / denom
-            return a["rate"] + t * (b["rate"] - a["rate"])
-        end
-    end
-    return sorted[end]["rate"]
+function rate_decimal(inst)
+    r = Float64(inst["rate"])
+    # Snapshot rates are quoted in percent (e.g. 4.25); FinanceModels expects decimals.
+    return r / 100.0
 end
+
+function rate_percent(continuous_rate)
+    round(100.0 * continuous_rate.continuous_value; digits=6)
+end
+
+input_path, output_path = ARGS[1], ARGS[2]
+payload = JSON.parse(read(input_path, String))
+instruments = parse_instruments(payload)
 
 points = map(instruments) do inst
     Dict(
-        "maturity" => inst["maturity"],
+        "maturity" => string(inst["maturity"]),
         "rate" => Float64(inst["rate"]),
         "tenor_years" => maturity_to_years(string(inst["maturity"])),
     )
 end
 sort!(points, by = p -> p["maturity"])
 
-interpolated = Dict(
-    "3Y" => linear_interp(points, 3.0),
-    "7Y" => linear_interp(points, 7.0),
-)
+tenors = [p["tenor_years"] for p in points]
+rates = [rate_decimal(inst) for inst in sort(instruments, by = i -> string(i["maturity"]))]
+
+curve = ZeroRateCurve(rates, tenors, Spline.Linear())
+
+interpolated = Dict{String, Float64}()
+for (label, target) in (("3Y" => 3.0), ("7Y" => 7.0))
+    interpolated[label] = rate_percent(zero(curve, target))
+end
 
 result = Dict(
     "curve_points" => points,
     "interpolated" => interpolated,
-    "method" => "linear",
+    "method" => "FinanceModels.ZeroRateCurve/Spline.Linear",
+    "curve" => Dict(
+        "pillars" => [Dict("tenor_years" => t, "rate_pct" => round(r * 100; digits=6)) for (t, r) in zip(tenors, rates)],
+    ),
 )
 
 write(output_path, JSON.json(result))
