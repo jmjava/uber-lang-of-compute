@@ -2,7 +2,23 @@
 
 Visual reference for the KBL Compute Engine. All diagrams use [Mermaid](https://mermaid.js.org/); they render on GitHub and in most Markdown viewers.
 
-See also: [architecture.md](architecture.md), [provisioning-runtimes.md](provisioning-runtimes.md), [getting-started.md](getting-started.md).
+See also: [architecture.md](architecture.md) (§ [Multiverse communication](architecture.md#multiverse-communication)), [provisioning-runtimes.md](provisioning-runtimes.md), [getting-started.md](getting-started.md).
+
+---
+
+## 0. README overview — multiple KBL fabrics
+
+Compact banner used at the top of the root README. Multiple **Pluggable Universes** coordinate via **Multiverse routing + Kafka**; controllers never call each other directly.
+
+```mermaid
+flowchart LR
+  DSL["Describe<br/>4 DSLs"] --> K8S["Orchestrate<br/>CRDs + controller"]
+  K8S --> FAB["Execute locally<br/>wheel · memo · store"]
+  FAB --> UA["Universe A"]
+  UA -->|sealed events · CDC| KFK[(Kafka)]
+  KFK --> UB["Universe B …N"]
+  MV["Multiverse<br/>routing rules"] -.-> KFK
+```
 
 ---
 
@@ -335,24 +351,36 @@ flowchart TD
 
 ---
 
-## 11. Multiverse routing (target)
+## 11. Multiverse routing — multiple KBL fabrics
+
+Event-driven coordination across Pluggable Universes. Works in one cluster (MemoryBus or Kafka) or across clusters sharing a Kafka/MSK backbone. Controllers do **not** peer with each other — only events and replicated sealed results cross universes.
 
 ```mermaid
-flowchart TB
-  subgraph uniA [PluggableUniverse A]
-    WFA[Workflow] --> StoreA[(node-local store)]
+flowchart LR
+  subgraph uniA [Pluggable Universe A]
+    WFA[Workflow + controller]
+    StoreA[(node-local store)]
+    WFA --> StoreA
   end
 
-  subgraph uniB [PluggableUniverse B]
+  subgraph bus [Event bus]
+    MV[Multiverse routing]
+    KFK[(Kafka / MemoryBus / Debezium CDC)]
+    MV -.-> KFK
+  end
+
+  subgraph uniB [Pluggable Universe B …N]
     RRB[ReadReplica]
+    StoreB[(node-local store)]
+    RRB --> StoreB
   end
 
-  MV[Multiverse] -->|routedEvents| Kafka[(Kafka / Debezium)]
-  Kafka --> RRB
-  StoreA -.->|CDC Phase 9| Kafka
+  WFA -->|snapshot completed| KFK
+  StoreA -.->|CDC optional| KFK
+  KFK -->|route + replicate| RRB
 ```
 
-See [ADR 0009](adr/0009-multiverse-routing.md).
+See [ADR 0009](adr/0009-multiverse-routing.md), [ADR 0011](adr/0011-read-replica-materialization.md), [ADR 0012](adr/0012-debezium-cdc-sync.md), and [architecture.md § Multiverse communication](architecture.md#multiverse-communication).
 
 ---
 
