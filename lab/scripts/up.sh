@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CLUSTER_NAME="${KBL_KIND_CLUSTER:-kbl-lab}"
 IMAGE_TAG="${KBL_LAB_IMAGE_TAG:-lab}"
 INSTALL_VOLCANO="${KBL_LAB_VOLCANO:-1}"
+INSTALL_OPENKURISE="${KBL_LAB_OPENKURISE:-1}"
 
 need() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -51,6 +52,11 @@ if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
   "$ROOT/lab/scripts/install-volcano.sh"
 fi
 
+if [[ "${INSTALL_OPENKURISE}" != "0" ]]; then
+  chmod +x "$ROOT/lab/scripts/install-openkruise.sh"
+  "$ROOT/lab/scripts/install-openkruise.sh"
+fi
+
 echo "Deploying KBL platform (controller + TSDB)..."
 kustomize build "$ROOT/lab/kustomize/overlays/kind" | kubectl apply -f -
 
@@ -72,6 +78,16 @@ if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
   }
 fi
 
+if [[ "${INSTALL_OPENKURISE}" != "0" ]]; then
+  echo "Applying OpenKruise demo (Julia hot-swap DominoChain)..."
+  kubectl apply -k "$ROOT/lab/manifests/openkruise/"
+  echo "Waiting for DominoChain julia-finance-openkruise..."
+  kubectl wait --for=jsonpath='{.status.phase}'=Completed \
+    dominochain/julia-finance-openkruise --timeout=300s 2>/dev/null || {
+    echo "OpenKruise chain still running — check: kubectl get dchain,pods,crr -l kbl.io/openkruise-demo=true"
+  }
+fi
+
 echo ""
 echo "Lab is up. Useful commands:"
 echo "  kubectl get nodes -L kbl.io/lab-role,kbl.io/tsdb-node"
@@ -83,6 +99,12 @@ if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
   echo "  kubectl get dchain,vcjob -l kbl.io/volcano-demo=true"
   echo "  kubectl get pods -l kbl.io/volcano-demo=true"
   echo "  kubectl -n volcano-system get pods"
+fi
+if [[ "${INSTALL_OPENKURISE}" != "0" ]]; then
+  echo "  kubectl get dchain julia-finance-openkruise -o wide"
+  echo "  kubectl get pods -l kbl.io/openkruise-demo=true"
+  echo "  kubectl get containerrecreaterequests.apps.kruise.io -l kbl.io/dominochain=julia-finance-openkruise"
+  echo "  kubectl -n kruise-system get pods"
 fi
 echo "  kubectl logs -n kbl-system deployment/kbl-controller -f"
 echo "  kubectl get configmap finance-lab-replay -o yaml   # after workflow completes"

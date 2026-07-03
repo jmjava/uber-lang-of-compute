@@ -246,6 +246,19 @@ KBL_LAB_VOLCANO=0 make lab-up   # skip Volcano
 
 See [ADR 0029](docs/adr/0029-volcano-kind-lab.md), [ADR 0030](docs/adr/0030-controller-volcano-emission.md), and [ADR 0031](docs/adr/0031-computewheel-volcano-queue.md).
 
+### OpenKruise hot-swap dominos (Phase 28)
+
+Multi-node Kind lab with [OpenKruise](https://openkruise.io/) installed by default. Demo **DominoChain** `julia-finance-openkruise` runs the Julia chain via placeholder Pod slots + ContainerRecreateRequest hot-swap:
+
+```bash
+make lab-up
+kubectl get dchain julia-finance-openkruise -o wide
+kubectl get containerrecreaterequests.apps.kruise.io -l kbl.io/dominochain=julia-finance-openkruise
+KBL_LAB_OPENKURISE=0 make lab-up   # skip OpenKruise
+```
+
+See [ADR 0032](docs/adr/0032-openkruise-kind-lab.md).
+
 ## What the MVP Proves
 
 1. **Snapshot isolation** — sealed snapshots gate execution
@@ -292,6 +305,7 @@ See [ADR 0029](docs/adr/0029-volcano-kind-lab.md), [ADR 0030](docs/adr/0030-cont
 - [ADR 0029: Volcano Kind Lab](docs/adr/0029-volcano-kind-lab.md)
 - [ADR 0030: Controller Volcano Emission](docs/adr/0030-controller-volcano-emission.md)
 - [ADR 0031: ComputeWheel Volcano Queue](docs/adr/0031-computewheel-volcano-queue.md)
+- [ADR 0032: OpenKruise Kind Lab](docs/adr/0032-openkruise-kind-lab.md)
 
 ## Roadmap
 
@@ -323,7 +337,8 @@ See [ADR 0029](docs/adr/0029-volcano-kind-lab.md), [ADR 0030](docs/adr/0030-cont
 | **Phase 24** | Julia Greeks — bond duration/convexity, rate-bucket DV01, Black–Scholes option greeks via `julia:greeks` |
 | **Phase 25** | Volcano Kind lab — multi-node cluster, Volcano install, queue + TSDB Data Pond node pin |
 | **Phase 26** | Controller Volcano emission — `runtime: volcano-init` on DominoChain, reconciler creates VCJob |
-| **Phase 27 (current)** | ComputeWheel Volcano queue — wheel assigns queue/nodeSelector/runner per time slice → Workflow → VCJob |
+| **Phase 27** | ComputeWheel Volcano queue — wheel assigns queue/nodeSelector/runner per time slice → Workflow → VCJob |
+| **Phase 28 (current)** | OpenKruise Kind lab — Helm install, Julia hot-swap DominoChain demo via ContainerRecreateRequest |
 
 ## Performance note
 
