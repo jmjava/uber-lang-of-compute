@@ -7,6 +7,7 @@ Central index for the [Uber Language of Compute](https://jmenke.blogspot.com/) i
 | Guide | Audience | Content |
 |-------|----------|---------|
 | [Getting Started](getting-started.md) | New operators | CLI → Kind lab → verify end-to-end |
+| [**Architecture Diagrams**](diagrams.md) | Everyone | **Mermaid** — topology, sequences, troubleshooting |
 | [Kind Lab Guide](../lab/README.md) | Local development | Multi-node Kind, Volcano, OpenKruise, demos |
 | [Provisioning Runtimes](provisioning-runtimes.md) | Platform engineers | `kubernetes-init`, `openkruise`, `volcano-init` compared |
 | [Architecture](architecture.md) | System design | Layers, data flow, control plane |
@@ -90,6 +91,7 @@ Skip components: `KBL_LAB_VOLCANO=0`, `KBL_LAB_OPENKURISE=0`. See [lab/README.md
 
 ### Meta
 - [0033 Documentation Phase](adr/0033-documentation-phase.md)
+- [0034 Architecture Diagrams](adr/0034-documentation-diagrams.md)
 
 ## Phase roadmap
 
@@ -102,6 +104,11 @@ Full phase table lives in the [root README](../README.md#roadmap). Recent phases
 | 25–27 | Volcano install, controller VCJob emission, ComputeWheel queue |
 | 28 | OpenKruise lab demo |
 | 29 | Documentation hub (this index) |
+| 30 | Architecture diagrams — Mermaid visual reference |
+
+## Visual reference
+
+**[diagrams.md](diagrams.md)** — 13 diagrams: DSL layers, Compute Wheel, Kind lab topology, init/OpenKruise/Volcano sequences, memoization, troubleshooting, AWS target.
 
 ## Component READMEs
 

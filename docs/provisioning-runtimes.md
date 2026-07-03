@@ -2,6 +2,8 @@
 
 How KBL executes domino chains in-cluster. Each runtime is selected via `DominoChain.spec.runtime` or `Workflow.spec.execution.runtime`.
 
+**Full diagram set:** [diagrams.md](diagrams.md) (§5–8: runtime comparison, init pod, OpenKruise, Volcano pipeline).
+
 ## Overview
 
 ```mermaid
@@ -69,7 +71,7 @@ spec:
     - { name: interp, command: julia:interpolate }
 ```
 
-Example: [examples/julia-domino-chain/dominochain-init.yaml](../examples/julia-domino-chain/dominochain-init.yaml).
+Example: [examples/julia-domino-chain/dominochain-init.yaml](../examples/julia-domino-chain/dominochain-init.yaml). Pod layout: [diagrams.md §6](diagrams.md#6-kubernetes-init-pod-anatomy).
 
 ### Environment (all container runtimes)
 

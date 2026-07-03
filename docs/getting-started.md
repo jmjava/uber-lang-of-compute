@@ -2,6 +2,25 @@
 
 Three paths into the KBL Compute Engine, from fastest local validation to full in-cluster lab.
 
+**Diagrams:** [diagrams.md](diagrams.md) — lab topology, runtime sequences, troubleshooting flowchart.
+
+## Path overview
+
+```mermaid
+flowchart LR
+  subgraph paths [Choose your path]
+    P1[Path 1 CLI<br/>kbl-compute]
+    P2[Path 2 Kind lab<br/>make lab-up]
+    P3[Path 3 Manual K8s<br/>kubectl + controller]
+  end
+
+  P1 --> R1[Replay log + memoization]
+  P2 --> R2[Volcano wheel + OpenKruise + TSDB]
+  P3 --> R3[Workflow / DominoChain CRs]
+
+  P2 --> D[diagrams.md §4 §12]
+```
+
 ## Prerequisites
 
 | Path | Requires |
@@ -82,7 +101,7 @@ kubectl logs -l kbl.io/openkruise-demo=true -c slot-2-compute-greeks
 make lab-down
 ```
 
-Detailed lab options: [lab/README.md](../lab/README.md).
+Detailed lab options: [lab/README.md](../lab/README.md). Stuck? [diagrams.md §12 — troubleshooting](diagrams.md#12-kind-lab-troubleshooting).
 
 ---
 
@@ -114,7 +133,7 @@ For container runtimes (`kubernetes-init`, `openkruise`, `volcano-init`), apply 
 | `openkruise` | Hot-swap slots, player-piano | `DominoChain/julia-finance-openkruise` |
 | `volcano-init` | Batch scheduler, gang scheduling | `ComputeWheel/julia-finance-wheel` |
 
-Full comparison: [provisioning-runtimes.md](provisioning-runtimes.md).
+Full comparison: [provisioning-runtimes.md](provisioning-runtimes.md). Diagrams: [diagrams.md §5–8](diagrams.md#5-provisioning-runtimes-compared).
 
 ---
 

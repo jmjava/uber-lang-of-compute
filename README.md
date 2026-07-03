@@ -21,7 +21,7 @@ See [docs/vocabulary.md](docs/vocabulary.md) for the full glossary.
 ## Repository Structure
 
 ```
-docs/           Vision, architecture, vocabulary, ADRs
+docs/           Vision, architecture, guides, vocabulary, ADRs (start at docs/README.md)
 specs/          Four DSL schemas + workflow example
 crds/           Kubernetes CRD definitions (Snapshot, Domino, Workflow, …)
 controller/     Go runtime — CLI + Kubernetes controller
@@ -274,6 +274,7 @@ See [ADR 0032](docs/adr/0032-openkruise-kind-lab.md).
 | Guide | Description |
 |-------|-------------|
 | [Getting Started](docs/getting-started.md) | CLI → Kind lab → verify Volcano + OpenKruise |
+| [**Architecture Diagrams**](docs/diagrams.md) | Mermaid — topology, runtimes, troubleshooting |
 | [Architecture](docs/architecture.md) | System layers, data flow, runtimes |
 | [Provisioning Runtimes](docs/provisioning-runtimes.md) | `kubernetes-init`, `openkruise`, `volcano-init` |
 | [Vocabulary](docs/vocabulary.md) | Glossary |
@@ -319,20 +320,11 @@ All ADRs: [docs/README.md#adrs-by-topic](docs/README.md#adrs-by-topic). Foundati
 - [ADR 0031: ComputeWheel Volcano Queue](docs/adr/0031-computewheel-volcano-queue.md)
 - [ADR 0032: OpenKruise Kind Lab](docs/adr/0032-openkruise-kind-lab.md)
 - [ADR 0033: Documentation Phase](docs/adr/0033-documentation-phase.md)
+- [ADR 0034: Architecture Diagrams](docs/adr/0034-documentation-diagrams.md)
 
-### Documentation phase (Phase 29)
+### Documentation diagrams (Phase 30)
 
-Consolidated operator docs:
-
-```bash
-# Read the hub
-cat docs/README.md
-
-# Follow the getting-started path
-open docs/getting-started.md
-```
-
-See [ADR 0033](docs/adr/0033-documentation-phase.md).
+Visual reference with 13 Mermaid diagrams: [docs/diagrams.md](docs/diagrams.md)
 
 ## Roadmap
 
@@ -366,7 +358,8 @@ See [ADR 0033](docs/adr/0033-documentation-phase.md).
 | **Phase 26** | Controller Volcano emission — `runtime: volcano-init` on DominoChain, reconciler creates VCJob |
 | **Phase 27** | ComputeWheel Volcano queue — wheel assigns queue/nodeSelector/runner per time slice → Workflow → VCJob |
 | **Phase 28** | OpenKruise Kind lab — Helm install, Julia hot-swap DominoChain demo via ContainerRecreateRequest |
-| **Phase 29 (current)** | Documentation hub — getting-started, provisioning-runtimes guide, architecture refresh, example cross-links |
+| **Phase 29** | Documentation hub — getting-started, provisioning-runtimes guide, architecture refresh |
+| **Phase 30 (current)** | Architecture diagrams — Mermaid visual reference (topology, sequences, troubleshooting) |
 
 ## Performance note
 

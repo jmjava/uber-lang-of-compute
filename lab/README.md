@@ -11,7 +11,9 @@ AWS production deployment is scaffolded separately under `infra/aws/cdk/` (see [
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [Kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/) (`kubectl kustomize` also works)
 
-Recommended host: **64 GiB RAM / 20 CPU** for the 3-node Kind cluster plus Volcano demo Job.
+Recommended host: **64 GiB RAM / 20 CPU** for the 3-node Kind cluster plus Volcano and OpenKruise demos.
+
+**Diagrams:** [docs/diagrams.md §4 — Kind lab topology](../docs/diagrams.md#4-kind-lab-topology), [§12 — troubleshooting](../docs/diagrams.md#12-kind-lab-troubleshooting).
 
 ## Quick start
 
@@ -65,10 +67,12 @@ Images are built locally as `*:lab` and loaded into Kind (`kind load docker-imag
 
 ### Cluster topology
 
+See [docs/diagrams.md §4](../docs/diagrams.md#4-kind-lab-topology) for the full Mermaid diagram.
+
 ```
 control-plane   kbl.io/lab-role=control-plane
-worker w1       kbl.io/lab-role=compute
-worker w2       kbl.io/lab-role=compute, kbl.io/tsdb-node=true  ← TSDB pinned here
+worker w1       kbl.io/lab-role=compute          ← VCJob pods, OpenKruise chain
+worker w2       kbl.io/lab-role=compute, kbl.io/tsdb-node=true  ← TSDB + Data Pond
 ```
 
 ## Verify
@@ -106,9 +110,9 @@ kubectl apply -f examples/julia-domino-chain/dominochain-init.yaml
 # Edit runnerImage to kbl-domino-runner-julia:lab for Julia chains in Kind
 ```
 
-The Volcano demo applies a **ComputeWheel** that rotates one time slice and drives Workflow → DominoChain → VCJob ([ADR 0031](../docs/adr/0031-computewheel-volcano-queue.md)).
+See [ADR 0031](../docs/adr/0031-computewheel-volcano-queue.md). Pipeline diagram: [diagrams.md §8](../docs/diagrams.md#8-volcano-batch-path-lab-demo).
 
-The OpenKruise demo applies a **DominoChain** with placeholder slots and sequential ContainerRecreateRequests ([ADR 0032](../docs/adr/0032-openkruise-kind-lab.md)).
+The OpenKruise demo applies a **DominoChain** with placeholder slots and sequential ContainerRecreateRequests ([ADR 0032](../docs/adr/0032-openkruise-kind-lab.md)). Sequence diagram: [diagrams.md §7](../docs/diagrams.md#7-openkruise-hot-swap-sequence).
 
 ```bash
 kubectl logs -l kbl.io/openkruise-demo=true -c slot-2-compute-greeks
@@ -126,6 +130,8 @@ lab/
   manifests/volcano/          # Queue + ComputeWheel volcano-init demo
   manifests/openkruise/     # Julia hot-swap DominoChain demo
   scripts/up.sh | down.sh | install-volcano.sh | install-openkruise.sh
+
+Visual guides: [docs/diagrams.md](../docs/diagrams.md)
 ```
 
 ## AWS (CDK)

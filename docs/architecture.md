@@ -1,5 +1,7 @@
 # Architecture
 
+Visual diagrams: **[diagrams.md](diagrams.md)** (Mermaid — Kind lab topology, runtimes, Compute Wheel, troubleshooting).
+
 ## System Overview
 
 ```
@@ -46,6 +48,33 @@
 │                    Multiverse Routing Layer                      │
 │         Debezium/Kafka · Pluggable Universes · Time slices       │
 └─────────────────────────────────────────────────────────────────┘
+```
+
+### Layer model (Mermaid)
+
+```mermaid
+flowchart TB
+  subgraph dsl [DSL Layer]
+    direction LR
+    E[Execution]
+    D[Data]
+    P[Provisioning]
+    R[Routing]
+  end
+
+  subgraph k8s [CRD + Controller]
+    CRD[Workflow Snapshot DominoChain ComputeWheel …]
+    C[kbl-controller reconcilers]
+  end
+
+  subgraph fabric [Compute Fabric]
+    W[Compute Wheel time slices]
+    M[Memoization + replay log]
+    N[Node-local store / TSDB]
+  end
+
+  dsl --> CRD --> C --> fabric
+  fabric --> MV[Multiverse / Kafka routing]
 ```
 
 ## Component Layers
@@ -103,7 +132,7 @@ Domino chains run on Kubernetes via `DominoChain.spec.runtime` (or `Workflow.spe
 | `openkruise` | Placeholder Pod + ContainerRecreateRequest per step | Player-piano hot-swap |
 | `volcano-init` | Volcano Job with init-container task | SyncSet / batch scheduling |
 
-See [provisioning-runtimes.md](./provisioning-runtimes.md) for full comparison and Kind lab demos.
+See [provisioning-runtimes.md](./provisioning-runtimes.md) and [diagrams.md §5–8](./diagrams.md#5-provisioning-runtimes-compared) for visual runtime comparisons.
 
 ### Kind lab stack (Phases 22–28)
 
@@ -118,7 +147,7 @@ lab/scripts/up.sh
   → julia-finance-openkruise DominoChain (openkruise)
 ```
 
-TSDB pins to the Data Pond worker (`kbl.io/tsdb-node=true`). See [lab/README.md](../lab/README.md).
+TSDB pins to the Data Pond worker (`kbl.io/tsdb-node=true`). See [lab/README.md](../lab/README.md) and [diagrams.md §4](./diagrams.md#4-kind-lab-topology).
 
 ## MVP Data Flow
 
