@@ -209,7 +209,7 @@ julia --project=controller/julia -e 'using Pkg; Pkg.instantiate()'
 ./controller/bin/kbl-compute --workflow examples/julia-domino-chain/workflow.yaml
 ```
 
-See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) and [ADR 0022](docs/adr/0022-julia-pluggable-execution.md). For in-cluster deployment choices (multi-container vs single-container multi-process), see [ADR 0023](docs/adr/0023-julia-deployment-models.md).
+See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.md) and [ADR 0022](docs/adr/0022-julia-pluggable-execution.md). For in-cluster deployment choices (multi-container vs single-container multi-process), see [ADR 0023](docs/adr/0023-julia-deployment-models.md). Build the Julia runner image with `make docker-domino-runner-julia` (ADR 0024).
 
 ## What the MVP Proves
 
@@ -248,6 +248,7 @@ See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.m
 - [ADR 0021: Zero-Copy Staging](docs/adr/0021-zero-copy-staging.md)
 - [ADR 0022: Julia Pluggable Execution](docs/adr/0022-julia-pluggable-execution.md)
 - [ADR 0023: Julia Deployment Models](docs/adr/0023-julia-deployment-models.md)
+- [ADR 0024: Julia In-Cluster Execution](docs/adr/0024-julia-in-cluster.md)
 
 ## Roadmap
 
@@ -272,7 +273,7 @@ See [examples/julia-domino-chain/README.md](examples/julia-domino-chain/README.m
 | **Phase 17** | Direct-bytes snapshot staging — single-pass seal without parse→remarshal |
 | **Phase 18** | mmap path reads (≥1 MiB) + TSDB snapshot data sidecars and streaming `/data` endpoint |
 | **Phase 19** | Zero-copy path staging — metadata-only TSDB envelopes, mmap seal-to-sidecar, streaming `/data` reads |
-| **Phase 20 (next)** | Julia in-cluster — Julia-enabled domino-runner image + E2E DominoChain; optional pooled-runtime spike (ADR 0023) |
+| **Phase 20 (current)** | Julia in-cluster — Julia domino-runner image, DominoChain env wiring, kubernetes-init examples |
 
 ## Performance note
 

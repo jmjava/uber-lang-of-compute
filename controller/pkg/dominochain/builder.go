@@ -3,6 +3,7 @@ package dominochain
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +18,10 @@ const (
 	SnapshotVolumeName = "snapshot"
 	PlaceholderImage  = "registry.k8s.io/pause:3.9"
 	DefaultRunnerImage = "ghcr.io/jmjava/kbl-domino-runner:latest"
+	// DefaultJuliaRunnerImage includes Julia + pre-instantiated controller/julia project (Phase 20).
+	DefaultJuliaRunnerImage = "ghcr.io/jmjava/kbl-domino-runner-julia:latest"
+	// JuliaProjectContainerPath is KBL_JULIA_PROJECT inside the Julia runner image.
+	JuliaProjectContainerPath = "/opt/kbl/julia"
 	LabelManagedBy    = "app.kubernetes.io/managed-by"
 	LabelDominoChain  = "kbl.io/dominochain"
 )
@@ -174,12 +179,24 @@ func (b *Builder) stepCommand(step kblv1alpha1.DominoStepSpec) []string {
 }
 
 func (b *Builder) stepEnv(step kblv1alpha1.DominoStepSpec, inputPath string) []corev1.EnvVar {
-	return []corev1.EnvVar{
+	env := []corev1.EnvVar{
 		{Name: "KBL_COMMAND", Value: step.Command},
 		{Name: "KBL_INPUT", Value: inputPath},
 		{Name: "KBL_OUTPUT", Value: filepath.Join(HandoffMountPath, "output.json")},
 		{Name: "KBL_STEP_NAME", Value: step.Name},
 	}
+	if IsJuliaCommand(step.Command) {
+		env = append(env,
+			corev1.EnvVar{Name: "KBL_JULIA_PROJECT", Value: JuliaProjectContainerPath},
+			corev1.EnvVar{Name: "KBL_JULIA_BIN", Value: "julia"},
+		)
+	}
+	return env
+}
+
+// IsJuliaCommand reports whether a domino command dispatches to the Julia executor.
+func IsJuliaCommand(command string) bool {
+	return strings.HasPrefix(command, "julia:")
 }
 
 func handoffMounts() []corev1.VolumeMount {
