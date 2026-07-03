@@ -4,7 +4,7 @@
 
 The KBL Compute Engine processes immutable time-sliced data snapshots through modular, deterministic compute dominos placed near local data stores. It uses DSLs/CRDs to describe execution, data, provisioning, and routing — minimizing entropy through snapshot isolation and maximizing reuse through memoized intermediate results.
 
-Derived from the [Uber Language of Compute](https://github.com/jmjava/uber-lang-of-compute) [blog series](http://jmenke.blogspot.com/) (2020–2025).
+Derived from the [Uber Language of Compute](https://github.com/jmjava/uber-lang-of-compute) blog series (2020–2025), originally published at **[jmenke.blogspot.com](https://jmenke.blogspot.com/)**.
 
 ## Core Concepts
 
@@ -242,6 +242,7 @@ See [lab/README.md](lab/README.md), [infra/aws/cdk/README.md](infra/aws/cdk/READ
 
 ## Documentation
 
+- [Uber Language of Compute blog — jmenke.blogspot.com](https://jmenke.blogspot.com/)
 - [Vision](docs/vision.md)
 - [Architecture](docs/architecture.md)
 - [Vocabulary](docs/vocabulary.md)
