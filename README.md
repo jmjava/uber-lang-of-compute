@@ -21,7 +21,7 @@ See [docs/vocabulary.md](docs/vocabulary.md) for the full glossary.
 ## Repository Structure
 
 ```
-docs/           Vision, architecture, vocabulary, ADRs
+docs/           Vision, architecture, guides, vocabulary, ADRs (start at docs/README.md)
 specs/          Four DSL schemas + workflow example
 crds/           Kubernetes CRD definitions (Snapshot, Domino, Workflow, …)
 controller/     Go runtime — CLI + Kubernetes controller
@@ -269,10 +269,23 @@ See [ADR 0032](docs/adr/0032-openkruise-kind-lab.md).
 
 ## Documentation
 
-- [Uber Language of Compute blog — jmenke.blogspot.com](https://jmenke.blogspot.com/)
-- [Vision](docs/vision.md)
-- [Architecture](docs/architecture.md)
-- [Vocabulary](docs/vocabulary.md)
+**Start here:** [docs/README.md](docs/README.md) — central index, blog mapping, examples, ADRs by topic.
+
+| Guide | Description |
+|-------|-------------|
+| [Getting Started](docs/getting-started.md) | CLI → Kind lab → verify Volcano + OpenKruise |
+| [**Architecture Diagrams**](docs/diagrams.md) | Mermaid — topology, runtimes, troubleshooting |
+| [Architecture](docs/architecture.md) | System layers, data flow, runtimes |
+| [Provisioning Runtimes](docs/provisioning-runtimes.md) | `kubernetes-init`, `openkruise`, `volcano-init` |
+| [Vocabulary](docs/vocabulary.md) | Glossary |
+| [Vision](docs/vision.md) | Design goals |
+| [Kind Lab](lab/README.md) | Local multi-node cluster operations |
+| [Blog — jmenke.blogspot.com](https://jmenke.blogspot.com/) | Original Uber Language of Compute series |
+
+### ADRs (Architecture Decision Records)
+
+All ADRs: [docs/README.md#adrs-by-topic](docs/README.md#adrs-by-topic). Foundation:
+
 - [ADR 0001: Four-DSL Model](docs/adr/0001-four-dsl-model.md)
 - [ADR 0002: Snapshot Isolation](docs/adr/0002-snapshot-isolation.md)
 - [ADR 0003: Node-Local Data](docs/adr/0003-node-local-data.md)
@@ -306,6 +319,12 @@ See [ADR 0032](docs/adr/0032-openkruise-kind-lab.md).
 - [ADR 0030: Controller Volcano Emission](docs/adr/0030-controller-volcano-emission.md)
 - [ADR 0031: ComputeWheel Volcano Queue](docs/adr/0031-computewheel-volcano-queue.md)
 - [ADR 0032: OpenKruise Kind Lab](docs/adr/0032-openkruise-kind-lab.md)
+- [ADR 0033: Documentation Phase](docs/adr/0033-documentation-phase.md)
+- [ADR 0034: Architecture Diagrams](docs/adr/0034-documentation-diagrams.md)
+
+### Documentation diagrams (Phase 30)
+
+Visual reference with 13 Mermaid diagrams: [docs/diagrams.md](docs/diagrams.md)
 
 ## Roadmap
 
@@ -338,7 +357,9 @@ See [ADR 0032](docs/adr/0032-openkruise-kind-lab.md).
 | **Phase 25** | Volcano Kind lab — multi-node cluster, Volcano install, queue + TSDB Data Pond node pin |
 | **Phase 26** | Controller Volcano emission — `runtime: volcano-init` on DominoChain, reconciler creates VCJob |
 | **Phase 27** | ComputeWheel Volcano queue — wheel assigns queue/nodeSelector/runner per time slice → Workflow → VCJob |
-| **Phase 28 (current)** | OpenKruise Kind lab — Helm install, Julia hot-swap DominoChain demo via ContainerRecreateRequest |
+| **Phase 28** | OpenKruise Kind lab — Helm install, Julia hot-swap DominoChain demo via ContainerRecreateRequest |
+| **Phase 29** | Documentation hub — getting-started, provisioning-runtimes guide, architecture refresh |
+| **Phase 30 (current)** | Architecture diagrams — Mermaid visual reference (topology, sequences, troubleshooting) |
 
 ## Performance note
 

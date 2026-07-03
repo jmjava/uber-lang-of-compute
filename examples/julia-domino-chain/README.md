@@ -44,10 +44,13 @@ After `interpolate`, `method` is `FinanceModels.ZeroRateCurve/Spline.Linear`. Af
 
 ## In-cluster deployment
 
-Phase 14 runs Julia as a **local subprocess** (dev/CI). For Kubernetes, see [ADR 0023](../../docs/adr/0023-julia-deployment-models.md):
+Phase 14 runs Julia as a **local subprocess** (dev/CI). For Kubernetes, see [ADR 0023](../../docs/adr/0023-julia-deployment-models.md) and [docs/provisioning-runtimes.md](../../docs/provisioning-runtimes.md).
 
-- **Recommended:** multi-container — one domino step per container via `domino-runner` + DominoChain (extends ADR 0007)
-- **Optional spike:** single-container multi-process — shared Julia supervisor for lower step latency
+| Runtime | Manifest | Lab demo (after `make lab-up`) |
+|---------|----------|------------------------------|
+| `kubernetes-init` | `dominochain-init.yaml` | Apply manually |
+| `openkruise` | `dominochain-openkruise.yaml` | `DominoChain/julia-finance-openkruise` |
+| `volcano-init` | `dominochain-volcano-init.yaml` | via `ComputeWheel/julia-finance-wheel` |
 
 ### Build Julia runner image
 
@@ -61,12 +64,23 @@ make docker-domino-runner-julia
 
 ### Kind lab
 
-After `make lab-up`:
-
 ```bash
-kubectl apply -f examples/julia-domino-chain/dominochain-init.yaml
-# Ensure runnerImage is kbl-domino-runner-julia:lab
+make lab-up
+
+# Volcano wheel (automatic)
+kubectl get wheel julia-finance-wheel -o wide
+kubectl get vcjob -l kbl.io/volcano-demo=true
+
+# OpenKruise hot-swap (automatic)
+kubectl get dchain julia-finance-openkruise -o wide
+kubectl logs -l kbl.io/openkruise-demo=true -c slot-2-compute-greeks
+
+# Manual init chain
+kubectl apply -f dominochain-init.yaml
+# Set runnerImage: kbl-domino-runner-julia:lab
 ```
+
+See [docs/getting-started.md](../../docs/getting-started.md).
 
 ### Deploy init chain (kubernetes-init)
 
@@ -84,14 +98,26 @@ kubectl apply -f workflow-container.yaml
 kubectl get dominochains -l kbl.io/dominochain -w
 ```
 
-OpenKruise hot-swap (requires OpenKruise installed):
+### OpenKruise hot-swap
+
+Requires OpenKruise (`lab/scripts/install-openkruise.sh` or `make lab-up`):
 
 ```bash
 kubectl apply -f dominochain-openkruise.yaml
 kubectl get dominochains julia-finance-openkruise-chain -w
+kubectl get containerrecreaterequests.apps.kruise.io
 ```
 
-Each init container runs `domino-runner` with `KBL_JULIA_PROJECT=/opt/kbl/julia` injected automatically for `julia:*` commands.
+### Volcano batch
+
+Requires Volcano and queue `kbl-lab`:
+
+```bash
+kubectl apply -f dominochain-volcano-init.yaml
+kubectl get vcjob -l kbl.io/dominochain -w
+```
+
+Each container runs `domino-runner` with `KBL_JULIA_PROJECT=/opt/kbl/julia` for `julia:*` commands.
 
 ## PluggableUniverse
 

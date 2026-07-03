@@ -1,5 +1,7 @@
 # Architecture
 
+Visual diagrams: **[diagrams.md](diagrams.md)** (Mermaid — Kind lab topology, runtimes, Compute Wheel, troubleshooting).
+
 ## System Overview
 
 ```
@@ -48,6 +50,33 @@
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Layer model (Mermaid)
+
+```mermaid
+flowchart TB
+  subgraph dsl [DSL Layer]
+    direction LR
+    E[Execution]
+    D[Data]
+    P[Provisioning]
+    R[Routing]
+  end
+
+  subgraph k8s [CRD + Controller]
+    CRD[Workflow Snapshot DominoChain ComputeWheel …]
+    C[kbl-controller reconcilers]
+  end
+
+  subgraph fabric [Compute Fabric]
+    W[Compute Wheel time slices]
+    M[Memoization + replay log]
+    N[Node-local store / TSDB]
+  end
+
+  dsl --> CRD --> C --> fabric
+  fabric --> MV[Multiverse / Kafka routing]
+```
+
 ## Component Layers
 
 ### 1. DSL Layer (`specs/`)
@@ -93,6 +122,33 @@ Each Compute Context owns local storage:
 
 Data never crosses node boundaries during compute; routing happens at the scheduling layer.
 
+## In-Cluster Provisioning Runtimes
+
+Domino chains run on Kubernetes via `DominoChain.spec.runtime` (or `Workflow.spec.execution.runtime`):
+
+| Runtime | Mechanism | Blog alignment |
+|---------|-----------|----------------|
+| `kubernetes-init` | Pod with sequential init containers | Standard domino chain |
+| `openkruise` | Placeholder Pod + ContainerRecreateRequest per step | Player-piano hot-swap |
+| `volcano-init` | Volcano Job with init-container task | SyncSet / batch scheduling |
+
+See [provisioning-runtimes.md](./provisioning-runtimes.md) and [diagrams.md §5–8](./diagrams.md#5-provisioning-runtimes-compared) for visual runtime comparisons.
+
+### Kind lab stack (Phases 22–28)
+
+Local validation path on multi-node Kind:
+
+```
+lab/scripts/up.sh
+  → CRDs + controller + TSDB
+  → Volcano (optional) + OpenKruise (optional)
+  → finance-lab Workflow (local engine)
+  → julia-finance-wheel ComputeWheel (volcano-init)
+  → julia-finance-openkruise DominoChain (openkruise)
+```
+
+TSDB pins to the Data Pond worker (`kbl.io/tsdb-node=true`). See [lab/README.md](../lab/README.md) and [diagrams.md §4](./diagrams.md#4-kind-lab-topology).
+
 ## MVP Data Flow
 
 ```
@@ -106,16 +162,18 @@ Data never crosses node boundaries during compute; routing happens at the schedu
 4. Final output available in store + replay log
 ```
 
-## Hot-Swapped Dominos (Future)
+## Hot-Swapped Dominos
 
-The 2025 design adds OpenKruise-based daisy-chain pods:
+OpenKruise-based daisy-chain pods are **implemented** (Phase 4, lab demo Phase 28):
 
-- 20 domino steps, only two active containers at once
-- Placeholder containers + `emptyDir` for handoff
-- Controller advances the chain in-place
-- Enables granular updates without full pod restart
+- Domino steps map to placeholder containers in one Pod
+- `ContainerRecreateRequest` hot-swaps each slot with the real domino-runner image
+- `emptyDir` handoff at `/kbl/handoff` between steps
+- Controller advances `status.activeStep` as each CRR completes
 
-See [ADR 0004](./adr/0004-hot-swapped-dominos.md).
+Volcano batch scheduling (`volcano-init`) provides an alternative provisioning path for time-sliced batch work via ComputeWheel.
+
+See [ADR 0007](./adr/0007-hot-swapped-dominos-implementation.md), [provisioning-runtimes.md](./provisioning-runtimes.md), and [ADR 0032](./adr/0032-openkruise-kind-lab.md).
 
 ## Determinism Guarantees
 

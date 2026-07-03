@@ -12,7 +12,8 @@ Core terms from the Uber Language of Compute blog series, as used in the KBL Com
 | **Compute Wheel / Ferris Wheel** | A rotating set of compute contexts processing time slices continuously — like a Ferris wheel where each seat is a context. |
 | **Windowed Mandelbrot** | Self-similar, hierarchical data/compute structure where only part of the graph exists at any given time. Enables fractal-style aggregation. |
 | **Domino** | One deterministic, referentially transparent compute step tied to one immutable snapshot. Output depends only on declared inputs. |
-| **Hot-Swapped Container** | A modular compute step swapped into a pod or workflow when needed, without restarting the entire pipeline. Uses OpenKruise in-place updates. |
+| **Hot-Swapped Container** | A modular compute step swapped into a pod via OpenKruise ContainerRecreateRequest, without restarting the entire pipeline. |
+| **Volcano Job / SyncSet** | Batch-scheduled domino chain executed by the Volcano scheduler; maps to `runtime: volcano-init` and `volcanoQueue` on DominoChain. |
 | **Low-Entropy Snapshot** | An immutable data view that makes computation reproducible. Entropy is minimized by freezing the input state. |
 | **Data Locality** | The principle that compute moves to data, not data to compute. Scheduling decisions prioritize node proximity to data. |
 | **Player-Piano Scheduler** | A scheduler that pre-provisions resources ahead of need, like notes pre-positioned on a piano roll before they are played. |
