@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kbl-controller
+  namespace: kbl-system
+  labels:
+    app.kubernetes.io/name: kbl-controller
+    app.kubernetes.io/component: operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kbl-controller
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kbl-controller
+    spec:
+      serviceAccountName: kbl-controller
+      containers:
+        - name: controller
+          image: kbl-controller:lab
+          imagePullPolicy: IfNotPresent
+          args:
+            - --store-root=/var/kbl/store
+            - --leader-elect=true
+            - --metrics-bind-address=:8080
+            - --health-probe-bind-address=:8081
+          ports:
+            - name: metrics
+              containerPort: 8080
+            - name: health
+              containerPort: 8081
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          volumeMounts:
+            - name: store
+              mountPath: /var/kbl/store
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: store
+          emptyDir: {}

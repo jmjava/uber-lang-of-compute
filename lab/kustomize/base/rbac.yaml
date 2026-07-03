@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kbl-controller
+  namespace: kbl-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kbl-controller
+rules:
+  - apiGroups: [kbl.io]
+    resources:
+      - workflows
+      - workflows/status
+      - workflows/finalizers
+      - snapshots
+      - snapshots/status
+      - dominos
+      - dominos/status
+      - dominochains
+      - dominochains/status
+      - computewheels
+      - computewheels/status
+      - computewheels/finalizers
+      - computecontexts
+      - computecontexts/status
+      - multiverses
+      - multiverses/status
+      - multiverses/finalizers
+      - pluggableuniverses
+      - pluggableuniverses/status
+      - readreplicas
+      - readreplicas/status
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [""]
+    resources: [configmaps, pods]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [apps.kruise.io]
+    resources: [containerrecreaterequests]
+    verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kbl-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kbl-controller
+subjects:
+  - kind: ServiceAccount
+    name: kbl-controller
+    namespace: kbl-system

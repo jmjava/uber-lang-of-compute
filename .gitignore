@@ -19,3 +19,8 @@ controller/vendor/
 
 # OS
 .DS_Store
+
+# CDK
+infra/aws/cdk/node_modules/
+infra/aws/cdk/cdk.out/
+infra/aws/cdk/dist/
