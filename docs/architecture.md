@@ -77,6 +77,52 @@ flowchart TB
   fabric --> MV[Multiverse / Kafka routing]
 ```
 
+## Multiverse communication
+
+Multiple **KBL fabrics** can run in parallel — each a **Pluggable Universe** with its own execution engine (Go, Julia, …), node-local store, and provisioning model. They **do not** call each other's controllers directly.
+
+Coordination is **event-driven** through a shared bus:
+
+1. A **Workflow** completes in Universe A → publishes a snapshot-completed event.
+2. **Multiverse** routing rules (partition labels, time-slice overrides, default universe) select target universe(s).
+3. **Kafka** carries events in production; a **MemoryBus** supports single-controller dev without Kafka ([ADR 0009](adr/0009-multiverse-routing.md)).
+4. Optional **Debezium CDC** from TSDB publishes row-level changes ([ADR 0012](adr/0012-debezium-cdc-sync.md)).
+5. **ReadReplica** CRs materialize sealed snapshot + domino results into Universe B's node-local store ([ADR 0011](adr/0011-read-replica-materialization.md)).
+
+**Data locality is preserved:** dominos always read from their own universe's store during compute. Cross-universe traffic is routing metadata, completion events, and replicated **sealed** results — never live dataset shipping on the hot path.
+
+```mermaid
+flowchart LR
+  subgraph uniA [Pluggable Universe A]
+    WFA[Workflow + controller]
+    StoreA[(node-local store)]
+    WFA --> StoreA
+  end
+
+  subgraph bus [Event bus — not controller-to-controller RPC]
+    MV[Multiverse routing]
+    KFK[(Kafka / MemoryBus)]
+    MV -.-> KFK
+  end
+
+  subgraph uniB [Pluggable Universe B …N]
+    RRB[ReadReplica]
+    StoreB[(node-local store)]
+    RRB --> StoreB
+  end
+
+  WFA -->|snapshot completed| KFK
+  StoreA -.->|CDC optional| KFK
+  KFK -->|route + replicate| RRB
+```
+
+| Deployment | Typical setup |
+|------------|---------------|
+| **Single cluster** | Multiple universes, one `kbl-controller`, MemoryBus or in-cluster Kafka |
+| **Multiple clusters / regions** | One fabric per cluster; shared Kafka or MSK backbone ([infra/aws/cdk](../infra/aws/cdk/README.md)) |
+
+Example manifests: [examples/multiverse-finance](../examples/multiverse-finance/README.md). Diagrams: [diagrams.md §0–11](diagrams.md#0-readme-overview--multiple-kbl-fabrics).
+
 ## Component Layers
 
 ### 1. DSL Layer (`specs/`)

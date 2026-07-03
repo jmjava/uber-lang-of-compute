@@ -2,15 +2,15 @@
 
 ```mermaid
 flowchart LR
-  DSL["Describe<br/>4 DSLs"]
-  K8S["Orchestrate<br/>CRDs + controller"]
-  FAB["Execute<br/>wheel · dominos · memo · store"]
-  RT["Route<br/>multiverse · Kafka"]
-
-  DSL --> K8S --> FAB --> RT
+  DSL["Describe<br/>4 DSLs"] --> K8S["Orchestrate<br/>CRDs + controller"]
+  K8S --> FAB["Execute locally<br/>wheel · memo · store"]
+  FAB --> UA["Universe A"]
+  UA -->|sealed events · CDC| KFK[(Kafka)]
+  KFK --> UB["Universe B …N"]
+  MV["Multiverse<br/>routing rules"] -.-> KFK
 ```
 
-*System layers — [full diagram set](docs/diagrams.md) (CRDs, runtimes, Kind lab, sequences)*
+*Multiple KBL fabrics (**Pluggable Universes**) coordinate **event-driven via Kafka** — not direct controller RPC. Compute stays node-local; only sealed events and replicated results cross universes. See [Multiverse communication](docs/architecture.md#multiverse-communication).*
 
 **A time-sliced, data-local, Kubernetes-native compute fabric**
 

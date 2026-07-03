@@ -10,7 +10,7 @@ Central index for the [Uber Language of Compute](https://jmenke.blogspot.com/) i
 | [**Architecture Diagrams**](diagrams.md) | Everyone | **Mermaid** — topology, sequences, troubleshooting |
 | [Kind Lab Guide](../lab/README.md) | Local development | Multi-node Kind, Volcano, OpenKruise, demos |
 | [Provisioning Runtimes](provisioning-runtimes.md) | Platform engineers | `kubernetes-init`, `openkruise`, `volcano-init` compared |
-| [Architecture](architecture.md) | System design | Layers, data flow, control plane |
+| [Architecture](architecture.md) | System design | Layers, data flow, [Multiverse communication](architecture.md#multiverse-communication) |
 | [Vocabulary](vocabulary.md) | Everyone | Glossary aligned with the blog series |
 | [Vision](vision.md) | Context | Original design goals |
 
@@ -23,7 +23,7 @@ The [jmenke.blogspot.com](https://jmenke.blogspot.com/) series describes four DS
 | Execution DSL | `Workflow`, `Domino`, `DominoChain` CRDs |
 | Data DSL | `Snapshot`, node-local TSDB/SQLite, sealed snapshots |
 | Provisioning DSL | DominoChain runtimes, Kind lab, Volcano queue, OpenKruise CRR |
-| Routing DSL | `PluggableUniverse`, `Multiverse`, `ComputeContext` |
+| Routing DSL | `PluggableUniverse`, `Multiverse`, `ComputeContext` — multiple KBL fabrics coordinate **event-driven via Kafka**, not controller RPC ([architecture § Multiverse communication](architecture.md#multiverse-communication)) |
 | Ferris Wheel / time slices | `ComputeWheel` reconciler ([ADR 0006](adr/0006-compute-wheel-rotation.md)) |
 | Player-piano scheduling | `preProvisionNext` on ComputeWheel |
 | Data Pond | Node-local TSDB + `kbl.io/tsdb-node` worker pin in Kind lab |

@@ -5,9 +5,9 @@ Core terms from the Uber Language of Compute blog series, as used in the KBL Com
 | Term | Meaning |
 |------|---------|
 | **Uber Language of Compute** | Meta-language composed of four DSLs: Execution, Data, Provisioning, Routing. Describes the full compute fabric declaratively. |
-| **Pluggable Universe** | A compute environment defined by its own laws: execution engine, data layer, and provisioning model. Can be swapped without changing the multiverse routing layer. |
-| **Multiverse** | A routed collection of Pluggable Universes, often time-sliced replicas processing parallel or sequential data views. |
-| **KBL / Kubernetes Based Lifeform** | A locality-aware Kubernetes compute organism: compute + local data + orchestration context, capable of spawning child KBLs. |
+| **Pluggable Universe** | A compute environment defined by its own laws: execution engine, data layer, and provisioning model. Can be swapped without changing the multiverse routing layer. Each universe is a separate KBL fabric with its own node-local stores. |
+| **Multiverse** | A routed collection of Pluggable Universes, often time-sliced replicas processing parallel or sequential data views. Coordinates universes **event-driven via Kafka** (or MemoryBus in dev) — controllers do not call each other directly. |
+| **KBL / Kubernetes Based Lifeform** | A locality-aware Kubernetes compute organism: compute + local data + orchestration context. Multiple KBL fabrics (universes) link through the Multiverse routing layer and shared event bus. |
 | **Compute Context** | Node-associated unit of compute and data locality. Binds a snapshot, domino chain, and node-local store together. |
 | **Compute Wheel / Ferris Wheel** | A rotating set of compute contexts processing time slices continuously — like a Ferris wheel where each seat is a context. |
 | **Windowed Mandelbrot** | Self-similar, hierarchical data/compute structure where only part of the graph exists at any given time. Enables fractal-style aggregation. |
@@ -24,13 +24,19 @@ Core terms from the Uber Language of Compute blog series, as used in the KBL Com
 
 ```
 Multiverse
-  └── PluggableUniverse (1..n)
+  └── PluggableUniverse (1..n)     ← each = separate KBL fabric
         └── ComputeWheel
               └── ComputeContext (1..n, one per node/time-slice)
                     ├── Snapshot (immutable data view)
                     ├── Domino chain (ordered compute steps)
                     └── Node-local store (inputs, outputs, memo cache)
+
+Cross-universe (not during domino compute):
+  Universe A ── snapshot-completed / CDC events ──► Kafka / MemoryBus
+       ► Multiverse routing rules ► ReadReplica ► Universe B local store
 ```
+
+See [architecture.md § Multiverse communication](architecture.md#multiverse-communication).
 
 ## Four DSLs
 
