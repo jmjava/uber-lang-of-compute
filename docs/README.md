@@ -92,6 +92,7 @@ Skip components: `KBL_LAB_VOLCANO=0`, `KBL_LAB_OPENKURISE=0`. See [lab/README.md
 ### Meta
 - [0033 Documentation Phase](adr/0033-documentation-phase.md)
 - [0034 Architecture Diagrams](adr/0034-documentation-diagrams.md)
+- [0035 Volcano Lab Profiles](adr/0035-volcano-lab-profiles.md)
 
 ## Phase roadmap
 

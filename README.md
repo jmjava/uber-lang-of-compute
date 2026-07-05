@@ -72,7 +72,8 @@ All ADRs: [docs/README.md#adrs-by-topic](docs/README.md#adrs-by-topic). Foundati
 | **Phase 27** | ComputeWheel Volcano queue — wheel assigns queue/nodeSelector/runner per time slice → Workflow → VCJob |
 | **Phase 28** | OpenKruise Kind lab — Helm install, Julia hot-swap DominoChain demo via ContainerRecreateRequest |
 | **Phase 29** | Documentation hub — getting-started, provisioning-runtimes guide, architecture refresh |
-| **Phase 30 (current)** | Architecture diagrams — Mermaid visual reference (topology, sequences, troubleshooting) |
+| **Phase 30** | Architecture diagrams — Mermaid visual reference (topology, sequences, troubleshooting) |
+| **Phase 31 (current)** | Volcano lab profiles — home i9 / compact i7, 2-context wheel + parallel burst, `verify-volcano.sh` |
 
 ## Core Concepts
 

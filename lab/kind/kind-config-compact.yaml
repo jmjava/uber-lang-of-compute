@@ -1,0 +1,30 @@
+# Compact Kind cluster for i7-class laptops (16–32 GiB RAM).
+# 1 control-plane + 1 worker — enough for platform + Volcano demo; skip OpenKruise by default.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: kbl-lab
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "kbl.io/lab-node=true,kbl.io/lab-role=control-plane"
+    extraMounts:
+      - hostPath: /tmp/kbl-lab/cp
+        containerPath: /var/kbl
+        readOnly: false
+        selinuxRelabel: false
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "kbl.io/lab-node=true,kbl.io/lab-role=compute,kbl.io/tsdb-node=true"
+    extraMounts:
+      - hostPath: /tmp/kbl-lab/w1
+        containerPath: /var/kbl
+        readOnly: false
+        selinuxRelabel: false

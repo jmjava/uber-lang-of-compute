@@ -1,0 +1,11 @@
+# Compact queue for i7-class laptops (single worker).
+apiVersion: scheduling.volcano.sh/v1beta1
+kind: Queue
+metadata:
+  name: kbl-lab
+spec:
+  weight: 1
+  capability:
+    cpu: "8"
+    memory: 16Gi
+  reclaimable: true

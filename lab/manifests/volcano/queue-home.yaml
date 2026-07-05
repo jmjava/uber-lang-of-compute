@@ -1,0 +1,11 @@
+# Home / i9 queue — sized for 32–64 GiB hosts with 2 compute workers.
+apiVersion: scheduling.volcano.sh/v1beta1
+kind: Queue
+metadata:
+  name: kbl-lab
+spec:
+  weight: 1
+  capability:
+    cpu: "32"
+    memory: 48Gi
+  reclaimable: true

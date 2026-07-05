@@ -1,5 +1,6 @@
 .PHONY: build test tidy clean docker-domino-runner docker-domino-runner-julia \
-	docker-kbl-controller docker-kbl-tsdb lab-up lab-down lab-volcano-install lab-openkruise-install cdk-synth
+	docker-kbl-controller docker-kbl-tsdb lab-up lab-down lab-volcano-install lab-openkruise-install \
+	lab-verify-volcano cdk-synth
 
 build:
 	cd controller && go build -o bin/kbl-compute ./cmd/kbl-compute
@@ -33,6 +34,10 @@ lab-up:
 lab-down:
 	chmod +x lab/scripts/*.sh
 	./lab/scripts/down.sh
+
+lab-verify-volcano:
+	chmod +x lab/scripts/verify-volcano.sh
+	./lab/scripts/verify-volcano.sh
 
 lab-volcano-install:
 	chmod +x lab/scripts/install-volcano.sh

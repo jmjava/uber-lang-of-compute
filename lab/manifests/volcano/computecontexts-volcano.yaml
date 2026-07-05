@@ -1,0 +1,21 @@
+# Compute contexts for the two-worker Volcano Ferris-wheel demo.
+# Node names match Kind cluster "kbl-lab" (kbl-lab-worker, kbl-lab-worker2).
+apiVersion: kbl.io/v1alpha1
+kind: ComputeContext
+metadata:
+  name: compute-a
+spec:
+  nodeName: kbl-lab-worker
+  storeType: tsdb
+  storeEndpoint: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+  dataPath: /var/kbl/tsdb
+---
+apiVersion: kbl.io/v1alpha1
+kind: ComputeContext
+metadata:
+  name: compute-b
+spec:
+  nodeName: kbl-lab-worker2
+  storeType: tsdb
+  storeEndpoint: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+  dataPath: /var/kbl/tsdb

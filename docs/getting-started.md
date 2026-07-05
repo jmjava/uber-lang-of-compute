@@ -67,8 +67,10 @@ Runnable in-cluster stack: CRDs, controller, TSDB, Volcano, OpenKruise, and demo
 
 ```bash
 chmod +x lab/scripts/*.sh
-make lab-up          # or: ./lab/scripts/up.sh
+KBL_LAB_PROFILE=home make lab-up   # i9 workstation; use compact on i7 laptop
 ```
+
+See [lab/HOME-LAB.md](../lab/HOME-LAB.md) for home-network setup and remote kubectl.
 
 ### Verify platform
 

@@ -1,5 +1,4 @@
-# ComputeWheel drives Julia finance chains via Volcano per time slice (Phase 27).
-# Home profile: rotates compute-a → compute-b — two VCJobs through queue kbl-lab.
+# Single-context Volcano wheel for compact (1-worker) Kind clusters.
 apiVersion: kbl.io/v1alpha1
 kind: ComputeWheel
 metadata:
@@ -9,11 +8,9 @@ metadata:
     kbl.io/volcano-demo: "true"
 spec:
   contexts:
-    - compute-a
-    - compute-b
+    - default-context
   timeSliceInterval: 24h
   maxRotations: 1
-  preProvisionNext: true
   volcanoQueue: kbl-lab
   nodeSelector:
     kbl.io/lab-role: compute

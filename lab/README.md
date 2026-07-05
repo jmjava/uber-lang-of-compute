@@ -11,16 +11,30 @@ AWS production deployment is scaffolded separately under `infra/aws/cdk/` (see [
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [Kustomize](https://kubectl.docs.kubernetes.io/installation/kustomize/) (`kubectl kustomize` also works)
 
-Recommended host: **64 GiB RAM / 20 CPU** for the 3-node Kind cluster plus Volcano and OpenKruise demos.
+Recommended host depends on profile (see [HOME-LAB.md](HOME-LAB.md)):
 
-**Diagrams:** [docs/diagrams.md §4 — Kind lab topology](../docs/diagrams.md#4-kind-lab-topology), [§12 — troubleshooting](../docs/diagrams.md#12-kind-lab-troubleshooting).
+| Profile | Machine | RAM |
+|---------|---------|-----|
+| **`home`** (default) | i9 / workstation | 32–64 GiB |
+| **`compact`** | i7 laptop | 16–32 GiB |
+
+```bash
+KBL_LAB_PROFILE=home ./lab/scripts/up.sh      # full Volcano Ferris wheel + burst (i9)
+KBL_LAB_PROFILE=compact ./lab/scripts/up.sh   # lighter single-worker lab (i7)
+./lab/scripts/verify-volcano.sh               # queue, VCJobs, pod placement
+```
+
+**Diagrams:** [docs/diagrams.md §4 — Kind lab topology](../docs/diagrams.md#4-kind-lab-topology), [§8 — Volcano pipeline](../docs/diagrams.md#8-volcano-batch-path-lab-demo), [§12 — troubleshooting](../docs/diagrams.md#12-kind-lab-troubleshooting).
 
 ## Quick start
 
 ```bash
 chmod +x lab/scripts/*.sh
-./lab/scripts/up.sh
+KBL_LAB_PROFILE=home ./lab/scripts/up.sh   # i9 home workstation (default)
+# KBL_LAB_PROFILE=compact ./lab/scripts/up.sh   # i7 laptop
 ```
+
+See **[HOME-LAB.md](HOME-LAB.md)** for remote kubectl from a dev laptop and Docker sizing.
 
 Tear down:
 
@@ -59,8 +73,9 @@ If upgrading from an older single-node lab cluster, delete and recreate:
 | kbl-tsdb | `kbl-system` | Deployment on `kbl.io/tsdb-node=true` worker |
 | ComputeContext `default-context` | `default` | Points at TSDB service |
 | Workflow `finance-lab` | `default` | 3-step finance chain |
-| Queue `kbl-lab` | cluster | Volcano queue (20 CPU / 64 GiB) |
-| ComputeWheel `julia-finance-wheel` | `default` | `volcanoQueue: kbl-lab`, `runtime: volcano-init` per time slice |
+| Queue `kbl-lab` | cluster | Volcano queue (profile-sized CPU/memory) |
+| ComputeWheel `julia-finance-wheel` | `default` | **2 contexts** (`compute-a` → `compute-b`), `volcanoQueue: kbl-lab`, `preProvisionNext` |
+| DominoChain `volcano-burst-a/b` | `default` | Parallel VCJobs on different workers (home/default profile) |
 | DominoChain `julia-finance-openkruise` | `default` | `runtime: openkruise` Julia hot-swap chain |
 
 Images are built locally as `*:lab` and loaded into Kind (`kind load docker-image`).
@@ -78,7 +93,9 @@ worker w2       kbl.io/lab-role=compute, kbl.io/tsdb-node=true  ← TSDB + Data 
 ## Verify
 
 ```bash
-kubectl get nodes -L kbl.io/lab-role,kbl.io/tsdb-node
+./lab/scripts/verify-volcano.sh
+kubectl get nodes -L kbl.io/lab-role,kbl.io/tsdb-node,kbl.io/gpu
+```
 kubectl get workflows finance-lab -o wide
 kubectl -n kbl-system get pods -o wide
 kubectl get wheel julia-finance-wheel -o wide
@@ -130,6 +147,8 @@ lab/
   manifests/volcano/          # Queue + ComputeWheel volcano-init demo
   manifests/openkruise/     # Julia hot-swap DominoChain demo
   scripts/up.sh | down.sh | install-volcano.sh | install-openkruise.sh
+  scripts/verify-volcano.sh | apply-volcano-burst.sh
+  HOME-LAB.md                 # i9 home workstation + remote kubectl
 
 Visual guides: [docs/diagrams.md](../docs/diagrams.md)
 ```

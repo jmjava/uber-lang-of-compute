@@ -1,0 +1,65 @@
+# Parallel Volcano batch burst — two VCJobs compete in queue kbl-lab (home profile).
+# Node names are substituted by lab/scripts/apply-volcano-burst.sh from the live cluster.
+apiVersion: kbl.io/v1alpha1
+kind: DominoChain
+metadata:
+  name: volcano-burst-a
+  namespace: default
+  labels:
+    kbl.io/volcano-demo: "true"
+    kbl.io/volcano-burst: "true"
+spec:
+  runtime: volcano-init
+  volcanoQueue: kbl-lab
+  nodeSelector:
+    kubernetes.io/hostname: __WORKER_A__
+  snapshot:
+    timeSlice: "2025-04-20T00:00:00Z"
+    source:
+      inline:
+        instruments:
+          - instrument_id: US10Y
+            rate: 4.25
+            maturity: "2035-02-15"
+    sealed: true
+  steps:
+    - name: load-curve-data
+      command: julia:identity
+    - name: interpolate-curve
+      command: julia:interpolate
+    - name: compute-greeks
+      command: julia:greeks
+  storePath: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+  runnerImage: kbl-domino-runner-julia:lab
+---
+apiVersion: kbl.io/v1alpha1
+kind: DominoChain
+metadata:
+  name: volcano-burst-b
+  namespace: default
+  labels:
+    kbl.io/volcano-demo: "true"
+    kbl.io/volcano-burst: "true"
+spec:
+  runtime: volcano-init
+  volcanoQueue: kbl-lab
+  nodeSelector:
+    kubernetes.io/hostname: __WORKER_B__
+  snapshot:
+    timeSlice: "2025-04-21T00:00:00Z"
+    source:
+      inline:
+        instruments:
+          - instrument_id: US2Y
+            rate: 4.80
+            maturity: "2027-02-15"
+    sealed: true
+  steps:
+    - name: load-curve-data
+      command: julia:identity
+    - name: interpolate-curve
+      command: julia:interpolate
+    - name: compute-greeks
+      command: julia:greeks
+  storePath: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+  runnerImage: kbl-domino-runner-julia:lab
