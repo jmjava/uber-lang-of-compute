@@ -39,6 +39,10 @@ lab-verify-volcano:
 	chmod +x lab/scripts/verify-volcano.sh
 	./lab/scripts/verify-volcano.sh
 
+lab-setup-wsl-home:
+	chmod +x lab/scripts/setup-wsl-home.sh lab/scripts/*.sh
+	./lab/scripts/setup-wsl-home.sh
+
 lab-volcano-install:
 	chmod +x lab/scripts/install-volcano.sh
 	./lab/scripts/install-volcano.sh

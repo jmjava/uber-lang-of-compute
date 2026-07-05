@@ -147,8 +147,8 @@ lab/
   manifests/volcano/          # Queue + ComputeWheel volcano-init demo
   manifests/openkruise/     # Julia hot-swap DominoChain demo
   scripts/up.sh | down.sh | install-volcano.sh | install-openkruise.sh
-  scripts/verify-volcano.sh | apply-volcano-burst.sh
-  HOME-LAB.md                 # i9 home workstation + remote kubectl
+  scripts/verify-volcano.sh | apply-volcano-burst.sh | setup-wsl-home.sh
+  HOME-LAB.md                 # i9 home workstation + WSL2 + remote kubectl
 
 Visual guides: [docs/diagrams.md](../docs/diagrams.md)
 ```

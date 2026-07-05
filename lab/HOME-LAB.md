@@ -2,7 +2,60 @@
 
 Run the full KBL Kind lab on your **home network machine** (i9, RTX 4080, 32–64 GiB RAM). Use a **compact profile** on an i7 laptop for lighter local dev.
 
-## Quick start on the home machine
+## Windows 11 + WSL2 (i9 downstairs)
+
+Use **Ubuntu (or another Linux distro) in WSL2**, not PowerShell, for Kind and Docker.
+
+### One-shot setup
+
+```bash
+# In WSL — clone under ~/src (avoid /mnt/c/... for speed)
+git clone https://github.com/jmjava/uber-lang-of-compute.git ~/src/uber-lang-of-compute
+cd ~/src/uber-lang-of-compute
+
+# First time: install kind/kubectl/kustomize if needed
+./lab/scripts/setup-wsl-home.sh --install-deps
+
+# Or if tools are already installed:
+./lab/scripts/setup-wsl-home.sh
+```
+
+The script checks Docker Desktop WSL integration, sets **`KBL_LAB_PROFILE=home`**, runs `make lab-up`, and runs `verify-volcano.sh`.
+
+### Docker Desktop checklist (Windows host)
+
+1. Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) with **WSL 2** backend.
+2. **Settings → Resources → Advanced:** Memory **24–48 GiB**, CPUs **8–16**.
+3. **Settings → Resources → WSL integration:** enable your Ubuntu distro.
+4. If `docker info` fails in WSL: in PowerShell run `wsl --shutdown`, reopen Ubuntu, start Docker Desktop.
+
+### Useful flags
+
+```bash
+./lab/scripts/setup-wsl-home.sh --check-only      # prerequisites only
+./lab/scripts/setup-wsl-home.sh --install-deps  # apt + kind/kubectl/kustomize
+./lab/scripts/setup-wsl-home.sh --clone         # clone to ~/src/uber-lang-of-compute if needed
+./lab/scripts/setup-wsl-home.sh --skip-up       # prep env without starting cluster
+```
+
+### Remote kubectl from i7 laptop
+
+After the lab is up, in WSL on the i9:
+
+```bash
+kind get kubeconfig --name kbl-lab > ~/kbl-lab-kubeconfig.yaml
+```
+
+Copy `kbl-lab-kubeconfig.yaml` to the laptop (scp, shared drive). On the i7:
+
+```bash
+export KUBECONFIG=~/kbl-lab-kubeconfig.yaml
+kubectl get nodes
+```
+
+You may need to replace `127.0.0.1` in the kubeconfig with the i9’s LAN IP if accessing from another machine.
+
+## Quick start on the home machine (native Linux / WSL after setup)
 
 ```bash
 git clone https://github.com/jmjava/uber-lang-of-compute.git
