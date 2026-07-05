@@ -84,23 +84,226 @@ Team membership is enforced at the API ([MILESTONE-15](https://github.com/course
 
 ---
 
-## Login and access to builder tools
+## Identity: login screen and user management (AWS Cognito)
 
-Hosted PurePlay deployments use **Cognito User Pool JWTs** (default reference in M15):
+PurePlay hosted builder access requires a **login screen**, **session management**, and **user administration** before designers reach the CourseForge GUI. **AWS Cognito** is the reference identity provider — aligned with CourseForge [MILESTONE-15](https://github.com/courseforge/course-builder/blob/main/milestones/specs/MILESTONE-15.md) and the platform default for hosted/subscription operation.
+
+### Why Cognito
+
+| Requirement | Cognito feature |
+|-------------|-----------------|
+| Login screen for browser users | **Hosted UI** or **Amplify Auth** embedded in the React SPA |
+| PurePlay org + team membership | **User Pool groups** + **custom attributes** (`custom:tenant_id`, `custom:team_id`) |
+| Community vs internal users | Separate groups (`community`, `designer`, `team-lead`, `developer`) |
+| Developer / CI accounts | **App client** with client credentials or machine-to-machine flow |
+| Future enterprise SSO | **SAML / OIDC federation** into the same User Pool |
+| API authorization | **JWT access tokens** validated by FastAPI on every request |
+
+Local desktop (Tauri) and `run.sh` dev mode remain **unauthenticated or license-gated**; Cognito applies to **hosted cloud** and **community Kind** deployments where multi-tenant policy is enforced.
+
+### Cognito resources (PurePlay production)
+
+```mermaid
+flowchart TB
+  subgraph users [Users]
+    PP[PurePlay designers]
+    CM[Community users]
+    DEV[Developer CI clients]
+  end
+
+  subgraph cognito [AWS Cognito]
+    UP[User Pool<br/>pureplay-courseforge]
+    HC[Hosted UI / OAuth]
+    GR[Groups and custom attributes]
+    AC[App clients<br/>spa + api + m2m]
+  end
+
+  subgraph app [CourseForge hosted]
+    LOGIN[Login screen]
+    SPA[React builder SPA]
+    API[FastAPI backend]
+  end
+
+  PP --> LOGIN
+  CM --> LOGIN
+  LOGIN --> HC
+  HC --> UP
+  UP --> GR
+  GR --> SPA
+  SPA -->|Bearer JWT| API
+  DEV --> AC
+  AC -->|client credentials| API
+  API -->|validate JWT| UP
+```
+
+| Resource | Purpose |
+|----------|---------|
+| **User Pool** | `pureplay-courseforge` (or shared CourseForge pool with tenant attribute) |
+| **App client — SPA** | Public client with PKCE for `tools/courseforge/frontend` |
+| **App client — API** | Optional confidential client for server-side token exchange |
+| **App client — M2M** | Developer accounts; client id + secret → access token with `developer` scope |
+| **Hosted UI domain** | `auth.build.pureplay.example.com` — branded login, signup, forgot password |
+| **Custom attributes** | `tenant_id`, `team_id`, `service_tier` (mutable by admins only) |
+| **Groups** | `pureplay-designer`, `pureplay-team-lead`, `pureplay-developer`, `community` |
+
+Optional **Cognito Identity Pool** if the SPA needs direct AWS credentials (e.g. short-lived S3 upload from browser). Prefer **presigned URLs from the API** when possible so the backend remains the tenancy gatekeeper.
+
+### Login screen — user experience
+
+The builder SPA shows a **dedicated login route** (`/login`) before any build tools load. Unauthenticated users are redirected; expired sessions show a re-login prompt with return URL preserved.
+
+**Phase 1 (fastest): Cognito Hosted UI**
+
+- Redirect to Cognito Hosted UI (PurePlay logo, colors via CSS customization).
+- Supports email/password, MFA (optional TOTP), forgot password, email verification.
+- On success, redirect back to SPA with authorization code; SPA exchanges for tokens (PKCE).
+- **Pros:** no custom auth UI to maintain; MFA and compliance features built in.
+- **Cons:** leaves CourseForge domain briefly during login.
+
+**Phase 2 (optional): Embedded login in SPA**
+
+- **Amplify Auth** or **oidc-client-ts** renders login form inside CourseForge chrome.
+- Same User Pool; better brand continuity for PurePlay.
+- Hosted UI remains fallback for password reset and MFA enrollment.
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant SPA as CourseForge SPA
+  participant CO as Cognito Hosted UI
+  participant API as FastAPI backend
+
+  U->>SPA: Open builder URL
+  SPA->>SPA: No valid session → /login
+  U->>SPA: Sign in
+  SPA->>CO: OAuth authorize (PKCE)
+  U->>CO: Email + password (+ MFA)
+  CO-->>SPA: Authorization code
+  SPA->>CO: Token exchange
+  CO-->>SPA: ID + access + refresh tokens
+  SPA->>SPA: Store tokens (memory / secure storage)
+  SPA->>API: GET /api/me (Authorization Bearer)
+  API->>API: Validate JWT, map claims → user context
+  API-->>SPA: Profile, team, tier, quotas
+  SPA-->>U: Builder home (team-scoped)
+```
+
+**Session behavior**
+
+- Access token TTL: 1 hour (typical); refresh token: 30 days with rotation.
+- SPA refreshes silently before expiry; on refresh failure → `/login`.
+- Logout: revoke refresh token + clear local storage + Cognito global sign-out (optional).
+
+### User management
+
+User lifecycle spans **Cognito (identity)** and **CourseForge backend (authorization + quotas)**. Cognito owns credentials; the API owns team membership, entitlements, and audit.
+
+| Action | Who performs it | Where |
+|--------|-----------------|-------|
+| Create PurePlay designer | Team lead or org admin | Admin UI → API → `AdminCreateUser` / invite email |
+| Invite to team | Team lead | API updates `custom:team_id` + group membership |
+| Remove from team | Team lead | API removes group; may disable Cognito user if leaving org |
+| Community self-signup | End user | Hosted UI signup → auto `community` group + `tenant_id=community` |
+| Promote to team lead | Org admin | API + Cognito group change |
+| Developer API client | Org admin | Create M2M app client; map to service principal in API DB |
+| Reset password / MFA | User | Hosted UI self-service |
+| Disable account | Org admin | Cognito `AdminDisableUser` + API mark inactive |
+
+**Admin surfaces (hosted GUI)**
+
+1. **Org admin** (PurePlay IT) — list users, assign teams, set service tier, view usage.
+2. **Team lead** — invite/remove designers on their team; cannot see other teams’ artifacts.
+3. **Self-service profile** — name, password, MFA; read-only team and tier display.
+
+The React SPA adds an **Account** / **Team settings** panel (M15 “hosted GUI policy surfaces”): show remaining quota, priority credits, and queue tier before submit.
+
+**Provisioning flow — new PurePlay designer**
+
+1. Team lead enters email in **Invite member** form.
+2. API calls Cognito `AdminCreateUser` (invite message) with `custom:tenant_id=pureplay`, `custom:team_id=pureplay-east`.
+3. API adds user to group `pureplay-designer`.
+4. API inserts row in tenant DB (user id = `sub`, team, default tier `team-standard`).
+5. User clicks invite link → sets password on Hosted UI → lands in builder.
+
+**Community signup**
+
+1. User opens community portal (`community.build.pureplay.example.com`).
+2. Hosted UI **Sign up** enabled for this app client only.
+3. Post-confirmation Lambda (or API webhook) assigns `community` group and `service_tier=community-pool`.
+4. No team lead approval required; optional email domain blocklist for abuse.
+
+### JWT claims and API enforcement
+
+Every authenticated API call carries a **Bearer access token**. FastAPI middleware validates signature (Cognito JWKS), issuer, audience, and expiry, then builds request context:
+
+| Claim | Maps to |
+|-------|---------|
+| `sub` | User id (stable) |
+| `email` | Display + audit |
+| `custom:tenant_id` | Storage partition (`pureplay`, `community`) |
+| `custom:team_id` | Team RBAC + Volcano queue selection |
+| `custom:service_tier` | `community-pool`, `team-standard`, `team-priority`, `developer-pro` |
+| `cognito:groups` | Role checks (`team-lead` may invite) |
+
+**Fail closed:** missing `tenant_id`, unknown team, or group/endpoint mismatch → `403` with no partial data leak. Job submit, artifact download, and trace endpoints all re-check tenant ([M15 segregation enforcement points](https://github.com/courseforge/course-builder/blob/main/milestones/specs/MILESTONE-15.md)).
+
+Developer M2M tokens use a **service principal** record linked to an app client id; claims include `client_id` and scoped `tenant_id` / `team_id` — no human `email`.
+
+### Developer accounts (separate from human login)
+
+Developer accounts do not use the login screen. They authenticate with **client credentials**:
+
+```http
+POST https://auth.build.pureplay.example.com/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&client_id=...&client_secret=...&scope=build:submit build:read
+```
+
+The API maps the client to a **developer-pro** tier queue and webhook configuration. Org admins rotate secrets via admin UI; old secrets revoked in Cognito.
+
+### PurePlay + community on one pool vs split pools
+
+| Approach | When to use |
+|----------|-------------|
+| **Single User Pool**, tenant attribute distinguishes PurePlay vs community | Recommended start — one Hosted UI, simpler ops |
+| **Separate User Pools** | Hard regulatory isolation between PurePlay employees and public community |
+
+PurePlay production likely starts with **one pool** and group-based separation; split only if compliance requires it.
+
+### Implementation checklist (CourseForge + infrastructure)
+
+- [ ] Cognito User Pool + SPA app client (PKCE) in `courseforge/infrastructure` CDK/Terraform
+- [ ] Hosted UI branding (PurePlay logo, callback URLs for staging + prod)
+- [ ] Custom attributes and groups defined in IaC
+- [ ] FastAPI JWT middleware + `/api/me`, `/api/admin/users`, `/api/teams/{id}/members`
+- [ ] React `/login` route, auth guard on builder routes, token refresh
+- [ ] Post-confirmation trigger for community tier assignment
+- [ ] M2M app client for developer pro tier
+- [ ] Audit log: actor `sub`, tenant, team, action ([M15 baseline](https://github.com/courseforge/course-builder/blob/main/milestones/specs/MILESTONE-15.md))
+
+Local dev bypass: `AUTH_MODE=none` or static dev JWT — never enabled in hosted environments.
+
+---
+
+## Login and access to builder tools (summary)
+
+Hosted PurePlay deployments gate the builder through **Cognito** (see previous section). Claims drive team isolation and queue tier:
 
 | Claim / field | Use |
 |---------------|-----|
 | `sub` | Stable user id |
 | `custom:tenant_id` | PurePlay org partition |
 | `custom:team_id` | Design team for RBAC and artifact paths |
+| `custom:service_tier` | Maps to Volcano queue / SLA tier |
 | `cognito:groups` | Roles: `designer`, `team-lead`, `developer`, `community` |
 | Scopes | API actions: `build:submit`, `build:read`, `artifact:download`, `dev:webhook` |
 
 **Login surfaces:**
 
-1. **Browser (hosted cloud / community Kind)** — Cognito hosted UI → CourseForge SPA.
-2. **Pro desktop (optional)** — Tauri shell with CF1/CFS1 license gate for offline-capable local Blender; same API contract when online.
-3. **Developer accounts** — Client-credentials or long-lived API key mapped to a service principal with explicit tier and rate limits.
+1. **Browser (hosted cloud / community Kind)** — Login screen → Cognito Hosted UI (or embedded Amplify) → CourseForge SPA.
+2. **Pro desktop (optional)** — Tauri shell with CF1/CFS1 license gate for offline-capable local Blender; Cognito when online for cloud Unreal builds.
+3. **Developer accounts** — OAuth2 client credentials; no interactive login screen.
 
 Authorization **fails closed** when tenant or team claims are missing. Community users receive the `community` group only; they cannot read PurePlay team artifacts.
 
@@ -243,9 +446,10 @@ PurePlay production is expected to run **hosted cloud** for team and community t
 
 1. **Priority pricing** — credits per expedited build vs monthly team allotment.
 2. **Community eligibility** — open signup vs invite-only vs PurePlay-branded subdomain.
-3. **Cross-team sharing** — whether a finished course can be published from team A to community without re-build.
-4. **GPU queue** — separate Volcano queue for GPU-heavy Unreal cooks when Alex adds them (i9 `kbl.io/gpu=present` label).
-5. **KBL adapter timing** — orchestrator-native queues first vs full DominoChain mapping in Phase 32.
+3. **Login UI** — Hosted UI only (phase 1) vs embedded Amplify form (phase 2).
+4. **Cross-team sharing** — whether a finished course can be published from team A to community without re-build.
+5. **GPU queue** — separate Volcano queue for GPU-heavy Unreal cooks when Alex adds them (i9 `kbl.io/gpu=present` label).
+6. **KBL adapter timing** — orchestrator-native queues first vs full DominoChain mapping in Phase 32.
 
 ---
 
