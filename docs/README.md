@@ -100,6 +100,7 @@ Skip components: `KBL_LAB_VOLCANO=0`, `KBL_LAB_OPENKURISE=0`. See [lab/README.md
 | Doc | Topic |
 |-----|-------|
 | [courseforge-integration.md](explorations/courseforge-integration.md) | Courseforge balancer + worker images × KBL scheduler |
+| [pureplay-multi-tier-platform.md](explorations/pureplay-multi-tier-platform.md) | PurePlay — Cognito, service-layer mapping, billing, teams, tiered SLA, 3-step pipeline |
 
 ## Phase roadmap
 

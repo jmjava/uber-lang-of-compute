@@ -74,7 +74,7 @@ All ADRs: [docs/README.md#adrs-by-topic](docs/README.md#adrs-by-topic). Foundati
 | **Phase 29** | Documentation hub — getting-started, provisioning-runtimes guide, architecture refresh |
 | **Phase 30** | Architecture diagrams — Mermaid visual reference (topology, sequences, troubleshooting) |
 | **Phase 31** | Volcano lab profiles — home i9 / compact i7, 2-context wheel + parallel burst, `verify-volcano.sh` |
-| **Phase 32 (exploration)** | Courseforge integration — worker images × KBL/Volcano scheduler ([exploration doc](docs/explorations/courseforge-integration.md)) |
+| **Phase 32 (exploration)** | Courseforge integration — worker images × KBL/Volcano scheduler ([exploration doc](docs/explorations/courseforge-integration.md), [PurePlay use case](docs/explorations/pureplay-multi-tier-platform.md)) |
 
 ## Core Concepts
 
