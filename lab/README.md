@@ -34,7 +34,9 @@ KBL_LAB_PROFILE=home ./lab/scripts/up.sh   # i9 home workstation (default)
 # KBL_LAB_PROFILE=compact ./lab/scripts/up.sh   # i7 laptop
 ```
 
-See **[HOME-LAB.md](HOME-LAB.md)** for remote kubectl from a dev laptop and Docker sizing.
+See **[HOME-LAB.md](HOME-LAB.md)** for home-network setup and Docker sizing.
+
+**Windows 11 + WSL2 (i9):** set `BROAD_REPO_TOKEN`, then `./lab/scripts/setup-wsl-home.sh --install-deps --clone` — see [HOME-LAB.md](HOME-LAB.md).
 
 Tear down:
 
@@ -147,8 +149,8 @@ lab/
   manifests/volcano/          # Queue + ComputeWheel volcano-init demo
   manifests/openkruise/     # Julia hot-swap DominoChain demo
   scripts/up.sh | down.sh | install-volcano.sh | install-openkruise.sh
-  scripts/verify-volcano.sh | apply-volcano-burst.sh
-  HOME-LAB.md                 # i9 home workstation + remote kubectl
+  scripts/verify-volcano.sh | apply-volcano-burst.sh | setup-wsl-home.sh
+  HOME-LAB.md                 # i9 home workstation + WSL2 + remote kubectl
 
 Visual guides: [docs/diagrams.md](../docs/diagrams.md)
 ```

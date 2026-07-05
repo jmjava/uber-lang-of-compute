@@ -2,7 +2,68 @@
 
 Run the full KBL Kind lab on your **home network machine** (i9, RTX 4080, 32–64 GiB RAM). Use a **compact profile** on an i7 laptop for lighter local dev.
 
-## Quick start on the home machine
+## Windows 11 + WSL2 (i9 downstairs)
+
+Use **Ubuntu (or another Linux distro) in WSL2**, not PowerShell, for Kind and Docker.
+
+### One-shot setup
+
+Private repos need **`BROAD_REPO_TOKEN`** (suite PAT with access to `jmjava/*` and `courseforge/*`):
+
+```bash
+export BROAD_REPO_TOKEN='ghp_...'   # or ~/.config/courseforge/broad-repo-token
+
+# In WSL — clone under ~/src (avoid /mnt/c/... for speed)
+./lab/scripts/setup-wsl-home.sh --install-deps --clone
+
+# Optional: also clone courseforge/course-builder + infrastructure (Phase 32)
+./lab/scripts/setup-wsl-home.sh --install-deps --clone --with-courseforge
+```
+
+If you already cloned manually:
+
+```bash
+cd ~/src/uber-lang-of-compute
+./lab/scripts/setup-wsl-home.sh --install-deps
+```
+
+The script verifies token access via `gh repo view courseforge/course-builder`, sets **`KBL_LAB_PROFILE=home`**, runs `make lab-up`, and runs `verify-volcano.sh`.
+
+### Docker Desktop checklist (Windows host)
+
+1. Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) with **WSL 2** backend.
+2. **Settings → Resources → Advanced:** Memory **24–48 GiB**, CPUs **8–16**.
+3. **Settings → Resources → WSL integration:** enable your Ubuntu distro.
+4. If `docker info` fails in WSL: in PowerShell run `wsl --shutdown`, reopen Ubuntu, start Docker Desktop.
+
+### Useful flags
+
+```bash
+./lab/scripts/setup-wsl-home.sh --check-only      # prerequisites only
+./lab/scripts/setup-wsl-home.sh --install-deps  # apt + kind/kubectl/kustomize/gh
+./lab/scripts/setup-wsl-home.sh --clone         # clone uber-lang-of-compute (BROAD_REPO_TOKEN)
+./lab/scripts/setup-wsl-home.sh --with-courseforge  # + courseforge/course-builder + infrastructure
+./lab/scripts/setup-wsl-home.sh --skip-up       # prep env without starting cluster
+```
+
+### Remote kubectl from i7 laptop
+
+After the lab is up, in WSL on the i9:
+
+```bash
+kind get kubeconfig --name kbl-lab > ~/kbl-lab-kubeconfig.yaml
+```
+
+Copy `kbl-lab-kubeconfig.yaml` to the laptop (scp, shared drive). On the i7:
+
+```bash
+export KUBECONFIG=~/kbl-lab-kubeconfig.yaml
+kubectl get nodes
+```
+
+You may need to replace `127.0.0.1` in the kubeconfig with the i9’s LAN IP if accessing from another machine.
+
+## Quick start on the home machine (native Linux / WSL after setup)
 
 ```bash
 git clone https://github.com/jmjava/uber-lang-of-compute.git
