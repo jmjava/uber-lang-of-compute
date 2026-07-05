@@ -141,6 +141,10 @@ Volcano is the closest analog to a **course-aware batch scheduler**; the Compute
 4. Should **grading** be a second domino in the chain or part of the worker image?
 5. **Tekton** — build worker images in CI, push to registry KBL `PluggableUniverse` references?
 
+## Target use case — PurePlay
+
+For the production-shaped vision (login, design teams, developer tiers, community pool with low SLA, priority speed options, and the current **design → Blender → Unreal** three-step Alex pipeline), see **[pureplay-multi-tier-platform.md](pureplay-multi-tier-platform.md)**.
+
 ## References
 
 - [ADR 0036: Courseforge integration exploration](../adr/0036-courseforge-integration-exploration.md)
