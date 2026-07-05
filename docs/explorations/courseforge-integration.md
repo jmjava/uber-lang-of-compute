@@ -1,150 +1,145 @@
 # Courseforge × KBL Compute Engine — Integration Exploration
 
 **Status:** exploration (Phase 32 candidate)  
-**Suite context:** [Courseforge handbook](https://courseforge.github.io/docs/handbook/repositories/) — repos under **`courseforge/`** org (private).
+**Repos:** [`courseforge/course-builder`](https://github.com/courseforge/course-builder), [`courseforge/infrastructure`](https://github.com/courseforge/infrastructure), this repo.
 
-## Why this pairing makes sense
+## What Courseforge actually is (from `course-builder`)
 
-**Courseforge** ([`courseforge/course-builder`](https://github.com/courseforge/course-builder)) follows the classic **Course Builder** pattern:
+This is **not** only legacy Google Course Builder external-task workers. The suite today is:
 
-| Layer | Role |
-|-------|------|
-| **Balancer** | Course UI + task dispatch (the main application) |
-| **Worker pool** | Builds and runs learner code; returns results |
+| Layer | Path in `course-builder` | Role |
+|-------|-------------------------|------|
+| **CourseForge API / UI** | `tools/courseforge/backend/`, `frontend/` | FastAPI balancer, LiDAR/course builds, tenant storage |
+| **Orchestrator** | `tools/automation-workers/orchestrator/` | Postgres `course_jobs` / **stages** / artifacts; HTTP dispatch via `WorkerClient` |
+| **Blender worker** | `tools/automation-workers/blender_worker/` | Long-lived pod/service `:8080`, runs **job packages** |
+| **Unreal worker** | `tools/automation-workers/unreal_worker/` | Same HTTP contract, private UE engine image |
+| **Job packages** | `tools/automation-workers/job-packages/builtin/` | Versioned `job.yaml` + scripts (zip/S3/file URI) — **logic changes without rebuilding heavy images** |
+| **Kind skeleton** | `tools/automation-workers/k8s/` | `blender-worker` Deployment in `automation-workers` namespace |
 
-**KBL** ([uber-lang-of-compute](../README.md)) is already a **Kubernetes-native compute fabric** with a richer scheduling stack than a flat worker URL:
+Spec: [stable-worker-spec.md](https://github.com/courseforge/infrastructure/blob/main/docs/stable-worker-job-package-pattern/stable-worker-spec.md) (in `courseforge/infrastructure`).
 
-- **Volcano** — batch queues, gang scheduling, fair share (lab Phase 25–31)
-- **ComputeWheel** — time-slice rotation (weekly modules, lab sessions)
-- **PluggableUniverse** — swappable runtimes via **`runtimeImage`**
-- **DominoChain + domino-runner** — containerized execution with snapshot handoff
-- **Multiverse + Kafka** — multi-tenant / multi-course routing
-- **Snapshots + memoization** — immutable inputs, skip duplicate runs (useful for identical submissions)
+### Worker HTTP contract (today)
 
-KBL does **not** replace the Courseforge **balancer** (UI, auth, course content). It can **replace or sit behind the worker pool** as a more sophisticated **compute scheduler**.
+Workers expose FastAPI on **port 8080**:
 
-## Suite map
+```http
+POST /jobs
+{
+  "jobId": "...",
+  "runtime": "blender",
+  "packageUri": "file:///opt/worker/job-packages/builtin/blender-courseforge-build",
+  "args": { "bundle_dir": "...", "blend_out": "..." }
+}
+GET /jobs/{id}  → state: preparing | running | succeeded | failed | ...
+```
 
-From the [documentation-generator suite handbook](https://github.com/jmjava/documentation-generator/blob/main/docs/suite/repositories.markdown):
+Orchestrator stages support **`dependsOn`** — topological sort in `orchestrator/stage_graph.py` (same idea as KBL domino `dependsOn`).
 
-| Repository | Integration touchpoint |
-|------------|------------------------|
-| **`courseforge/course-builder`** | Balancer; **worker images**; external-task API → KBL adapter |
-| **`courseforge/infrastructure`** | Kind lab on home i9; Tekton; could host **kbl-controller** + Volcano alongside existing installer |
-| **`jmjava/tekton-dag`** | Build worker images; optional pipeline to publish images KBL consumes |
-| **`jmjava/uber-lang-of-compute`** (this repo) | Scheduler fabric: controller, Volcano, Multiverse |
-| **`jmjava/documentation-generator`** | Docgen / demo videos for integrated stack |
+### Worker images (today)
+
+| Image | Dockerfile | Notes |
+|-------|------------|-------|
+| `courseforge-blender-worker-base:22.04` | `blender_worker/Dockerfile.base` | Heavy: Ubuntu + Blender + FastAPI stack |
+| `blender-worker` (thin) | `blender_worker/Dockerfile` | COPY `shared/`, `job-packages/`, harness |
+| Unreal base | `scripts/build-unreal-linux-base-from-engine.sh` | Private ECR only |
+
+Kind dev image: `localhost:5000/courseforge-blender-worker:dev` (`k8s/blender-worker-deployment.yaml`).
+
+Backend dispatch example: `tools/courseforge/backend/lidar_worker_dispatch.py` → `POST` blender-worker with package `PACKAGE_LIDAR_PROCESS`.
+
+## Why KBL fits as a *more sophisticated scheduler*
+
+Courseforge already separates **stable worker images** from **versioned job packages**. KBL adds Kubernetes-native scheduling and audit semantics the orchestrator does not have today:
+
+| Courseforge today | KBL adds |
+|-------------------|----------|
+| Orchestrator HTTP dispatch to fixed worker URLs | **Volcano queues** — fair share per course/cohort/GPU pool |
+| Stage graph in Postgres | **Workflow / DominoChain** CRs + reconciler (same DAG semantics) |
+| Poll worker job state | **Replay log** + snapshot IDs for audit/regrade |
+| Re-run identical build | **Memoization** on input hash |
+| Single Kind worker replica | **ComputeWheel** time slices (module/week rotation) |
+| `automation-workers` namespace | **Multiverse** — route tenants/universes (future) |
+| EKS scale-out (roadmap) | Same patterns on home i9 Kind + Volcano (Phase 31) |
+
+KBL **does not replace** CourseForge UI, Postgres job store, MinIO/S3 artifacts, or the **heavy worker images**. It can **upgrade the dispatch/scheduling plane** above those stable runtimes.
+
+## Architecture options
 
 ```mermaid
 flowchart TB
-  subgraph courseforge [Courseforge — balancer]
-    CB[course-builder UI + task dispatch]
+  subgraph cf [courseforge/course-builder]
+    API[CourseForge FastAPI]
+    ORCH[Orchestrator optional]
+    BW[blender-worker Deployment :8080]
+    UW[unreal-worker Deployment :8080]
   end
 
-  subgraph kbl [KBL — compute fabric]
-    ADAPT[Task adapter optional]
-    WF[Workflow / DominoChain CRs]
-    VOL[Volcano queue per course/cohort]
-    WIMG[course-builder worker images as runnerImage]
-    WH[ComputeWheel time slices]
+  subgraph kbl [KBL — uber-lang-of-compute]
+    ADAPT[courseforge domino executor]
+    WF[Workflow / DominoChain]
+    VOL[Volcano queue]
   end
 
-  subgraph infra [courseforge/infrastructure]
-    KIND[Kind on home i9]
-    TEK[Tekton builds]
-  end
-
-  CB -->|submit learner task| ADAPT
+  API -->|today| ORCH
+  ORCH -->|POST /jobs| BW
+  API -->|Phase 32| ADAPT
   ADAPT --> WF
   WF --> VOL
-  VOL --> WIMG
-  WH --> WF
-  TEK --> WIMG
-  KIND --> kbl
-  WIMG -->|results + replay log| ADAPT
-  ADAPT --> CB
+  VOL --> ADAPT
+  ADAPT -->|POST /jobs packageUri| BW
+  ADAPT -->|POST /jobs| UW
 ```
 
-## Worker images — how they plug in
+### Option A — KBL domino calls existing worker Services (recommended PoC)
 
-Today KBL runs dominos via **`domino-runner`** images (`kbl-domino-runner`, `kbl-domino-runner-julia`) with a small contract:
+Keep **long-lived** `blender-worker` / `unreal-worker` Deployments. Add a KBL domino command, e.g. `courseforge:package`:
 
-| Env var | Purpose |
-|---------|---------|
-| `KBL_COMMAND` | e.g. `builtin:identity`, `julia:greeks` |
-| `KBL_INPUT` | Path to input JSON (sealed snapshot + prior domino outputs) |
-| `KBL_OUTPUT` | Path to write output JSON |
+1. Read sealed snapshot + args from `KBL_INPUT` (packageUri, runtime, args).
+2. `POST http://blender-worker.automation-workers.svc:8080/jobs`.
+3. Poll until `succeeded` / `failed`.
+4. Write artifact refs + logs to `KBL_OUTPUT`.
 
-**Courseforge worker images** (in `course-builder`) likely speak a **different HTTP or process contract** (Google’s [external task balancer](https://github.com/google/coursebuilder-android-container-module) model: POST code → build → run → screenshot/result).
+**Volcano** schedules the **domino-runner pod** that performs the HTTP orchestration (lightweight). Heavy Blender/Unreal images stay as today.
 
-### Integration options (in increasing invasiveness)
+Map:
 
-| Option | Description | When to use |
-|--------|-------------|-------------|
-| **A. Image alias** | Point `PluggableUniverse.spec.executionEngine.runtimeImage` / `DominoChain.spec.runnerImage` at an **existing course-builder worker image** if it already implements the KBL handoff (or a thin wrapper entrypoint). | Worker Dockerfile adds `KBL_*` shim only |
-| **B. domino-runner shim** | New image `kbl-domino-runner-courseforge` that wraps course-builder worker: reads `KBL_INPUT`, calls worker API, writes `KBL_OUTPUT`. | Preserve course-builder worker logic unchanged |
-| **C. Domino = one learner run** | Single domino step `courseforge:run` per submission; chain length 1; Volcano still schedules the pod. | Minimal CR surface |
-| **D. Full chain** | Compile → test → grade as **multi-step DominoChain** (init or OpenKruise); each step can use a **different worker image** from course-builder. | Rich labs (build, run, validate) |
+| KBL | Courseforge |
+|-----|-------------|
+| `PluggableUniverse` `runtime: blender` | Worker Service URL + base image tag for docs/RBAC |
+| One domino step | One orchestrator **stage** / one `POST /jobs` |
+| `DominoChain.spec` chain + `dependsOn` | Orchestrator `stages[]` + `dependsOn` |
+| `volcanoQueue: course-<id>` | Per-course fair share |
 
-**Recommended first PoC:** **Option B or C** — one PluggableUniverse per language/runtime image you already maintain in course-builder, scheduled through **`runtime: volcano-init`** and queue **`course-<id>`**.
+### Option B — KBL replaces orchestrator dispatch only
 
-## KBL as “more sophisticated scheduler”
+CourseForge API creates **Workflow** CRs instead of Postgres `course_jobs`. KBL reconciler expands stages → domino chain → Option A HTTP calls. Postgres becomes optional for status (read from Workflow status).
 
-What Courseforge gains over a single worker URL:
+### Option C — Run job package inside domino-runner image (later)
 
-| Capability | KBL mechanism | Courseforge benefit |
-|------------|---------------|---------------------|
-| **Fair share across sections** | Volcano `Queue` per course (`capability`, `weight`) | CS101 lab doesn’t starve CS201 |
-| **Session / week rotation** | `ComputeWheel` time slices | Align compute with module releases |
-| **Runtime isolation** | `PluggableUniverse` + separate worker images | Python vs Java vs GPU labs |
-| **GPU workers (4080 home lab)** | `nodeSelector: kbl.io/gpu=present` + Volcano GPU tasks | Heavy ML assignments on i9 box |
-| **Audit / regrade** | Replay log + snapshot IDs | Deterministic “why this grade?” |
-| **Duplicate submission dedup** | Memoization on input hash | Same code twice → reuse result |
-| **Multi-campus / multi-tenant** | Multiverse routing + Kafka | Separate universes per org (future) |
+Embed package runner from `shared/job_package/` in `kbl-domino-runner-courseforge` so Volcano schedules **one-shot pods** with the heavy Blender base image. Higher isolation, colder starts — matches KBL init-chain model but **conflicts** with “stable long-lived worker” design unless used for burst GPU jobs only.
 
-Volcano is the closest analog to a **course-aware batch scheduler**; the ComputeWheel adds **temporal structure** Course Builder never had natively.
+## Concrete repo map for Phase 32
 
-## Proposed phases
+| Step | Where |
+|------|--------|
+| Inventory images | `tools/automation-workers/blender_worker/Dockerfile*`, `docker-compose.yml` |
+| Worker API | `shared/worker_harness.py`, `blender_worker/main.py` |
+| Stage DAG | `orchestrator/stage_graph.py`, `orchestrator/workflow.py` |
+| Backend → worker | `tools/courseforge/backend/lidar_worker_dispatch.py` |
+| Kind co-install | `courseforge/infrastructure` Kind installer + KBL `lab/HOME-LAB.md` profile |
+| KBL shim | New `controller/pkg/executor/courseforge/` + `kbl-domino-runner-courseforge` (thin) |
+| Volcano demo | Queue `courseforge-lab`; Workflow with `courseforge:package` domino |
 
-### Phase 32a — Inventory (courseforge/course-builder)
+## Open questions
 
-- [ ] List worker Dockerfiles / image names and tags
-- [ ] Document worker HTTP/API contract (request/response)
-- [ ] Map each image → `executionEngine.type` + `runtimeImage`
-- [ ] Note GPU vs CPU worker variants
-
-*Requires read access to **`courseforge/course-builder`** (private org).*
-
-### Phase 32b — Kind co-install (courseforge/infrastructure + KBL)
-
-- [ ] Extend home i9 Kind profile to deploy **kbl-controller + Volcano** next to existing suite services
-- [ ] Publish course-builder worker images into Kind (`kind load docker-image`)
-- [ ] Single manual Workflow using `runnerImage: <course-builder-worker>`
-
-### Phase 32c — Adapter (balancer → KBL)
-
-- [ ] Service or module in course-builder: external task → create `Workflow` / `DominoChain`
-- [ ] Poll `status.phase` + replay log → balancer task result
-- [ ] Optional: webhook from controller on completion
-
-### Phase 32d — Production-shaped demo
-
-- [ ] Volcano queue **`courseforge-lab`**
-- [ ] ComputeWheel for a **two-week module** (two contexts / time slices)
-- [ ] `verify-volcano.sh`-style script for course operators
-
-## Open questions (need course-builder repo)
-
-1. **Exact repo path** for worker images (`docker/`, `workers/`, `modules/...`)?
-2. Does the balancer use **Google’s `gcb_external_task_balancer_*`** settings or a custom REST API?
-3. Are workers **long-lived** (pool) or **one-shot** containers per submission? (KBL favors one-shot domino pods; long-lived pools map to PluggableUniverse + many Workflow CRs.)
-4. Should **grading** be a second domino in the chain or part of the worker image?
-5. **Tekton** — build worker images in CI, push to registry KBL `PluggableUniverse` references?
+1. Should orchestrator **remain** for Postgres/artifacts while KBL owns scheduling, or migrate status to CRDs only?
+2. GPU Unreal workers on i9 — Volcano `nvidia.com/gpu` + existing UE ECR image?
+3. Job package URIs (S3/MinIO) — seal as **Snapshot** in KBL store before dispatch?
+4. Tekton in infrastructure — build worker images; KBL `PluggableUniverse.runtimeImage` pins the same ECR tag?
 
 ## References
 
-- [ADR 0036: Courseforge integration exploration](../adr/0036-courseforge-integration-exploration.md)
-- [ADR 0031: ComputeWheel Volcano queue](../adr/0031-computewheel-volcano-queue.md)
-- [lab/HOME-LAB.md](../../lab/HOME-LAB.md) — i9 / Volcano home profile
-- [Courseforge suite repositories (handbook)](https://courseforge.github.io/docs/handbook/repositories/)
-- [Google Course Builder external task module](https://github.com/google/coursebuilder-android-container-module) — balancer/worker reference architecture
+- [ADR 0036](../adr/0036-courseforge-integration-exploration.md)
+- [lab/HOME-LAB.md](../../lab/HOME-LAB.md)
+- `course-builder/tools/automation-workers/README.md`
+- `courseforge/infrastructure/docs/stable-worker-job-package-pattern/stable-worker-spec.md`
