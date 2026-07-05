@@ -281,6 +281,8 @@ PurePlay production likely starts with **one pool** and group-based separation; 
 - [ ] Post-confirmation trigger for community tier assignment
 - [ ] M2M app client for developer pro tier
 - [ ] Audit log: actor `sub`, tenant, team, action ([M15 baseline](https://github.com/courseforge/course-builder/blob/main/milestones/specs/MILESTONE-15.md))
+- [ ] Entitlement store + `/api/me` merge with billing status
+- [ ] Stripe (or stub) webhooks → plan / `past_due` sync
 
 Local dev bypass: `AUTH_MODE=none` or static dev JWT — never enabled in hosted environments.
 
@@ -309,9 +311,242 @@ Authorization **fails closed** when tenant or team claims are missing. Community
 
 ---
 
+## Cognito → service layer mapping
+
+Cognito proves **who** the user is; **service layer** decides **what queue, SLA, and quotas** apply. The mapping is explicit so login, scheduling, and billing stay aligned.
+
+```mermaid
+flowchart LR
+  subgraph identity [Cognito JWT]
+    G[cognito:groups]
+    A[custom attributes]
+  end
+
+  subgraph policy [CourseForge entitlement store]
+    ENT[Plan + subscription state]
+    QTA[Quotas and credits]
+  end
+
+  subgraph runtime [Compute layer]
+    Q[Volcano queue]
+    SLA[SLA class]
+  end
+
+  subgraph billing [Billing engine]
+    USG[Usage events]
+    INV[Invoices / meters]
+  end
+
+  G --> ENT
+  A --> ENT
+  ENT --> QTA
+  QTA --> Q
+  QTA --> SLA
+  Q --> USG
+  USG --> INV
+  INV --> ENT
+```
+
+### Mapping table
+
+| Service layer | Cognito group(s) | `custom:service_tier` | `custom:tenant_id` | Volcano queue | SLA class | Billing SKU (example) |
+|---------------|------------------|----------------------|--------------------|---------------|-----------|------------------------|
+| **Community pool** | `community` | `community-pool` | `community` | `community-pool` | `best-effort` | Free — `community-free` |
+| **Team standard** | `pureplay-designer` | `team-standard` | `pureplay` | `team-{teamId}` | `standard` | Per-seat — `pureplay-designer-seat` |
+| **Team priority** | `pureplay-designer` + expedite flag | `team-priority` *(per job)* | `pureplay` | `team-{teamId}-priority` | `priority` | Credit pack or overage — `priority-build-credit` |
+| **Team lead** | `pureplay-team-lead` | inherits team plan | `pureplay` | same as team | same as team | Included in seat — no extra SKU |
+| **Developer pro** | `pureplay-developer` (M2M) | `developer-pro` | `pureplay` | `dev-{clientId}` | `contractual` | Base + metered — `developer-pro-base` + usage |
+
+**Rules**
+
+1. **Default layer on login** comes from Cognito group + `custom:service_tier` on the token.
+2. **Per-job override** — `priority: expedited` on submit temporarily maps to **team priority** queue; does not change Cognito attributes.
+3. **Source of truth for paid state** is the **entitlement store** (Postgres), not Cognito alone. Cognito attributes may be updated after billing events for convenience, but API checks subscription status before honoring priority or developer tiers.
+4. **Payment lapse** — entitlement downgrades to `team-standard` or blocks submit; Cognito login still works but `/api/me` shows `billing_status: past_due`.
+
+### Entitlement record (per user or per team)
+
+Stored in CourseForge backend; keyed by `sub` (user) or `team_id` (shared team wallet):
+
+| Field | Example | Used for |
+|-------|---------|----------|
+| `plan_id` | `pureplay-team-2026` | Maps to billing subscription |
+| `service_layer` | `team-standard` | Default queue + SLA |
+| `priority_credits_remaining` | `42` | Expedited builds before overage meter |
+| `concurrent_job_limit` | `2` | Pre-submit gate |
+| `storage_quota_gb` | `500` | Artifact retention enforcement |
+| `billing_account_id` | `cus_...` | External billing customer id |
+| `billing_status` | `active` / `past_due` / `canceled` | Fail closed on submit when not `active` for paid tiers |
+
+`GET /api/me` returns merged **JWT claims + entitlement row + live quota usage** so the login screen and builder show the same tier the scheduler will use.
+
+---
+
+## Billing integration
+
+Billing ties **Cognito identity** and **service layers** to **money and meters**. CourseForge [M15](https://github.com/courseforge/course-builder/blob/main/milestones/specs/MILESTONE-15.md) requires a **provider-agnostic** domain model: usage events and entitlements are canonical; the billing engine is swappable ( **Stripe Billing** is the reference implementation on AWS).
+
+### Architecture
+
+```mermaid
+flowchart TB
+  subgraph events [Usage path]
+    JOB[Build job completes]
+    UE[Usage event emitter]
+    LED[Usage ledger Postgres]
+  end
+
+  subgraph billing [Billing provider — Stripe reference]
+    CUS[Customer / subscription]
+    MTR[Meters / line items]
+    WH[Webhooks]
+  end
+
+  subgraph sync [Entitlement sync]
+    API[CourseForge API]
+    ENT[(entitlements)]
+    COG[Cognito attribute sync optional]
+  end
+
+  JOB --> UE --> LED
+  LED --> MTR
+  WH --> API
+  API --> ENT
+  API --> COG
+  CUS --- WH
+```
+
+| Component | Responsibility |
+|-----------|----------------|
+| **Usage ledger** | Append-only, idempotent events ([M15 schema](#usage-events-metered-dimensions)) |
+| **Billing provider** | Subscriptions, invoices, payment methods, tax |
+| **Entitlement service** | Maps paid state → `service_layer`, credits, quotas |
+| **Webhooks** | `invoice.paid`, `customer.subscription.updated`, `payment_failed` → update entitlements |
+| **Cognito sync** | Optional push of `custom:service_tier` when org plan changes (JWT reflects tier without extra DB read) |
+
+### Plans and SKUs (PurePlay example)
+
+| SKU | Service layer | Billing model | Notes |
+|-----|---------------|---------------|-------|
+| `community-free` | Community pool | $0 | Rate-limited; no SLA |
+| `pureplay-designer-seat` | Team standard | Per user / month (org contract) | PurePlay internal designers |
+| `pureplay-team-priority-pack` | Team priority | Prepaid credits (e.g. 100 expedited builds) | Decrements `priority_credits_remaining` |
+| `priority-build-overage` | Team priority | Metered per expedited build after credits exhausted | Usage event → Stripe meter |
+| `developer-pro-base` | Developer pro | Monthly platform fee | Includes API + webhook |
+| `developer-pro-compute` | Developer pro | Metered GPU/CPU minutes | Heavier Unreal stages later |
+| `storage-overage-gb-day` | All paid tiers | Metered | Artifact storage beyond plan quota |
+
+Business pricing is **out of scope** for this doc (M15); the table defines **integration shape** only.
+
+### Usage events (metered dimensions)
+
+Every billable action emits a canonical usage event (tenant-safe, no raw course content):
+
+```json
+{
+  "eventId": "uuid",
+  "idempotencyKey": "job-{courseJobId}-stage-{stageName}",
+  "timestamp": "2026-07-05T16:00:00Z",
+  "tenantId": "pureplay",
+  "teamId": "pureplay-east",
+  "actorSub": "cognito-sub-...",
+  "serviceLayer": "team-priority",
+  "meter": "priority_build",
+  "quantity": 1,
+  "dimensions": {
+    "workflowTemplate": "course-build-a4",
+    "stage": "blender-build",
+    "runtime": "blender",
+    "queue": "team-pureplay-east-priority",
+    "wallSeconds": 1847,
+    "computeClass": "cpu-standard"
+  }
+}
+```
+
+| Meter | When emitted | Maps to service layer |
+|-------|--------------|----------------------|
+| `standard_build` | Full course job success on team queue | Team standard |
+| `priority_build` | Job submitted with `priority: expedited` | Team priority |
+| `community_build` | Job on community pool | Community (free; optional future ads/sponsor model) |
+| `developer_api_job` | M2M client submission | Developer pro |
+| `gpu_minute` | Unreal/GPU worker time (future Alex stages) | Priority / developer |
+| `storage_gb_day` | Daily rollup of artifact bytes | All paid tiers |
+| `egress_gb` | Artifact download | All tiers |
+
+Events are **idempotent** on `idempotencyKey` so orchestrator retries do not double-bill.
+
+### Billing ↔ Cognito ↔ scheduler flow
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant SPA as SPA
+  participant API as FastAPI
+  participant ENT as Entitlements
+  participant VOL as Volcano queue
+  participant BIL as Stripe
+
+  U->>SPA: Login (Cognito)
+  SPA->>API: GET /api/me
+  API->>ENT: Load plan + credits
+  ENT-->>SPA: layer=team-standard, credits=12
+
+  U->>SPA: Build course (priority=expedited)
+  SPA->>API: POST /api/courseforge/build
+  API->>ENT: Check credits + billing_status
+  alt credits OK and active
+    ENT-->>API: OK → team-priority queue
+    API->>VOL: Submit job (queue team-*-priority)
+    VOL-->>API: Job complete
+    API->>ENT: Decrement credit, emit usage event
+    API->>BIL: Report meter (if overage)
+  else past_due or no credits
+    API-->>SPA: 402 Payment Required / fallback to standard
+  end
+```
+
+**Pre-submit UX (M15):** builder shows “Expedited — 1 credit (11 remaining)” or “Past due — expedited unavailable” before the user commits.
+
+### Webhook-driven entitlement updates
+
+| Webhook (Stripe example) | Entitlement action |
+|--------------------------|-------------------|
+| `checkout.session.completed` | Activate plan; set `service_layer`; assign seats to `sub` or team |
+| `customer.subscription.updated` | Change seat count, plan tier, renewal date |
+| `invoice.paid` | Clear `past_due`; restore priority eligibility |
+| `invoice.payment_failed` | Set `billing_status: past_due`; block expedited + developer burst |
+| `customer.subscription.deleted` | Downgrade to community or read-only |
+
+Optional: Lambda or API worker updates Cognito `custom:service_tier` when org-wide plan changes so refreshed tokens carry the new default layer.
+
+### PurePlay org vs community billing
+
+| Audience | Billing owner | Cognito tenant | Typical flow |
+|----------|---------------|----------------|--------------|
+| PurePlay employees | PurePlay org (`billing_account_id` on org) | `pureplay` | Annual contract; IT manages seats in admin UI |
+| Community users | Self-serve or sponsor | `community` | Free tier default; optional Stripe Checkout for priority boost packs |
+| External developer partners | Partner org | `pureplay` or dedicated tenant | Developer pro subscription + usage invoice |
+
+Community **does not** charge for queue wait time — billing only applies if PurePlay later sells **priority boost** or **storage upgrade** add-ons to community users.
+
+### Implementation checklist (billing)
+
+- [ ] Canonical usage event schema + idempotent writer ([M15 §5](https://github.com/courseforge/course-builder/blob/main/milestones/specs/MILESTONE-15.md))
+- [ ] `entitlements` table keyed by tenant / team / user
+- [ ] Stripe (or stub) customer ↔ `billing_account_id` mapping
+- [ ] Webhook endpoint with signature verification
+- [ ] Pre-submit entitlement check on `POST /api/courseforge/build`
+- [ ] Credit decrement + overage meter on job completion
+- [ ] Admin UI: plan, usage this period, download invoice link
+- [ ] `402` / quota error surfaces in SPA (chat + form paths)
+- [ ] Audit: usage events retain `actorSub`, `tenantId`, `serviceLayer` for support
+
+---
+
 ## Service tiers and SLA
 
-PurePlay offers **different levels of service** on the same worker images. KBL **Volcano queues** (or orchestrator priority fields that map to them) implement the split.
+PurePlay offers **different levels of service** on the same worker images. KBL **Volcano queues** (or orchestrator priority fields that map to them) implement the split. **Cognito groups and entitlements** select the layer; **billing** records consumption (see [Cognito → service layer mapping](#cognito--service-layer-mapping) and [Billing integration](#billing-integration)).
 
 | Tier | Who | Target turnaround | Queue behavior | SLA posture |
 |------|-----|-------------------|----------------|-------------|
@@ -337,7 +572,7 @@ Teams and developer accounts may **opt into priority scheduling**:
 
 - Per-submit flag: `priority: standard | expedited`
 - Expedited jobs route to `team-{id}-priority` Volcano queue or receive higher `priorityClassName`
-- Billing: priority credits, monthly allotment, or pay-per-build
+- Billing: decrements **priority credits** from team entitlement; overage meters to Stripe ([Billing integration](#billing-integration))
 - KBL mechanism: separate `Queue` CR with higher `weight` and optional `preemptable: false` on team jobs ([ADR 0031](../adr/0031-computewheel-volcano-queue.md))
 
 ---
@@ -444,12 +679,13 @@ PurePlay production is expected to run **hosted cloud** for team and community t
 
 ## Open decisions
 
-1. **Priority pricing** — credits per expedited build vs monthly team allotment.
+1. **Priority pricing** — credits per expedited build vs monthly team allotment (billing SKU shape documented; amounts TBD).
 2. **Community eligibility** — open signup vs invite-only vs PurePlay-branded subdomain.
 3. **Login UI** — Hosted UI only (phase 1) vs embedded Amplify form (phase 2).
-4. **Cross-team sharing** — whether a finished course can be published from team A to community without re-build.
-5. **GPU queue** — separate Volcano queue for GPU-heavy Unreal cooks when Alex adds them (i9 `kbl.io/gpu=present` label).
-6. **KBL adapter timing** — orchestrator-native queues first vs full DominoChain mapping in Phase 32.
+4. **Billing provider** — Stripe as reference vs AWS Marketplace / invoiced enterprise only for PurePlay org.
+5. **Cross-team sharing** — whether a finished course can be published from team A to community without re-build.
+6. **GPU queue** — separate Volcano queue for GPU-heavy Unreal cooks when Alex adds them (i9 `kbl.io/gpu=present` label); meter as `gpu_minute`.
+7. **KBL adapter timing** — orchestrator-native queues first vs full DominoChain mapping in Phase 32.
 
 ---
 
