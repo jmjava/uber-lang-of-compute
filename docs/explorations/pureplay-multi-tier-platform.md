@@ -5,10 +5,17 @@
 **Audience:** Alex (Blender/Unreal pipeline), PurePlay product/ops, CourseForge platform  
 **Related:** [Courseforge × KBL integration](courseforge-integration.md) · [ADR 0036](../adr/0036-courseforge-integration-exploration.md)
 
-### Share link (after merge)
+### Share this document
 
-GitHub: `docs/explorations/pureplay-multi-tier-platform.md` in [jmjava/uber-lang-of-compute](https://github.com/jmjava/uber-lang-of-compute)  
-Open PR for review: [#35](https://github.com/jmjava/uber-lang-of-compute/pull/35)
+**Canonical link (merged on `main`):**
+
+https://github.com/jmjava/uber-lang-of-compute/blob/main/docs/explorations/pureplay-multi-tier-platform.md
+
+**From the docs index:** [docs/README.md § Explorations](../README.md#explorations)
+
+Merged via [PR #35](https://github.com/jmjava/uber-lang-of-compute/pull/35) (2026-07-05).
+
+> **Repository access:** `jmjava/uber-lang-of-compute` is **private**. Alex and PurePlay reviewers need a GitHub invite to open the links above. Until then, export this file from a clone or paste the rendered Markdown into a shared doc.
 
 Mermaid diagrams render on GitHub and in VS Code/Cursor preview — suitable for pasting into PurePlay meetings or exporting via [Mermaid Live Editor](https://mermaid.live).
 
@@ -19,11 +26,14 @@ Mermaid diagrams render on GitHub and in VS Code/Cursor preview — suitable for
 | 1 | [Platform overview](#platform-overview-for-review) | End-to-end: login → tiers → billing → 3-step build |
 | 2 | [Actors and teams](#actors-and-teams) | PurePlay org, Cognito, CourseForge, Volcano queues |
 | 3 | [Cognito resources](#cognito-resources-pureplay-production) | User Pool, Hosted UI, app clients |
-| 4 | [Login flow](#login-screen--user-experience) | Hosted UI PKCE sequence |
-| 5 | [Service layer mapping](#cognito--service-layer-mapping) | Identity → entitlements → queues → billing |
+| 4 | [Login flow](#login-screen-user-experience) | Hosted UI PKCE sequence |
+| 5 | [Service layer mapping](#cognito-service-layer-mapping) | Identity → entitlements → queues → billing |
 | 6 | [Billing architecture](#billing-architecture) | Usage events, Stripe, webhooks |
-| 7 | [Billing submit flow](#billing--cognito--scheduler-flow) | Credits check before priority queue |
+| 7 | [Billing submit flow](#billing-cognito-scheduler-flow) | Credits check before priority queue |
 | 8 | [Build pipeline](#current-course-build-pipeline-three-steps) | A2 → Blender A3 → Unreal A4 (+ Alex future stages) |
+| 9 | [End-to-end build flow](#end-to-end-request-flow-hosted-pureplay) | Login through job completion |
+
+<a id="platform-overview-for-review"></a>
 
 ### Platform overview (for review)
 
@@ -117,6 +127,8 @@ One React GUI and one FastAPI backend ([MILESTONE-A6](https://github.com/coursef
 
 ---
 
+<a id="actors-and-teams"></a>
+
 ## Actors and teams
 
 ```mermaid
@@ -198,6 +210,8 @@ PurePlay hosted builder access requires a **login screen**, **session management
 
 Local desktop (Tauri) and `run.sh` dev mode remain **unauthenticated or license-gated**; Cognito applies to **hosted cloud** and **community Kind** deployments where multi-tenant policy is enforced.
 
+<a id="cognito-resources-pureplay-production"></a>
+
 ### Cognito resources (PurePlay production)
 
 ```mermaid
@@ -244,6 +258,8 @@ flowchart TB
 | **Groups** | `pureplay-designer`, `pureplay-team-lead`, `pureplay-developer`, `community` |
 
 Optional **Cognito Identity Pool** if the SPA needs direct AWS credentials (e.g. short-lived S3 upload from browser). Prefer **presigned URLs from the API** when possible so the backend remains the tenancy gatekeeper.
+
+<a id="login-screen-user-experience"></a>
 
 ### Login screen — user experience
 
@@ -408,6 +424,8 @@ Authorization **fails closed** when tenant or team claims are missing. Community
 
 ---
 
+<a id="cognito-service-layer-mapping"></a>
+
 ## Cognito → service layer mapping
 
 Cognito proves **who** the user is; **service layer** decides **what queue, SLA, and quotas** apply. The mapping is explicit so login, scheduling, and billing stay aligned.
@@ -479,9 +497,13 @@ Stored in CourseForge backend; keyed by `sub` (user) or `team_id` (shared team w
 
 ---
 
+<a id="billing-integration"></a>
+
 ## Billing integration
 
 Billing ties **Cognito identity** and **service layers** to **money and meters**. CourseForge [M15](https://github.com/courseforge/course-builder/blob/main/milestones/specs/MILESTONE-15.md) requires a **provider-agnostic** domain model: usage events and entitlements are canonical; the billing engine is swappable ( **Stripe Billing** is the reference implementation on AWS).
+
+<a id="billing-architecture"></a>
 
 ### Billing architecture
 
@@ -535,6 +557,8 @@ flowchart TB
 
 Business pricing is **out of scope** for this doc (M15); the table defines **integration shape** only.
 
+<a id="usage-events-metered-dimensions"></a>
+
 ### Usage events (metered dimensions)
 
 Every billable action emits a canonical usage event (tenant-safe, no raw course content):
@@ -572,6 +596,8 @@ Every billable action emits a canonical usage event (tenant-safe, no raw course 
 | `egress_gb` | Artifact download | All tiers |
 
 Events are **idempotent** on `idempotencyKey` so orchestrator retries do not double-bill.
+
+<a id="billing-cognito-scheduler-flow"></a>
 
 ### Billing ↔ Cognito ↔ scheduler flow
 
@@ -643,7 +669,7 @@ Community **does not** charge for queue wait time — billing only applies if Pu
 
 ## Service tiers and SLA
 
-PurePlay offers **different levels of service** on the same worker images. KBL **Volcano queues** (or orchestrator priority fields that map to them) implement the split. **Cognito groups and entitlements** select the layer; **billing** records consumption (see [Cognito → service layer mapping](#cognito--service-layer-mapping) and [Billing integration](#billing-integration)).
+PurePlay offers **different levels of service** on the same worker images. KBL **Volcano queues** (or orchestrator priority fields that map to them) implement the split. **Cognito groups and entitlements** select the layer; **billing** records consumption (see [Cognito → service layer mapping](#cognito-service-layer-mapping) and [Billing integration](#billing-integration)).
 
 | Tier | Who | Target turnaround | Queue behavior | SLA posture |
 |------|-----|-------------------|----------------|-------------|
@@ -673,6 +699,8 @@ Teams and developer accounts may **opt into priority scheduling**:
 - KBL mechanism: separate `Queue` CR with higher `weight` and optional `preemptable: false` on team jobs ([ADR 0031](../adr/0031-computewheel-volcano-queue.md))
 
 ---
+
+<a id="current-course-build-pipeline-three-steps"></a>
 
 ## Current course build pipeline (three steps)
 
@@ -714,6 +742,8 @@ New stages append to the orchestrator DAG as **separate job packages** — heavy
 When KBL backs the pool, each stage may map to a **DominoChain** step with Volcano scheduling and snapshot handoff between Blender and Unreal dominos ([integration options](courseforge-integration.md#integration-options-in-increasing-invasiveness)).
 
 ---
+
+<a id="end-to-end-request-flow-hosted-pureplay"></a>
 
 ## End-to-end request flow (hosted PurePlay)
 
