@@ -1,6 +1,6 @@
 .PHONY: build test tidy clean docker-domino-runner docker-domino-runner-julia \
 	docker-kbl-controller docker-kbl-tsdb lab-up lab-down lab-volcano-install lab-openkruise-install \
-	lab-verify-volcano cdk-synth
+	lab-verify-volcano lab-setup-wsl-home cdk-synth
 
 build:
 	cd controller && go build -o bin/kbl-compute ./cmd/kbl-compute

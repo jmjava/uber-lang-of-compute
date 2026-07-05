@@ -8,19 +8,26 @@ Use **Ubuntu (or another Linux distro) in WSL2**, not PowerShell, for Kind and D
 
 ### One-shot setup
 
+Private repos need **`BROAD_REPO_TOKEN`** (suite PAT with access to `jmjava/*` and `courseforge/*`):
+
 ```bash
+export BROAD_REPO_TOKEN='ghp_...'   # or ~/.config/courseforge/broad-repo-token
+
 # In WSL — clone under ~/src (avoid /mnt/c/... for speed)
-git clone https://github.com/jmjava/uber-lang-of-compute.git ~/src/uber-lang-of-compute
-cd ~/src/uber-lang-of-compute
+./lab/scripts/setup-wsl-home.sh --install-deps --clone
 
-# First time: install kind/kubectl/kustomize if needed
-./lab/scripts/setup-wsl-home.sh --install-deps
-
-# Or if tools are already installed:
-./lab/scripts/setup-wsl-home.sh
+# Optional: also clone courseforge/course-builder + infrastructure (Phase 32)
+./lab/scripts/setup-wsl-home.sh --install-deps --clone --with-courseforge
 ```
 
-The script checks Docker Desktop WSL integration, sets **`KBL_LAB_PROFILE=home`**, runs `make lab-up`, and runs `verify-volcano.sh`.
+If you already cloned manually:
+
+```bash
+cd ~/src/uber-lang-of-compute
+./lab/scripts/setup-wsl-home.sh --install-deps
+```
+
+The script verifies token access via `gh repo view courseforge/course-builder`, sets **`KBL_LAB_PROFILE=home`**, runs `make lab-up`, and runs `verify-volcano.sh`.
 
 ### Docker Desktop checklist (Windows host)
 
@@ -33,8 +40,9 @@ The script checks Docker Desktop WSL integration, sets **`KBL_LAB_PROFILE=home`*
 
 ```bash
 ./lab/scripts/setup-wsl-home.sh --check-only      # prerequisites only
-./lab/scripts/setup-wsl-home.sh --install-deps  # apt + kind/kubectl/kustomize
-./lab/scripts/setup-wsl-home.sh --clone         # clone to ~/src/uber-lang-of-compute if needed
+./lab/scripts/setup-wsl-home.sh --install-deps  # apt + kind/kubectl/kustomize/gh
+./lab/scripts/setup-wsl-home.sh --clone         # clone uber-lang-of-compute (BROAD_REPO_TOKEN)
+./lab/scripts/setup-wsl-home.sh --with-courseforge  # + courseforge/course-builder + infrastructure
 ./lab/scripts/setup-wsl-home.sh --skip-up       # prep env without starting cluster
 ```
 

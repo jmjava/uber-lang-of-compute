@@ -1,27 +1,37 @@
 #!/usr/bin/env bash
 # One-shot KBL Kind lab setup for Windows 11 + WSL2 (i9 home profile).
 #
-# Run inside your WSL distro (Ubuntu recommended), NOT from PowerShell directly:
-#   cd ~/src/uber-lang-of-compute   # or wherever you cloned
-#   ./lab/scripts/setup-wsl-home.sh
+# Requires BROAD_REPO_TOKEN for private jmjava / courseforge GitHub repos.
+#
+# Run inside Ubuntu WSL (not PowerShell):
+#   export BROAD_REPO_TOKEN='ghp_...'
+#   ./lab/scripts/setup-wsl-home.sh --install-deps --clone
 #
 # Options:
-#   --install-deps    Install kind, kubectl, kustomize (Linux amd64) if missing
-#   --check-only      Prerequisites check only; do not start the lab
-#   --skip-up         Prepare env but do not run lab/scripts/up.sh
-#   --clone           Clone repo to ~/src/uber-lang-of-compute when not already in repo
+#   --install-deps       Install kind, kubectl, kustomize (Linux amd64) if missing
+#   --check-only         Prerequisites check only; do not start the lab
+#   --skip-up            Prepare env but do not run lab/scripts/up.sh
+#   --clone              Clone uber-lang-of-compute (uses BROAD_REPO_TOKEN)
+#   --with-courseforge   Also clone courseforge/course-builder + infrastructure
 #
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib-broad-git.sh
+source "${SCRIPT_DIR}/lib-broad-git.sh"
 
 INSTALL_DEPS=0
 CHECK_ONLY=0
 SKIP_UP=0
 DO_CLONE=0
-REPO_URL="${KBL_REPO_URL:-https://github.com/jmjava/uber-lang-of-compute.git}"
+WITH_COURSEFORGE=0
+KBL_REPO_SLUG="${KBL_REPO_SLUG:-jmjava/uber-lang-of-compute}"
 CLONE_DIR="${KBL_CLONE_DIR:-$HOME/src/uber-lang-of-compute}"
+COURSEFORGE_DIR="${COURSEFORGE_DIR:-$HOME/src/course-builder}"
+INFRA_DIR="${COURSEFORGE_INFRA_DIR:-$HOME/src/courseforge-infrastructure}"
 
 usage() {
-  sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
@@ -31,6 +41,7 @@ while [[ $# -gt 0 ]]; do
     --check-only) CHECK_ONLY=1 ;;
     --skip-up) SKIP_UP=1 ;;
     --clone) DO_CLONE=1 ;;
+    --with-courseforge) WITH_COURSEFORGE=1; DO_CLONE=1 ;;
     -h|--help) usage 0 ;;
     *) echo "unknown option: $1" >&2; usage 1 ;;
   esac
@@ -121,10 +132,31 @@ check_wsl_environment() {
 
   case "$PWD" in
     /mnt/*)
-      warn "You are on a Windows drive (/mnt/c/...). Clone the repo under ~/src for faster Docker/Kind I/O."
-      warn "Example: git clone $REPO_URL ~/src/uber-lang-of-compute && cd ~/src/uber-lang-of-compute"
+      warn "You are on a Windows drive (/mnt/c/...). Use ~/src for faster Docker/Kind I/O."
       ;;
   esac
+}
+
+verify_github_access() {
+  require_broad_repo_token || exit 1
+  info "GitHub API (BROAD_REPO_TOKEN): courseforge/course-builder"
+  if ! GH_TOKEN="$BROAD_REPO_TOKEN" gh repo view courseforge/course-builder --json name -q .name >/dev/null 2>&1; then
+    die "BROAD_REPO_TOKEN cannot read courseforge/course-builder — check PAT scopes (repo org access)"
+  fi
+  info "GitHub API: ${KBL_REPO_SLUG}"
+  if ! GH_TOKEN="$BROAD_REPO_TOKEN" gh repo view "$KBL_REPO_SLUG" --json name -q .name >/dev/null 2>&1; then
+    die "BROAD_REPO_TOKEN cannot read ${KBL_REPO_SLUG}"
+  fi
+}
+
+clone_repos() {
+  require_broad_repo_token || exit 1
+  git_clone_broad "$KBL_REPO_SLUG" "$CLONE_DIR"
+  if [[ "$WITH_COURSEFORGE" == "1" ]]; then
+    git_clone_broad "courseforge/course-builder" "$COURSEFORGE_DIR"
+    git_clone_broad "courseforge/infrastructure" "$INFRA_DIR"
+    info "Courseforge workers: $COURSEFORGE_DIR/tools/automation-workers/"
+  fi
 }
 
 print_docker_hints() {
@@ -134,7 +166,6 @@ Docker Desktop (Windows) — recommended for i9 home lab:
   • Resources → Memory: 24–48 GiB
   • Resources → CPUs: 8–16
   • Resources → WSL Integration: ON for this distro
-  • Optional later: GPU support via WSL2 + NVIDIA driver (Courseforge / UE workers)
 
 EOF
 }
@@ -142,32 +173,41 @@ EOF
 main() {
   check_wsl_environment
 
+  if [[ "$DO_CLONE" == "1" || "$WITH_COURSEFORGE" == "1" ]]; then
+    verify_github_access
+    clone_repos
+  fi
+
   ROOT=""
   if ROOT="$(find_repo_root)"; then
     info "Using repo at $ROOT"
+  elif [[ -d "$CLONE_DIR/lab/scripts/up.sh" ]] || [[ -f "$CLONE_DIR/lab/scripts/up.sh" ]]; then
+    ROOT="$CLONE_DIR"
+    info "Using cloned repo at $ROOT"
   elif [[ "$DO_CLONE" == "1" ]]; then
-    mkdir -p "$(dirname "$CLONE_DIR")"
-    if [[ ! -d "$CLONE_DIR/.git" ]]; then
-      info "Cloning $REPO_URL → $CLONE_DIR"
-      git clone "$REPO_URL" "$CLONE_DIR"
-    fi
     ROOT="$CLONE_DIR"
   else
-    die "Not inside uber-lang-of-compute. cd to the repo or pass --clone"
+    die "Not inside uber-lang-of-compute. Pass --clone (requires BROAD_REPO_TOKEN)"
   fi
 
   cd "$ROOT"
 
   if [[ "$INSTALL_DEPS" == "1" ]]; then
     sudo apt-get update -qq
-    sudo apt-get install -y -qq curl git make ca-certificates >/dev/null 2>&1 || true
+    sudo apt-get install -y -qq curl git make ca-certificates gh >/dev/null 2>&1 || true
   fi
+
+  command -v gh >/dev/null 2>&1 || warn "gh CLI not installed (optional; apt install gh or github.com/cli/cli)"
 
   check_docker
   ensure_tool kind install_kind
   ensure_tool kubectl install_kubectl
   ensure_tool kustomize install_kustomize
   command -v make >/dev/null 2>&1 || die "make not found (sudo apt install build-essential)"
+
+  if [[ "$DO_CLONE" == "1" || "$WITH_COURSEFORGE" == "1" ]]; then
+    verify_github_access
+  fi
 
   info "Tool versions:"
   docker version --format '  docker: {{.Server.Version}}' 2>/dev/null || docker --version
@@ -195,7 +235,7 @@ main() {
     exit 0
   fi
 
-  info "Starting Kind lab (this builds images — first run may take 15–30+ minutes)..."
+  info "Starting Kind lab (first run builds images — may take 15–30+ minutes)..."
   make lab-up
 
   info "Verifying Volcano demo..."
@@ -209,9 +249,11 @@ Lab is up on WSL.
   ./lab/scripts/verify-volcano.sh
   kubectl get wheel julia-finance-wheel -o wide
 
-Remote kubectl from your i7 (same LAN):
+Courseforge (if cloned with --with-courseforge):
+  cd ${COURSEFORGE_DIR}/tools/automation-workers && docker compose config
+
+Remote kubectl from i7 laptop:
   kind get kubeconfig --name ${KBL_KIND_CLUSTER} > ~/kbl-lab-kubeconfig.yaml
-  # Copy to laptop, then: export KUBECONFIG=~/kbl-lab-kubeconfig.yaml
 
 Tear down:
   make lab-down
