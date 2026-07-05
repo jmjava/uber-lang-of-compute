@@ -1,8 +1,105 @@
 # PurePlay × CourseForge — Multi-Tier Builder Platform Use Case
 
-**Status:** target use case (production vision)  
+**Status:** target use case (production vision) — **ready for Alex + PurePlay review**  
 **Target customer:** **PurePlay**  
+**Audience:** Alex (Blender/Unreal pipeline), PurePlay product/ops, CourseForge platform  
 **Related:** [Courseforge × KBL integration](courseforge-integration.md) · [ADR 0036](../adr/0036-courseforge-integration-exploration.md)
+
+### Share link (after merge)
+
+GitHub: `docs/explorations/pureplay-multi-tier-platform.md` in [jmjava/uber-lang-of-compute](https://github.com/jmjava/uber-lang-of-compute)  
+Open PR for review: [#35](https://github.com/jmjava/uber-lang-of-compute/pull/35)
+
+Mermaid diagrams render on GitHub and in VS Code/Cursor preview — suitable for pasting into PurePlay meetings or exporting via [Mermaid Live Editor](https://mermaid.live).
+
+### Diagram index (9 figures)
+
+| # | Section | What it shows |
+|---|---------|---------------|
+| 1 | [Platform overview](#platform-overview-for-review) | End-to-end: login → tiers → billing → 3-step build |
+| 2 | [Actors and teams](#actors-and-teams) | PurePlay org, Cognito, CourseForge, Volcano queues |
+| 3 | [Cognito resources](#cognito-resources-pureplay-production) | User Pool, Hosted UI, app clients |
+| 4 | [Login flow](#login-screen--user-experience) | Hosted UI PKCE sequence |
+| 5 | [Service layer mapping](#cognito--service-layer-mapping) | Identity → entitlements → queues → billing |
+| 6 | [Billing architecture](#billing-architecture) | Usage events, Stripe, webhooks |
+| 7 | [Billing submit flow](#billing--cognito--scheduler-flow) | Credits check before priority queue |
+| 8 | [Build pipeline](#current-course-build-pipeline-three-steps) | A2 → Blender A3 → Unreal A4 (+ Alex future stages) |
+
+### Platform overview (for review)
+
+Single-page view for Alex and PurePlay stakeholders:
+
+```mermaid
+flowchart TB
+  subgraph users [Users]
+    PP[PurePlay designers]
+    CM[Community]
+    DEV[Developer API]
+  end
+
+  subgraph auth [AWS Cognito]
+    LOGIN[Login screen / Hosted UI]
+    JWT[JWT claims<br/>tenant · team · tier]
+  end
+
+  subgraph product [CourseForge]
+    GUI[Builder GUI]
+    API[FastAPI]
+    ENT[Entitlements + billing state]
+    ORCH[Orchestrator]
+  end
+
+  subgraph billing [Billing]
+    USG[Usage meters]
+    STR[Stripe subscriptions + credits]
+  end
+
+  subgraph compute [Compute — KBL + Volcano]
+    QC[community-pool<br/>low SLA]
+    QT[team-standard]
+    QP[team-priority]
+    BW[blender-worker]
+    UW[unreal-worker]
+  end
+
+  subgraph pipeline [Alex pipeline today]
+    S1[A2 bundle]
+    S2[Blender GCD A3]
+    S3[Unreal import A4]
+    S4[Future UE stages]
+  end
+
+  PP --> LOGIN
+  CM --> LOGIN
+  DEV --> API
+  LOGIN --> JWT --> GUI
+  GUI --> API
+  API --> ENT
+  ENT --> STR
+  API --> ORCH
+  ORCH --> QC
+  ORCH --> QT
+  ORCH --> QP
+  QC --> BW
+  QT --> BW
+  QP --> BW
+  BW --> S2
+  S2 --> S3
+  S3 --> UW
+  S3 -.-> S4
+  S1 --> S2
+  ORCH --> USG
+  USG --> STR
+```
+
+**Key points for PurePlay**
+
+- One GUI; **Cognito login** gates hosted access; teams isolated by tenant + team id.
+- **Four service layers**: community (free, long waits OK), team standard, team priority (credits), developer pro.
+- **Billing** meters builds and priority credits; payment status controls expedited queue access.
+- **Today’s build**: design bundle → Blender (Alex GCD) → Unreal FBX import; Alex adds more Unreal stages later without rebuilding worker images.
+
+---
 
 ## Summary
 
@@ -386,7 +483,7 @@ Stored in CourseForge backend; keyed by `sub` (user) or `team_id` (shared team w
 
 Billing ties **Cognito identity** and **service layers** to **money and meters**. CourseForge [M15](https://github.com/courseforge/course-builder/blob/main/milestones/specs/MILESTONE-15.md) requires a **provider-agnostic** domain model: usage events and entitlements are canonical; the billing engine is swappable ( **Stripe Billing** is the reference implementation on AWS).
 
-### Architecture
+### Billing architecture
 
 ```mermaid
 flowchart TB
