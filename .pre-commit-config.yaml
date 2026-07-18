@@ -1,0 +1,19 @@
+# Pre-commit hooks to avoid committing secrets.
+# Install: pip install pre-commit && pre-commit install
+# Also install push hooks: pre-commit install --hook-type pre-push
+# Run manually: pre-commit run --all-files
+#
+# GitGuardian: pip install ggshield (or let pre-commit manage it), then
+# secret scan runs on commit and push. Optional: ggshield auth login
+# or export GITGUARDIAN_API_KEY. Or enable GitGuardian on the GitHub repo.
+
+repos:
+  - repo: https://github.com/gitguardian/ggshield
+    rev: v1.40.0
+    hooks:
+      - id: ggshield
+        language_version: python3
+        stages: [pre-commit]
+      - id: ggshield-push
+        language_version: python3
+        stages: [pre-push]

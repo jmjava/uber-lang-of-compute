@@ -20,6 +20,10 @@ controller/vendor/
 # OS
 .DS_Store
 
+# GitGuardian / ggshield
+.cache_ggshield
+
+
 # CDK
 infra/aws/cdk/node_modules/
 infra/aws/cdk/cdk.out/
