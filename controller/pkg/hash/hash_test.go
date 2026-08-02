@@ -51,3 +51,11 @@ func TestDifferentInputsDifferentHashes(t *testing.T) {
 		t.Error("different inputs should produce different hashes")
 	}
 }
+
+func TestChainKey(t *testing.T) {
+	got := hash.ChainKey("snap-1", "domino-a", "abc123")
+	want := "snap-1:domino-a:abc123"
+	if got != want {
+		t.Errorf("ChainKey() = %q, want %q", got, want)
+	}
+}
