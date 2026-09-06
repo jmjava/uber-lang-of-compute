@@ -21,7 +21,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M13 | Unique names in an execution chain | **proved** | `TestRejectsDuplicateChainNames`, `TestUniqueNamesRejectsDuplicates` |
 | M14 | Engine-enforced causal past | **proved** | `TestDominoCannotReadFutureOutput`, `TestRejectsDependsOnOutsideCausalPast`, `TestFutureReadRejected` |
 | M15 | Partial sandbox isolation is not a cage | **proved** | `TestPartialSandboxIsolationIsNotACage`, `TestPartialSandboxIsolationRejectedByEngine` |
-| M16 | Wall-clock is not in the worldline | planned | delayed rerun: equal hashes/HeadLink, unequal timestamps |
+| M16 | Wall-clock is not in the worldline | **proved** | `TestWallClockNotInWorldline` |
 | M17 | Sealed snapshots are write-once | planned | different payload fails; identical rewrite is idempotent |
 | M18 | Memo key conflict is H5, not ignore | planned | same key, different output is an error |
 | M19 | Collision-safe WorkflowName truncation | planned | two long equal-length names must not collide |

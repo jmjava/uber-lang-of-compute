@@ -16,6 +16,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | M13 | Execution chain names are unique | Theorem of exclusion | `TestRejectsDuplicateChainNames`, `TestUniqueNamesRejectsDuplicates` | Namespaced aliases |
 | M14 | Engine rejects reads outside the causal past | Theorem of the cone | `TestDominoCannotReadFutureOutput`, `TestRejectsDependsOnOutsideCausalPast` | OS sandbox of the process |
 | M15 | Partial isolation is not a Faraday cage | Falsification of XOR⇒H2-admission | `TestPartialSandboxIsolationIsNotACage`, `TestPartialSandboxIsolationRejectedByEngine` | Real kernel namespaces |
+| M16 | Wall-clock is excluded from the worldline | Theorem of the gauge | `TestWallClockNotInWorldline` | Relativistic proper time |
 | M1/M2 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
 | M9 | Replay log is a hash chain from the snapshot ID | Theorem of the spine | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput` | Full Merkle DAG / blockchain |
 | Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |

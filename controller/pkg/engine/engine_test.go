@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/engine"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
@@ -96,6 +97,35 @@ func TestSnapshotReplayDeterministic(t *testing.T) {
 	}
 	if result2.WorkCostUSD != 0 {
 		t.Fatalf("replay cost want 0 got %v", result2.WorkCostUSD)
+	}
+}
+
+func TestWallClockNotInWorldline(t *testing.T) {
+	run := func(t *testing.T, name string) *types.RunResult {
+		t.Helper()
+		s, err := store.Open(filepath.Join(t.TempDir(), name+".db"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer s.Close()
+		result, err := engine.New(s).Run(loadTestWorkflow(t, "simple-domino-chain"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return result
+	}
+
+	a := run(t, "a")
+	time.Sleep(2 * time.Millisecond)
+	b := run(t, "b")
+	if a.HeadLink != b.HeadLink || theory.Worldline(a.Entries) != theory.Worldline(b.Entries) {
+		t.Fatal("independent runs must share hash worldline and spine head")
+	}
+	for i := range a.Entries {
+		a.Entries[i].Timestamp = a.Entries[i].Timestamp.Add(time.Hour)
+	}
+	if err := theory.VerifySpine(a.SnapshotID, a.Entries); err != nil {
+		t.Fatalf("timestamp mutation must not break the spine: %v", err)
 	}
 }
 
