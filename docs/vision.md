@@ -45,7 +45,7 @@ If replay + caching + locality work for one chain, the fabric scales.
 - Hot-swapped container dominos via OpenKruise daisy chains
 - Node-local TSDB DaemonSet as live-data and cached-result store
 - Debezium/Kafka routing across pluggable universes
-- Self-similar hierarchical aggregation (Windowed Mandelbrot *pattern* — theorem F1; not yet the cluster scheduler)
+- Self-similar hierarchical aggregation (Windowed Mandelbrot *pattern* — theorem F1; wheel seats = explorer leaves, milestone M3)
 - Player-piano scheduling: pre-provision resources ahead of need
 
 ## Related Reading

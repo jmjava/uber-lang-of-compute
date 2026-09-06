@@ -8,7 +8,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 |----|-----------|--------|-------|
 | M1 | Picard regularity gate in the engine | **proved** | `TestDeterministicWorkflowRejectsContractGradeCommand`, `TestDeterministicBuiltinRunRecordsRegularity`, `TestRequireDeterministicRejectsContract` |
 | M2 | Bennett logical work on every run | **proved** | `TestSnapshotReplayDeterministic` work fields; `TestTheoremM1MemoObservationallyEquivalent` |
-| M3 | Explorer window seats the Compute Wheel | pending | \(k^d\) leaves = wheel seats; one full turn visits each leaf once; coarsen ⇒ \(k^{d-1}\) seats |
+| M3 | Explorer window seats the Compute Wheel | **proved** | `TestWindowSeatsMatchExplorerLeaves`, `TestFullTurnVisitsEveryWindowLeaf`, `TestCoarsenReducesSeatsByArity` |
 | M4 | Classical histories on snapshot-completed events | later | routing fan-out carries sealed snapshot ID; `Interfere(liveShare=false)` is false in the event path |
 | M5 | Homeostasis on Workflow status | later | spec-phase vs status-phase error is 0 iff Ready |
 | M6 | Unfold-driven hierarchical workflows | later | a live chain can be built from `Unfold` (F1 leaves the pattern library) |

@@ -19,7 +19,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | F1 | `Coarsen(Unfold(d)) ≅ Unfold(d-1)` | Theorem (pattern) | `TestCoarsenRecoversShallowerWindow` | Live fractal scheduler |
 | F-dim | Additive window has similarity dimension 1 | Explorer mimic | `TestSimilarityDimensionAdditiveTreeIsOne` | Hausdorff dim. of the Mandelbrot set |
 | F-esc | Escape-time is a finite iteration window | Explorer mimic | `TestEscapeTimeIsAFiniteWindow` | Connectedness locus of \(z^2+c\) |
-| F-wheel | Window leaves can be wheel seats | Explorer mimic | `TestWheelWindowLeafCount` | — |
+| F-wheel | Window leaves can be wheel seats | Explorer mimic | `TestWheelWindowLeafCount`, `TestWindowSeatsMatchExplorerLeaves`, `TestFullTurnVisitsEveryWindowLeaf` | Live CRD field for depth/arity |
 | Hist | Sealed fan-out does not interfere | Branching mimic | `TestHistoriesDoNotInterfereWhenSealed` | Hilbert space |
 | Homeo | Spec=status is homeostatic | Control mimic | `TestHomeostasisMatchesSpec` | Metabolism |
 | ID128 | Snapshot IDs are 128-bit | Implemented | `hash.SnapshotIDHexLen` | Full 256-bit store keys |
