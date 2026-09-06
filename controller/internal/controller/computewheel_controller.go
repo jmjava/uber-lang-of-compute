@@ -224,26 +224,24 @@ func (r *ComputeWheelReconciler) preProvisionNext(
 	interval time.Duration,
 	currentCtx *kblv1alpha1.ComputeContext,
 ) error {
-	next := wheel.AdvanceAfterCompletion(state, len(w.Spec.Contexts), interval, 0)
-	if next.Done {
-		return nil
-	}
-
-	nextContextName, err := wheel.ActiveContextName(w.Spec.Contexts, next.State.ActiveContextIndex)
+	slot, done, err := wheel.Lookahead(w.Name, w.Spec.Contexts, state, interval, 0)
 	if err != nil {
 		return err
+	}
+	if done {
+		return nil
 	}
 
 	var nextCtx kblv1alpha1.ComputeContext
 	nextCtxPtr := &nextCtx
-	if err := r.Get(ctx, client.ObjectKey{Name: nextContextName}, &nextCtx); err != nil {
+	if err := r.Get(ctx, client.ObjectKey{Name: slot.Context}, &nextCtx); err != nil {
 		if !apierrors.IsNotFound(err) {
 			return err
 		}
 		nextCtxPtr = currentCtx
 	}
 
-	nextWF := wheel.BuildWorkflow(w, nextCtxPtr, next.State, r.StoreRoot)
+	nextWF := wheel.BuildWorkflow(w, nextCtxPtr, slot.State, r.StoreRoot)
 	var existing kblv1alpha1.Workflow
 	if err := r.Get(ctx, client.ObjectKeyFromObject(nextWF), &existing); err == nil {
 		return nil

@@ -104,3 +104,60 @@ func TestWorkflowNameWithinLimit(t *testing.T) {
 		t.Errorf("workflow name exceeds 63 chars: %d", len(name))
 	}
 }
+
+func TestLookaheadIsAFunctionOfState(t *testing.T) {
+	contexts := []string{"compute-a", "compute-b"}
+	start := time.Date(2025, 4, 15, 0, 0, 0, 0, time.UTC)
+	state := wheel.State{CurrentTimeSlice: start, ActiveContextIndex: 0}
+	interval := 24 * time.Hour
+
+	a, doneA, err := wheel.Lookahead("finance-wheel", contexts, state, interval, 0)
+	if err != nil || doneA {
+		t.Fatalf("lookahead: %v done=%v", err, doneA)
+	}
+	b, doneB, err := wheel.Lookahead("finance-wheel", contexts, state, interval, 0)
+	if err != nil || doneB || a != b {
+		t.Fatalf("lookahead must be a function: %v vs %v done=%v", a, b, doneB)
+	}
+
+	landed := wheel.AdvanceAfterCompletion(state, len(contexts), interval, 0)
+	want := wheel.WorkflowName("finance-wheel", contexts[landed.State.ActiveContextIndex], wheel.FormatTimeSlice(landed.State.CurrentTimeSlice))
+	if a.Name != want || a.Context != "compute-b" {
+		t.Fatalf("pre-provisioned slot %q/%q want %q/compute-b", a.Name, a.Context, want)
+	}
+}
+
+func TestLookaheadWrapsToNextSlice(t *testing.T) {
+	contexts := []string{"compute-a", "compute-b"}
+	start := time.Date(2025, 4, 15, 0, 0, 0, 0, time.UTC)
+	state := wheel.State{CurrentTimeSlice: start, ActiveContextIndex: 1}
+	slot, done, err := wheel.Lookahead("finance-wheel", contexts, state, 24*time.Hour, 0)
+	if err != nil || done {
+		t.Fatalf("lookahead: %v done=%v", err, done)
+	}
+	if slot.Context != "compute-a" {
+		t.Fatalf("wrap should land on first context, got %s", slot.Context)
+	}
+	if slot.State.CurrentTimeSlice != start.Add(24*time.Hour) {
+		t.Fatalf("wrap should advance the slice, got %v", slot.State.CurrentTimeSlice)
+	}
+}
+
+func TestLookaheadStopsWhenDone(t *testing.T) {
+	contexts := []string{"a", "b"}
+	state := wheel.State{
+		CurrentTimeSlice:   time.Date(2025, 4, 15, 0, 0, 0, 0, time.UTC),
+		ActiveContextIndex: 1,
+		RotationCount:      0,
+	}
+	slot, done, err := wheel.Lookahead("w", contexts, state, time.Hour, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !done {
+		t.Fatal("expected no next note at max rotations")
+	}
+	if slot.Name != "" {
+		t.Fatalf("done lookahead must not name a workflow, got %q", slot.Name)
+	}
+}

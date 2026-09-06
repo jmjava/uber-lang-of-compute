@@ -18,7 +18,7 @@ Physics-shaped names are **nature-inspired abstractions** ([docs/theory/nature-i
 | **Volcano Job / SyncSet** | Batch-scheduled domino chain executed by the Volcano scheduler; maps to `runtime: volcano-init` and `volcanoQueue` on DominoChain. |
 | **Low-Entropy Snapshot** | An immutable data view that makes computation reproducible. **Entropy here is ensemble Shannon entropy** \(H_{\mathrm{ens}}\) of candidate inputs: sealing collapses the prior to a Dirac mass (\(H_{\mathrm{ens}}=0\)). It is not thermodynamic \(S\), and sealing does not compress the payload. |
 | **Data Locality** | The principle that compute moves to data, not data to compute. Scheduling decisions prioritize node proximity to data. |
-| **Player-Piano Scheduler** | A scheduler that pre-provisions resources ahead of need, like notes pre-positioned on a piano roll before they are played. |
+| **Player-Piano Scheduler** | A scheduler that pre-provisions resources ahead of need, like notes pre-positioned on a piano roll before they are played. `wheel.Lookahead` is that next note as a function of current state (M12). |
 | **Compute Fabric** | The overall system: time-sliced, data-local, Kubernetes-native infrastructure for deterministic chained computation. |
 | **Replay Log** | An append-only record of domino executions: snapshot ID, domino ID, input hash, output hash, and whether the result was reused or recomputed. |
 

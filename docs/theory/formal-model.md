@@ -135,6 +135,12 @@ For \(n_c>0\), \(\Phi_W\) is a total function. After \(n_c\) steps from \((0,t,r
 
 **Proof.** Inspection of `AdvanceAfterCompletion`. Period: the index increments \(n_c-1\) times without wrapping, then wraps once. ∎
 
+### Theorem M12 (player-piano lookahead)
+
+Assume \(n_c>0\). `Lookahead` is a function of \((\mathrm{wheelName},\mathrm{contexts},\mathrm{state},\Delta t,\mathrm{maxRotations})\). If the successor is not absorbing, its name equals `WorkflowName` of the state produced by \(\Phi_W\), which is the Workflow `BuildWorkflow` would create for that slot.
+
+**Proof.** `Lookahead` is `AdvanceAfterCompletion` followed by `ActiveContextName` and `WorkflowName`. Two calls on equal inputs therefore agree. When \(\Phi_W\) is absorbing (`Done`), the name is empty. Tests: `TestLookaheadIsAFunctionOfState`, `TestLookaheadNameMatchesBuiltWorkflow`, `TestLookaheadStopsWhenDone`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).
@@ -186,6 +192,7 @@ The method is [nature-inspired.md](nature-inspired.md). We mimic nature; we do n
 | Hash / snapshot ID | `controller/pkg/hash` |
 | Memo | `store.LookupMemo` / `SaveResult` |
 | Wheel \(\Phi_W\) | `controller/pkg/wheel/rotation.go` |
+| Player-piano lookahead | `wheel.Lookahead`, `preProvisionNext` |
 | Routing \(\rho\) | `controller/pkg/routing/router.go` |
 | Causal past | `controller/pkg/theory/causal.go` |
 | Ensemble entropy | `controller/pkg/theory/entropy.go` |

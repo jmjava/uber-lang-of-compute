@@ -122,7 +122,7 @@ This is the same methodological move as an artificial neuron (McCulloch & Pitts 
 
 **Source \(S\).** A planar rotation is motion on \(S^1\). Combined with a time coordinate that only advances, the orbit lives on a cylinder \(S^1\times\mathbb{R}\) (a helix if time is plotted). Discrete analogue: a cyclic seat index in \(\mathbb{Z}_n\) and a slice in a discrete time lattice.
 
-**Target \(T\).** `wheel.AdvanceAfterCompletion`: seat \(i \mapsto i+1 \bmod n\); when \(i\) wraps, slice \(\mapsto\) slice \(+\Delta t\) and rotation count increments. Unique successor for \(n>0\).
+**Target \(T\).** `wheel.AdvanceAfterCompletion`: seat \(i \mapsto i+1 \bmod n\); when \(i\) wraps, slice \(\mapsto\) slice \(+\Delta t\) and rotation count increments. Unique successor for \(n>0\). `Lookahead` names that successor without advancing the live wheel (player-piano / `preProvisionNext`).
 
 **Morphism \(\varphi\).** Seat \(\mapsto\) ComputeContext. Angle \(2\pi i/n\) \(\mapsto\) index \(i\). Continuous rotation \(\mapsto\) discrete advance after slot completion. Time \(\mapsto\) `CurrentTimeSlice`.
 
@@ -130,6 +130,7 @@ This is the same methodological move as an artificial neuron (McCulloch & Pitts 
 
 - **Unique successor (Thm. W1).** \(\Phi\) is a function. Test: `TestTheoremW1WheelHasUniqueSuccessor`.
 - **Period in the angular coordinate.** \(n\) advances wrap the seat index and add exactly one interval to the slice. Test: `TestCylinderPeriodAdvancesTimeOnce`.
+- **Lookahead is a function (Thm. M12).** The next Workflow name is determined by current state. Tests: `TestLookaheadIsAFunctionOfState`, `TestLookaheadNameMatchesBuiltWorkflow`.
 
 **Does not transfer \(P_-\).**
 
@@ -207,7 +208,7 @@ Tests: F1, `TestSimilarityDimensionAdditiveTreeIsOne`, `TestWheelWindowLeafCount
 | II | Low-entropy snapshot | Ensemble Shannon collapse at seal | Theorem for \(H_{\mathrm{ens}}\) | E1 |
 | III | Locality / isolation | Causal past + sealed-only signaling | Theorem | causal past, R1 |
 | IV | Multiverse | Product of systems + non-interfering classical branches | Theorem for routing; branching mimic for Everett-shaped fan-out | C1, histories |
-| V | Ferris / Compute Wheel | Discrete cylinder map | Theorem | W1 |
+| V | Ferris / Compute Wheel | Discrete cylinder map + player-piano lookahead | Theorem | W1, M12 |
 | VI | Windowed Mandelbrot | Explorer viewport + coarsenable IFS | Theorem F1; explorer mimic for \(z^2+c\) | F1, dimension, escape-time, wheel leaves |
 | VII | Minimize entropy / maximize caching | Recorded intermediates | Theorem for outputs; bookkeeping mimic for Landauer | M1, logical work |
 | VIII | Lifeform | Spec/status homeostasis | Control mimic | homeostasis |

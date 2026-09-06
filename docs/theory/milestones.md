@@ -17,6 +17,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M9 | Tamper-evident Merkle-style replay spine | **proved** | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput`, `TestLinkIsDeterministicAndOrderSensitive` |
 | M10 | Isolation does not imply uniqueness | **proved** | `TestIsolatedSandboxImpureIsNotUnique`, `TestExecuteSandboxImpureIsNotUnique`, `TestIsolatedSandboxDoesNotImplyUniqueness` |
 | M11 | Four-DSL orthogonality for builtins | **proved** | `TestProvisioningOrthogonalToBuiltinWorldline` |
+| M12 | Player-piano lookahead is a function of wheel state | **proved** | `TestLookaheadIsAFunctionOfState`, `TestLookaheadNameMatchesBuiltWorkflow`, `TestLookaheadStopsWhenDone` |
 
 ## Proof command
 

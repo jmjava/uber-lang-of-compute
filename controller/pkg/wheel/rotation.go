@@ -89,6 +89,32 @@ func AdvanceAfterCompletion(state State, contextCount int, interval time.Duratio
 	return AdvanceResult{State: next, AdvancedSlice: false}
 }
 
+// Slot is a named position on the Compute Wheel.
+type Slot struct {
+	Name    string
+	Context string
+	State   State
+}
+
+// Lookahead is the next Workflow name after the current state, or Done if the
+// wheel has no successor. Nature-inspired reading: the player-piano roll
+// already has the next note; we read it without playing it.
+func Lookahead(wheelName string, contexts []string, state State, interval time.Duration, maxRotations int) (Slot, bool, error) {
+	next := AdvanceAfterCompletion(state, len(contexts), interval, maxRotations)
+	if next.Done {
+		return Slot{State: next.State}, true, nil
+	}
+	ctx, err := ActiveContextName(contexts, next.State.ActiveContextIndex)
+	if err != nil {
+		return Slot{}, false, err
+	}
+	return Slot{
+		Name:    WorkflowName(wheelName, ctx, FormatTimeSlice(next.State.CurrentTimeSlice)),
+		Context: ctx,
+		State:   next.State,
+	}, false, nil
+}
+
 // ActiveContextName returns the context name at the current index.
 func ActiveContextName(contexts []string, index int) (string, error) {
 	if index < 0 || index >= len(contexts) {

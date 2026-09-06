@@ -119,3 +119,37 @@ func TestBuildWorkflowVolcanoQueue(t *testing.T) {
 		t.Fatalf("expected volcano queue label, got %q", wf.Labels["kbl.io/volcano-queue"])
 	}
 }
+
+func TestLookaheadNameMatchesBuiltWorkflow(t *testing.T) {
+	ts := time.Date(2025, 4, 15, 0, 0, 0, 0, time.UTC)
+	w := &kblv1alpha1.ComputeWheel{
+		ObjectMeta: metav1.ObjectMeta{Name: "finance-wheel", Namespace: "default"},
+		Spec: kblv1alpha1.ComputeWheelSpec{
+			Contexts: []string{"compute-a", "compute-b"},
+			WorkflowTemplate: kblv1alpha1.WorkflowTemplateSpec{
+				Snapshot: kblv1alpha1.SnapshotSpec{
+					Source: kblv1alpha1.SnapshotSource{
+						Inline: map[string]interface{}{"value": 1},
+					},
+					Sealed: true,
+				},
+				Dominos: []kblv1alpha1.DominoSpec{
+					{Name: "load", Command: "builtin:identity"},
+				},
+				Execution: kblv1alpha1.ExecutionSpec{
+					Chain:         []string{"load"},
+					Deterministic: true,
+				},
+			},
+		},
+	}
+	state := wheel.State{CurrentTimeSlice: ts, ActiveContextIndex: 0}
+	slot, done, err := wheel.Lookahead(w.Name, w.Spec.Contexts, state, 24*time.Hour, 0)
+	if err != nil || done {
+		t.Fatalf("lookahead: %v done=%v", err, done)
+	}
+	wf := wheel.BuildWorkflow(w, nil, slot.State, "/tmp/kbl")
+	if wf.Name != slot.Name {
+		t.Fatalf("player-piano name %q != built workflow %q", slot.Name, wf.Name)
+	}
+}
