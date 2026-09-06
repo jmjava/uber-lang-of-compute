@@ -1,6 +1,19 @@
 # Related Work
 
-Citations are to the literature that actually bears on KBL's claims. The author's blog series is the design lineage, not the scholarly context. Where a physics name is used in this repository, the relevant paper is usually a *correspondence* paper in computer science, not a paper in Physical Review.
+The author's blog series is the design lineage. Scholarly context has two layers: **nature-inspired computing** (the method) and **systems** (the artifact). Physics-shaped names are used the way "neuron" is used in a neural net: a copied structure, not a laboratory identity. Method: [nature-inspired.md](nature-inspired.md).
+
+---
+
+## Nature-inspired computing (the method)
+
+- **McCulloch, W. & Pitts, W.** (1943). *A logical calculus of the ideas immanent in nervous activity.* Bull. Math. Biophys. The original "copy the neuron, leave the wetware" paper.
+- **Rosenblatt, F.** (1958). *The perceptron.* Psychological Review. Same method, learning included.
+- **Rumelhart, D., Hinton, G. & Williams, R.** (1986). *Learning representations by back-propagating errors.* Nature. The abstraction remains productive without becoming neuroscience.
+- **Holland, J.** (1975). *Adaptation in Natural and Artificial Systems.* Genetic algorithms as evolution-inspired search.
+- **Kirkpatrick, S., Gelatt, C. & Vecchi, M.** (1983). *Optimization by simulated annealing.* Science. Metallurgy copied as a search heuristic; joules of the metal are left in nature.
+- **Dorigo, M.** *Ant Colony Optimization.* Another explicit mimic with the biological remainder named.
+
+KBL's use of entropy, worlds, wheels, and lifeforms belongs in this family, not in Physical Review.
 
 ---
 
@@ -56,7 +69,7 @@ KBL does not claim novelty for "pure functions of immutable inputs." It claims a
 
 ## Many systems, not many-worlds
 
-- **Everett, H.** (1957). *Relative state formulation of quantum mechanics.* Rev. Mod. Phys. Cited only to **refuse** the correspondence. KBL has no amplitudes.
+- **Everett, H.** (1957). *Relative state formulation of quantum mechanics.* Rev. Mod. Phys. Source of the branching *image*. KBL copies non-interfering classical histories with sealed records, not amplitudes — the neural-net move.
 - **Coupled map lattices / multi-physics codes** (Kaneko; engineering co-simulation). Product of systems with different local rules and weak interface coupling — Correspondence IV.
 
 ---
@@ -70,4 +83,4 @@ KBL does not claim novelty for "pure functions of immutable inputs." It claims a
 
 ## What we are not
 
-KBL is not a contribution to statistical mechanics, general relativity, or fractal geometry. It is a systems artifact whose design language borrowed those names. The correspondence paper is the method for keeping the names without smuggling the ontologies.
+KBL is not a contribution to statistical mechanics, general relativity, or fractal geometry. It is a **nature-inspired systems artifact**: it copies named structures from those fields the way a neural net copies the neuron, and it names the remainder left in nature.

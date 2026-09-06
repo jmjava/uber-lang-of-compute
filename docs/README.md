@@ -13,7 +13,7 @@ Central index for the [Uber Language of Compute](https://jmenke.blogspot.com/) i
 | [Architecture](architecture.md) | System design | Layers, data flow, [Multiverse communication](architecture.md#multiverse-communication) |
 | [Vocabulary](vocabulary.md) | Everyone | Glossary aligned with the blog series |
 | [Vision](vision.md) | Context | Original design goals |
-| [**Theory**](theory/README.md) | Researchers | Physics correspondences, formal model, peer-review reading |
+| [**Theory**](theory/README.md) | Researchers | Nature-inspired mimics of physics/biology, formal model, peer-review reading |
 
 ## Blog alignment
 

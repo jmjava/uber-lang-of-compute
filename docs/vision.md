@@ -10,7 +10,7 @@ The core thesis, drawn from the Uber Language of Compute blog series (2020–202
 
 > Compute rearranges around data. Bring compute to the data, not data to compute.
 
-Physics vocabulary in this project is a **correspondence layer**, not a claim that Kubernetes implements thermodynamics or many-worlds quantum mechanics. Each borrowed structure (unique Cauchy trajectories, ensemble-entropy collapse at seal time, causal past during compute, discrete cylinder flow of the wheel, windowed self-similar aggregation) is defined, bounded, and tested in [docs/theory](./theory/README.md). What does not transfer — Landauer heat, Everett branching, the map \(z\mapsto z^2+c\), biological life — is declined there as a theorem.
+Physics-shaped names are **nature-inspired abstractions**, in the same sense that a neural net is brain-inspired: we copy a structure nature already found useful (frozen initial data, unique trajectories, local interaction, recorded intermediates, independent worlds, homeostatic feedback, a windowed explorer of an infinite hierarchy) and leave the wetware in nature. Method, grades, and tests: [docs/theory](./theory/README.md), especially [nature-inspired.md](./theory/nature-inspired.md).
 
 ## Core Principles
 

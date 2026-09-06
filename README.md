@@ -18,7 +18,7 @@ flowchart TB
 
 **A time-sliced, data-local, Kubernetes-native compute fabric**
 
-The KBL Compute Engine processes immutable time-sliced data snapshots through modular, deterministic compute dominos placed near local data stores. It uses DSLs/CRDs to describe execution, data, provisioning, and routing — collapsing **ensemble input entropy** through snapshot isolation and maximizing reuse through memoized intermediate results. Physics-shaped names (entropy, multiverse, Mandelbrot, lifeform) are defined as [correspondences](docs/theory/correspondences.md), not identity claims about nature.
+The KBL Compute Engine processes immutable time-sliced data snapshots through modular, deterministic compute dominos placed near local data stores. It uses DSLs/CRDs to describe execution, data, provisioning, and routing — collapsing **ensemble input entropy** through snapshot isolation and maximizing reuse through memoized intermediate results. Physics-shaped names (entropy, multiverse, Mandelbrot, lifeform) are **nature-inspired abstractions** ([docs/theory/nature-inspired.md](docs/theory/nature-inspired.md)), copied from nature the way a neural net copies the neuron — not proofs of physics.
 
 Derived from the [Uber Language of Compute](https://github.com/jmjava/uber-lang-of-compute) blog series (2020–2025), originally published at **[jmenke.blogspot.com](https://jmenke.blogspot.com/)**.
 
@@ -34,7 +34,7 @@ Derived from the [Uber Language of Compute](https://github.com/jmjava/uber-lang-
 | [Provisioning Runtimes](docs/provisioning-runtimes.md) | `kubernetes-init`, `openkruise`, `volcano-init` |
 | [Vocabulary](docs/vocabulary.md) | Glossary |
 | [Vision](docs/vision.md) | Design goals |
-| [**Theory / correspondences**](docs/theory/README.md) | Peer-review reading, physics linkages, theorems, evidence |
+| [**Theory / nature-inspired**](docs/theory/README.md) | Physics-shaped names as ANN-style mimics of nature; theorems and grades |
 | [Kind Lab](lab/README.md) | Local multi-node cluster operations |
 | [Blog — jmenke.blogspot.com](https://jmenke.blogspot.com/) | Original Uber Language of Compute series |
 

@@ -1,13 +1,16 @@
 package theory
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 // Node is one cell in a finite window of a k-ary aggregation tree.
 //
-// Correspondence: the Windowed Mandelbrot pattern is not the Mandelbrot set
-// z ↦ z²+c. It is a windowed unfolding of an infinite self-similar hierarchy:
-// only depth ≤ D is materialized, and coarsening one level recovers the
-// shallower window (renormalization / multigrid analogue).
+// Correspondence: the Windowed Mandelbrot pattern copies the *explorer*
+// (only a finite viewport of an infinite self-similar object is materialized).
+// Coarsening recovers the shallower window (renormalization / multigrid analogue).
+// This is nature-inspired design, not a claim that the scheduler is z ↦ z²+c.
 type Node struct {
 	Label    string
 	Depth    int
@@ -120,4 +123,63 @@ func ValuesEqual(a, b *Node) bool {
 		}
 	}
 	return true
+}
+
+// LeafCount is the number of leaves of a perfect arity-ary tree of the given depth.
+func LeafCount(depth, arity int) int {
+	if depth <= 0 || arity <= 0 {
+		return 1
+	}
+	n := 1
+	for i := 0; i < depth; i++ {
+		n *= arity
+	}
+	return n
+}
+
+// Leaves returns leaf nodes in left-to-right order.
+func Leaves(n *Node) []*Node {
+	if n == nil {
+		return nil
+	}
+	if len(n.Children) == 0 {
+		return []*Node{n}
+	}
+	var out []*Node
+	for _, c := range n.Children {
+		out = append(out, Leaves(c)...)
+	}
+	return out
+}
+
+// SimilarityDimension is the similarity (Hutchinson) dimension of a perfect
+// k-ary IFS with contraction 1/scale: log(k)/log(scale).
+//
+// Nature-inspired reading: this is the fractal *budget* of a windowed explorer
+// (how densely a scale fills), not the Hausdorff dimension of the Mandelbrot set.
+// Additive Unfold uses scale=arity, so the dimension is 1 — consistent with a
+// conserved 1-D scalar (value-mass) along the hierarchy.
+func SimilarityDimension(arity int, scale float64) float64 {
+	if arity <= 0 || scale <= 1 {
+		return 0
+	}
+	return math.Log(float64(arity)) / math.Log(scale)
+}
+
+// EscapeTime iterates z → z²+c until |z| exceeds radius or maxIter is reached.
+//
+// This is the Mandelbrot *explorer* primitive: a finite iteration window on an
+// infinite generated object. It is not the scheduler's law of motion and does
+// not identify KBL with the Mandelbrot set. It copies the viewport idea the
+// way a neural net copies a firing rate.
+func EscapeTime(c complex128, maxIter int, radius float64) int {
+	z := 0 + 0i
+	for i := 0; i < maxIter; i++ {
+		z = z*z + c
+		re, im := real(z), imag(z)
+		if re*re+im*im > radius*radius {
+			return i + 1
+		}
+	}
+	return maxIter
 }

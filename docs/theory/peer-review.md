@@ -2,11 +2,11 @@
 
 **Manuscript.** *A Kubernetes-native compute fabric with physics-inspired structure: snapshots, dominos, wheels, and a routed multiverse.*
 
-**Venue analogue.** Interdisciplinary systems journal (e.g. ACM TOCS / JPDC) that will also receive physicists as reviewers.
+**Venue analogue.** Nature-inspired computing / systems journal (the neural-net analogue), not Physical Review.
 
-**Recommendation (original form of the repo).** **Reject, with invitation to resubmit as a systems paper plus a correspondence appendix.**
+**Recommendation (original form of the repo).** **Reject, with invitation to resubmit as nature-inspired systems work** — the physics words were used as identity, not as named mimics.
 
-**Recommendation (this revision).** **Revise and resubmit.** The systems artifact is real. The physics language is now a bounded correspondence theory rather than an identity claim. Remaining gaps are labeled as such.
+**Recommendation (this revision).** **Revise and resubmit.** The systems artifact is real. The physics language is now ANN-style mimicry of nature (copied structure, remainder named, grades of leftover analogies). Remaining gaps are graded, not declined.
 
 This report is written in the voice of a peer reviewer, then answered. It is the starting point for treating the project as academic research rather than a thought experiment.
 
@@ -36,11 +36,11 @@ The manuscript says the MVP "proves the physics" and that snapshots are "low-ent
 
 **Required.** Either define operational criteria or relabel.
 
-**Addressed.**
+**Addressed.** The right method is **nature-inspired computing**, not a proof of physics ([nature-inspired.md](nature-inspired.md)) — the same move as neural nets copying neurons without claiming to be brains.
 
-- Lifeform → optional cybernetic reading (homeostasis via reconciliation). Not biology. Not a theorem.
-- Mandelbrot → **windowed self-similar aggregation**: a finite unfolding of an infinite \(k\)-ary tree, with a coarsening operator that recovers the shallower window. Proven in `pkg/theory`. The polynomial \(z\mapsto z^2+c\) is **not** claimed.
-- Multiverse → **product of independent discrete dynamical systems** with a routing morphism. Everett branching is **rejected** as a correspondence.
+- Lifeform → control mimic: spec/status homeostasis (`ReconcileError`). Metabolism left in nature.
+- Mandelbrot → explorer mimic: windowed unfolding (F1), IFS similarity dimension, escape-time as a finite iteration viewport. The connectedness locus of \(z\mapsto z^2+c\) is left in nature; the *explorer* is what we copy.
+- Multiverse → product of systems plus a **branching mimic**: sealed fan-out of classical histories that do not interfere. Hilbert space is left in nature.
 
 ### M3. Missing formal model
 
@@ -48,7 +48,7 @@ There is no state space, no evolution map, no uniqueness theorem, no statement o
 
 **Required.** A discrete dynamical system \((S,\Phi)\) and theorems under named hypotheses.
 
-**Addressed.** [formal-model.md](formal-model.md). The flag is documented as a **purity contract** the engine cannot discharge for arbitrary commands. Sealed-snapshot gating is enforced regardless of the flag.
+**Addressed.** [formal-model.md](formal-model.md). Uniqueness is *conditional on a regularity class* (Picard copied as a hypothesis, not as a proof that every container is Lipschitz). Builtins are theorem-grade; Julia is a pinned discretization; images remain a contract. The seal gate is mandatory regardless.
 
 ### M4. Implementation contradicts the causal story
 
@@ -72,7 +72,7 @@ The only citations are the author's blog posts. A referee will supply Nix, git/M
 
 ## 3. Minor comments
 
-- **Determinism vs floating point.** Julia FinanceModels tests check byte-identical replay under a pinned Manifest. That is empirical, not a theorem about IEEE-754. Keep it labeled as evidence under a pinned runtime, not as uniqueness of a real-valued function.
+- **Determinism vs floating point.** Julia tests check byte-identical replay under a pinned Manifest. Grade: empirical discretization (shadowing of a discrete map), not uniqueness on \(\mathbb{R}\).
 - **Replay timestamps.** `ReplayLogEntry.Timestamp` is wall-clock. It is not part of the hash worldline. Do not call the log "time-reversible dynamics"; it is an audit trail of a unique trajectory.
 - **Player-piano / organism.** Fine as design metaphor once the correspondence paper exists. Do not put them in the abstract of a systems paper without the cybernetics/control-theory reading.
 - **Four DSLs as "laws of physics."** Acceptable as "independent specification axes." Not a derivation from a least-action principle.
@@ -90,12 +90,12 @@ These claims are standard, testable, and already evidenced:
 5. Routing is a deterministic function of (time-slice overrides, partitions, default).
 6. Node-local stores plus event-driven replication keep compute off the cross-universe hot path.
 
-That is a legitimate Kubernetes compute-fabric paper. It does not need physics. The physics is extra, and extra must pay rent in definitions.
+That is a legitimate Kubernetes compute-fabric paper. The physics-shaped names are extra in the *neural-net* sense: borrowed structure, paid for with definitions.
 
 ---
 
 ## 5. Stance this revision takes
 
-We do **not** give up the analogies. We **prove the linkage that can be proved**: a list of structure-preserving maps, each with transferred invariants and an explicit failure boundary. Analogies that cannot be made into correspondences are kept as named metaphors and marked non-theorems (lifeform, Landauer heat, Mandelbrot polynomial).
+We are **not trying to prove physics.** We are mimicking structures nature already found useful, the way neural nets mimic neurons. Residual analogies (Landauer bookkeeping, Everett-shaped fan-out, Mandelbrot explorer, lifeform homeostasis, container regularity) are kept at an explicit **grade**, not discarded and not oversold as laboratory identities.
 
-A later paper can still be written for a systems venue with the correspondence appendix optional. A physics venue should not receive this work as a claim about nature.
+A nature-inspired computing or systems venue is the intended audience. A physics venue should not receive this work as a claim about nature.

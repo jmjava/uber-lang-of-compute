@@ -40,7 +40,7 @@ The **engine state** relevant to one workflow is \((s, D, M, Y)\) where \(Y\) ma
 | H5 | **Memo integrity.** \(M(s,d,h)=y\) only if some prior execution of \(f_d\) on an input hashing to \(h\) produced \(y\). | M1 |
 | H6 | **Replica Cauchy condition.** Materialize/CDC copy only when \(\sigma=\mathrm{sealed}\). | R1 |
 
-H2 is **not discharged by the engine** for arbitrary container commands. Builtin dominos (`builtin:identity`, interpolation, DV01) and pinned-Julia scripts are the currently evidenced fragment of H2.
+H2 is graded, not binary. `CommandRegularity` classifies commands: builtins discharge H2 as a theorem; Julia discharges it as uniqueness of a *pinned discretization* (shadowing of a discrete map); container images leave it as a Picard-style regularity *contract*. See [nature-inspired.md](nature-inspired.md).
 
 ---
 
@@ -143,14 +143,20 @@ Assume H6. `Materialize` and CDC export/apply fail on \(\sigma=\mathrm{open}\). 
 
 ---
 
-## 5. What is not a theorem
+## 5. Remainder left in nature (inspired-by, not theorems of physics)
 
-- Container purity (H2 for `image:` dominos).
-- Bit-identity of unpinned floating-point libraries across machines.
-- Thermodynamic entropy or Landauer heat.
-- Everett branching.
-- Fractal dimension of a live compute DAG (Unfold is not yet the cluster scheduler).
-- Biological life.
+These are kept as **mimics**, the way an ANN keeps "neuron" without keeping glia. Each has an executable counterpart in `pkg/theory` at a named grade. None is a laboratory identity.
+
+| Remainder | Grade of the mimic | Code |
+|-----------|--------------------|------|
+| Container purity | Contract (Picard regularity hypothesis) | `CommandRegularity` |
+| Julia / floating point | Empirical discretization / shadowing | pinned Manifest tests; `RegularityPinned` |
+| Landauer heat (joules) | Bookkeeping of irreversible *steps* | `LogicalWork`, `ReplaySaves` |
+| Everett amplitudes | Classical non-interfering histories | `History`, `Branch`, `Interfere` |
+| Mandelbrot set as a polynomial | Explorer viewport + IFS dimension + escape-time window | `Unfold`/`Coarsen`, `SimilarityDimension`, `EscapeTime`, `LeafCount` |
+| Biological life | Control homeostasis | `ReconcileError`, `Homeostatic` |
+
+The method is [nature-inspired.md](nature-inspired.md). We mimic nature; we do not prove it.
 
 ---
 
@@ -165,5 +171,9 @@ Assume H6. `Materialize` and CDC export/apply fail on \(\sigma=\mathrm{open}\). 
 | Routing \(\rho\) | `controller/pkg/routing/router.go` |
 | Causal past | `controller/pkg/theory/causal.go` |
 | Ensemble entropy | `controller/pkg/theory/entropy.go` |
-| Windowed aggregation | `controller/pkg/theory/aggregation.go` |
+| Windowed aggregation / explorer | `controller/pkg/theory/aggregation.go` |
+| Regularity ladder | `controller/pkg/theory/regularity.go` |
+| Logical work (Bennett bookkeeping) | `controller/pkg/theory/work.go` |
+| Classical histories | `controller/pkg/theory/histories.go` |
+| Homeostasis | `controller/pkg/theory/homeostasis.go` |
 | Cauchy replica | `controller/pkg/replica/materialize.go`, `controller/pkg/cdc` |

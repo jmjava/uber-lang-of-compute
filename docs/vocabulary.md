@@ -2,17 +2,17 @@
 
 Core terms from the Uber Language of Compute blog series, as used in the KBL Compute Engine.
 
-Physics-shaped names are **correspondences** ([docs/theory/correspondences.md](./theory/correspondences.md)): each has a source-domain meaning, a computational meaning, transferred properties, and an explicit failure boundary. Do not read them as identity claims about nature.
+Physics-shaped names are **nature-inspired abstractions** ([docs/theory/nature-inspired.md](./theory/nature-inspired.md)), like "neuron" in a neural net: a structure copied from nature, not a claim to be nature. Each name has a source-domain meaning, a computational copy, a grade (theorem / discretization / contract / bookkeeping / explorer / branching / control), and a remainder left in nature.
 
 | Term | Meaning |
 |------|---------|
 | **Uber Language of Compute** | Meta-language composed of four DSLs: Execution, Data, Provisioning, Routing. Describes the full compute fabric declaratively. |
 | **Pluggable Universe** | A compute environment defined by its own **laws** in the four-DSL sense: execution engine, data layer, and provisioning model — i.e. its own discrete evolution map \(\Phi_u\), not a Hamiltonian. Can be swapped without changing the multiverse routing layer. Each universe is a separate KBL fabric with its own node-local stores. |
-| **Multiverse** | A **product of independent dynamical systems** plus a routing morphism: a routed collection of Pluggable Universes, often time-sliced. Coordinates universes **event-driven via Kafka** (or MemoryBus in dev) — controllers do not call each other directly. **Not** Everett many-worlds (no amplitudes). |
-| **KBL / Kubernetes Based Lifeform** | A locality-aware Kubernetes compute unit: compute + local data + orchestration context. The "lifeform" reading is cybernetic homeostasis (reconciler feedback), not biology. Multiple fabrics link through the Multiverse routing layer and shared event bus. |
+| **Multiverse** | A **product of independent dynamical systems** plus routing: a routed collection of Pluggable Universes. Fan-out copies *sealed* records into other universes (branching mimic of many-worlds bookkeeping, not a wavefunction). Controllers do not call each other; the bus carries events. |
+| **KBL / Kubernetes Based Lifeform** | A locality-aware Kubernetes compute unit. "Lifeform" copies homeostasis (spec vs status), the way "neural net" copies the neuron — not metabolism. |
 | **Compute Context** | Node-associated unit of compute and data locality. Binds a snapshot, domino chain, and node-local store together. |
 | **Compute Wheel / Ferris Wheel** | A rotating set of compute contexts processing time slices — discrete flow on a cylinder \(\mathbb{Z}_{n}\times T\): seats wrap, time only advances (theorem W1). Not rotational mechanics. |
-| **Windowed Mandelbrot** | **Pattern, not the Mandelbrot set.** A finite unfolding of an infinite \(k\)-ary aggregation tree (`theory.Unfold`); only depth \(\le D\) is materialized. Coarsening recovers the shallower window (theorem F1). Not \(z\mapsto z^2+c\); not yet the cluster scheduler. |
+| **Windowed Mandelbrot** | **Explorer mimic.** A finite unfolding of an infinite \(k\)-ary aggregation tree (`theory.Unfold`); only depth \(\le D\) is materialized. Coarsening recovers the shallower window (theorem F1). Escape-time is the iteration budget of a Mandelbrot-style viewport, not the scheduler's law of motion. |
 | **Domino** | One deterministic, referentially transparent compute step tied to one immutable snapshot. Output depends only on declared inputs. |
 | **Hot-Swapped Container** | A modular compute step swapped into a pod via OpenKruise ContainerRecreateRequest, without restarting the entire pipeline. |
 | **Volcano Job / SyncSet** | Batch-scheduled domino chain executed by the Volcano scheduler; maps to `runtime: volcano-init` and `volcanoQueue` on DominoChain. |

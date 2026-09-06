@@ -1,6 +1,8 @@
 # Correspondences: Physics Structures and the KBL Fabric
 
-**Abstract.** We construct eight correspondences between named structures in mechanics, information theory, and relativistic causality and the KBL compute fabric. Each correspondence is a 5-tuple: source definition, target definition, morphism, transferred properties, non-transferred properties. Theorems that transfer are implemented as tests in `controller/pkg/theory` and the engine/wheel/routing/replica packages. We claim a *linkage of structure*, not an identity of ontology. KBL is not a physical theory.
+**Abstract.** We construct eight **nature-inspired** correspondences between named structures in mechanics, information theory, and biology and the KBL compute fabric. The method is the same as neural nets copying the neuron: keep a usable abstraction, discard the wetware, say which is which. Each correspondence is a 5-tuple: source definition, target definition, morphism, transferred properties, remainder left in nature. Theorems that transfer are tests in `controller/pkg/theory`. KBL mimics nature; it does not prove physics.
+
+The method paper is [nature-inspired.md](nature-inspired.md).
 
 ---
 
@@ -16,9 +18,9 @@ A **correspondence** \(C = (S, T, \varphi, P_+, P_-)\) consists of:
 | \(P_+\) | Properties of \(S\) that \(\varphi\) preserves (theorems) |
 | \(P_-\) | Properties of \(S\) that \(\varphi\) does **not** preserve (limits of the analogy) |
 
-This is the same methodological move as Lamport's clocks (1978): special relativity is not running on the network; the *causal partial order* is. We keep the name when the transferred structure is the reason the name was chosen, and we drop the physical remainder.
+This is the same methodological move as an artificial neuron (McCulloch & Pitts 1943): cortex is not running in the matrix multiply; the *weighted combination* is. We keep the name when the copied structure is why the name was chosen, and we leave the biological or physical remainder in nature.
 
-**Rule.** If \(P_+\) is empty, the name is branding and must not appear in a theorem statement.
+**Rule.** If nothing was copied, the name is branding. If something was copied, grade the mimic (theorem / empirical discretization / contract / bookkeeping / explorer / branching / control) rather than calling it a failed proof of physics.
 
 ---
 
@@ -35,12 +37,11 @@ This is the same methodological move as Lamport's clocks (1978): special relativ
 - **Uniqueness (Thm. D2).** If every \(d_i\) is a function and hashing is injective on the domain of interest, the hash worldline is unique. Test: `TestTheoremD2SealedSnapshotHasUniqueTrajectory`, `TestSnapshotReplayDeterministic`.
 - **No evolution without Cauchy data (Thm. D1).** Unsealed snapshots have no trajectory. Test: `TestTheoremD1UnsealedSnapshotHasNoTrajectory`.
 
-**Does not transfer \(P_-\).**
+**Does not transfer \(P_-\) (left in nature, as glia are left out of an ANN).**
 
 - \(F=ma\), symplectic structure, energy conservation, continuous time, or time-reversal. The replay log is not a reversed integration; it is an audit of a forward unique path.
-- Purity of arbitrary containers. `deterministic: true` is a **contract**, not a proof. Julia evidence is pinned-Manifest empirical identity, not a theorem about \(\mathbb{R}\).
 
-**Loose linkage, stated precisely.** The analogue of "Newtonian" here is *the well-posedness of a discrete Cauchy problem*, not classical mechanics as a physical law. That is the same sense in which a functional program is "deterministic."
+**Loose linkage (nature-inspired).** Uniqueness is *conditional on regularity*, copying Picard–Lindelöf rather than claiming every vector field is Lipschitz. `CommandRegularity` grades that hypothesis: builtins are theorem-grade, Julia is a pinned discretization (shadowing of a discrete map, not uniqueness on \(\mathbb{R}\)), containers are a contract (`deterministic: true`). Tests: `TestCommandRegularityLadder`, D1, D2.
 
 ---
 
@@ -60,13 +61,12 @@ This is the same methodological move as Lamport's clocks (1978): special relativ
 - **Collapse (Thm. E1).** If \(\mu\) is uniform on \(N\) distinct payloads, \(H_{\mathrm{ens}}=\log_2 N\). After sealing one member, \(H_{\mathrm{ens}}=0\). Test: `TestEnsembleEntropyCollapsesOnSeal`. Distinct sealed payloads produce distinct snapshot IDs: `TestTheoremE1EngineSealCollapsesInputEnsemble`.
 - **Payload entropy is invariant under sealing.** Sealing does not compress \(x^*\). The tests treat this as a non-claim, not a theorem to "prove entropy went down."
 
-**Does not transfer \(P_-\).**
+**Does not transfer \(P_-\) (left in nature).**
 
-- Boltzmann entropy of a physical macrostate.
-- A numerical drop in \(H_{\mathrm{pay}}\) at `sealed: true`.
-- Landauer heat in the cluster. Memoization avoids repeating *work*; it does not imply \(kT\ln 2\) saved per skipped domino (the CPU, the store, and the cache lookup have their own costs). Landauer is Correspondence VII, marked heuristic.
+- Boltzmann entropy of a physical macrostate, and any drop in payload Shannon entropy at `sealed: true`.
+- Heat in joules. See VII: we copy Bennett's *bookkeeping*, not Landauer's laboratory bound.
 
-**Loose linkage, stated precisely.** The blog phrase "low-entropy snapshot" is correct if and only if entropy means \(H_{\mathrm{ens}}\). It is false if it means thermodynamic \(S\) or payload compressibility. This revision adopts the information-theoretic reading and rejects the other two as theorems.
+**Loose linkage (nature-inspired).** "Low-entropy snapshot" is the information-theoretic mimic of "freeze the ensemble before you integrate." Sealing is not a refrigerator.
 
 ---
 
@@ -109,12 +109,11 @@ This is the same methodological move as Lamport's clocks (1978): special relativ
 - **Routing is a function (Thm. C1).** Same event, same spec \(\Rightarrow\) same target. Test: `TestTheoremC1RoutingIsAFunction`.
 - **Independence of hot-path compute.** A universe computes only against its local store. Coupling is after-the-fact and sealed.
 
-**Does not transfer \(P_-\).**
+**Does not transfer \(P_-\) (left in nature).**
 
-- Hilbert space, unitarity, decoherence, interference, "many-worlds interpretation." There is no amplitude. Calling this Everett would be a category error.
-- Conservation of probability or a measure on the set of universes.
+- Hilbert space, unitarity, interference of amplitudes. There is no inner product.
 
-**Loose linkage, stated precisely.** Keep the name *Multiverse* as a product-and-route construction (many law-sets, weak coupling). Cite Everett only to **decline** that correspondence.
+**Loose linkage (nature-inspired).** What is worth copying from Everett is **non-interfering branches with classical records** — the same abstraction as an ensemble of independently trained nets. `Branch` fans a sealed snapshot into other universes; `Interfere(..., liveShare=false)` is always false. We copy the branching *bookkeeping*, not the wavefunction. Tests: `TestHistoriesDoNotInterfereWhenSealed`.
 
 ---
 
@@ -153,64 +152,63 @@ This is the same methodological move as Lamport's clocks (1978): special relativ
 - **Self-similarity of windows (Thm. F1).** `Coarsen(Unfold(d,k))` is shape- and value-equal to `Unfold(d-1,k)`. Tests: `TestCoarsenRecoversShallowerWindow`, `TestTheoremF1WindowedAggregation`.
 - **Finiteness of the window.** Height is exactly \(D\). Test: `TestWindowIsFinite`.
 
-**Does not transfer \(P_-\).**
+**Does not transfer \(P_-\) (left in nature).**
 
-- The map \(z\mapsto z^2+c\), critical-point orbits, Hausdorff dimension of a Julia set, or a fractal scheduler in the Kubernetes controller. The production fabric does **not** yet build compute DAGs by Unfold. The correspondence is a *precise pattern*, now executable, not an implemented fractal scheduler (still a roadmap item in vision.md).
+- The connectedness locus of \(z\mapsto z^2+c\), and a fractal *Kubernetes* scheduler that iterates that map. The production controller does not yet spawn pods from `Unfold`.
 
-**Loose linkage, stated precisely.** The blog's Mandelbrot is the *windowed explorer* of an infinite self-similar object, plus coarse-graining. We keep the historical name as "Windowed Mandelbrot *pattern*" and define it as Thm. F1. We do not claim the Mandelbrot set.
+**Loose linkage (nature-inspired).** The blog's Mandelbrot is the **explorer**: an infinite generated object of which only a window is drawn. We copy that viewport.
 
----
+- Finite unfolding + coarsening (theorem F1).
+- Similarity dimension of the windowed IFS (`SimilarityDimension`); additive trees have \(D=1\), matching a conserved scalar.
+- Leaf count as a wheel's seats (`LeafCount`) — the current window can be the Ferris-wheel circuit.
+- Escape-time (`EscapeTime`) as the explorer's iteration budget: a finite window on \(z\mapsto z^2+c\), used the way a sigmoid is used (a shape from nature, not a proof of cortex or of complex dynamics).
 
-## VII. Landauer / Bennett → memoization as recorded reversibility (heuristic)
-
-**Source \(S\).** Landauer (1961): erasing one bit in a computer at temperature \(T\) dissipates at least \(kT\ln 2\). Bennett (1973, 1982): computation can be logically reversible if intermediate results are kept; then the thermodynamic bound need not be paid at each step.
-
-**Target \(T\).** Memo table keyed by \((snapshotID, dominoID, inputHash)\). A hit returns the recorded output without re-executing \(d\).
-
-**Morphism \(\varphi\).** "Keep the intermediate result instead of erasing it and recomputing" \(\mapsto\) memoization. Irreversible re-evaluation \(\mapsto\) a cache miss.
-
-**Transfers \(P_+\) (weak).**
-
-- **Observational equivalence (Thm. M1).** A hit is indistinguishable in outputs and hashes from a recompute, given purity and collision resistance. Test: `TestTheoremM1MemoObservationallyEquivalent`, `TestMemoizationReusesResults`.
-- Work (number of executions) is nonincreasing on exact replays.
-
-**Does not transfer \(P_-\).**
-
-- Any bound in joules. Skipping a Julia subprocess does not imply Landauer savings; the machine is not a thermodynamically accounted engine. This correspondence is **heuristic**: it explains *why* the entropy-and-caching slogan was chosen, not a measurable \(kT\ln 2\).
-
-**Status.** Do not put Landauer in the abstract. Keep it as the intellectual ancestor of "minimize recompute by storing results."
+Tests: F1, `TestSimilarityDimensionAdditiveTreeIsOne`, `TestWheelWindowLeafCount`, `TestEscapeTimeIsAFiniteWindow`.
 
 ---
 
-## VIII. Organism / lifeform → homeostatic control (non-theorem)
+## VII. Landauer / Bennett → recorded intermediates (bookkeeping mimic)
 
-**Source \(S\).** Ashby (1956): ultrastable systems that keep essential variables within bounds by feedback. Autopoiesis (Maturana & Varela) is stronger (self-production of components) and is **not** used.
+**Source \(S\).** Landauer (1961): erasing one bit at temperature \(T\) costs at least \(kT\ln 2\). Bennett (1973, 1982): keep intermediates and you need not pay that at every step.
 
-**Target \(T\).** Kubernetes reconciliation: observe, diff against desired spec, act. ComputeContext health checks against node-local stores. Optional player-piano lookahead (`preProvisionNext`) is feed-forward, not metabolism.
+**Target \(T\).** Memo table keyed by \((snapshotID, dominoID, inputHash)\). `LogicalWork` counts evaluations versus reuses.
+
+**Morphism \(\varphi\).** "Keep the intermediate instead of erasing it" \(\mapsto\) memoization. Irreversible re-evaluation \(\mapsto\) a cache miss. Joules \(\mapsto\) *steps* (the ANN move: "energy" as a loss, not ATP).
+
+**Transfers \(P_+\).**
+
+- **Observational equivalence (Thm. M1).** A hit matches a recompute in outputs and hashes, given purity and collision resistance.
+- **Replay saves irreversible steps.** `ReplaySaves(Work(first), Work(second))`. Tests: M1, `TestLogicalWorkReplaySaves`.
+
+**Left in nature.** A bound in joules. The cluster is not a thermodynamically accounted engine. The mimic is the *accounting shape*.
+
+---
+
+## VIII. Organism / lifeform → homeostatic control (control mimic)
+
+**Source \(S\).** Ashby (1956): ultrastable systems that keep essential variables within bounds by feedback. Autopoiesis is stronger and is left in nature.
+
+**Target \(T\).** Kubernetes reconciliation. `ReconcileError(desired, observed)` is zero iff spec matches status (`Homeostatic`).
 
 **Morphism \(\varphi\).** Essential variables \(\mapsto\) CR status vs spec. Feedback \(\mapsto\) reconciler. Organism boundary \(\mapsto\) a universe's stores and engines.
 
-**Transfers \(P_+\).** Control-loop homeostasis is a fair cybernetic reading of operators. It is not implemented as a theorem in `pkg/theory` because it is Kubernetes' theorem, not KBL's.
+**Transfers \(P_+\).** The control loop is a fair copy of homeostasis. Test: `TestHomeostasisMatchesSpec`. It is Kubernetes' loop as much as KBL's; we still name the mimic.
 
-**Does not transfer \(P_-\).** Metabolism, reproduction, evolution, autopoiesis, or any biological criterion. **KBL / Kubernetes Based Lifeform remains a name**, with a cybernetic gloss, not a result.
+**Left in nature.** Metabolism, reproduction, evolution, DNA. **KBL** keeps "lifeform" the way "neural net" keeps "neural."
 
 ---
 
 ## Summary table
 
-| # | Name in the blog | Transferred structure | Status | Primary tests |
-|---|------------------|----------------------|--------|----------------|
-| I | Newtonian determinism | Unique discrete Cauchy trajectory | Theorem under purity + hash assumptions | D1, D2, snapshot replay |
-| II | Low-entropy snapshot | Ensemble Shannon collapse at seal | Theorem for \(H_{\mathrm{ens}}\); *not* for \(S_{\mathrm{thermo}}\) or \(H_{\mathrm{pay}}\) | E1, ensemble entropy |
-| III | Locality / isolation | Causal past + sealed-only signaling | Theorem of the engine and replica path | causal past, R1, future-read |
-| IV | Multiverse | Product of systems + routing function | Theorem for routing; Everett declined | C1 |
-| V | Ferris / Compute Wheel | Discrete cylinder map | Theorem of `pkg/wheel` | W1, cylinder period |
-| VI | Windowed Mandelbrot | Coarsenable finite unfolding | Theorem of `pkg/theory`; not yet a cluster scheduler | F1 |
-| VII | Minimize entropy / maximize caching | Memo observational equivalence | Theorem for outputs; Landauer heat declined | M1 |
-| VIII | Lifeform | Reconciler homeostasis | Metaphor + cybernetic gloss | — |
+| # | Name in the blog | Copied structure | Grade | Primary tests |
+|---|------------------|------------------|-------|----------------|
+| I | Newtonian determinism | Conditional unique Cauchy trajectory | Theorem (builtins); empirical discretization (Julia); contract (containers) | D1, D2, regularity ladder |
+| II | Low-entropy snapshot | Ensemble Shannon collapse at seal | Theorem for \(H_{\mathrm{ens}}\) | E1 |
+| III | Locality / isolation | Causal past + sealed-only signaling | Theorem | causal past, R1 |
+| IV | Multiverse | Product of systems + non-interfering classical branches | Theorem for routing; branching mimic for Everett-shaped fan-out | C1, histories |
+| V | Ferris / Compute Wheel | Discrete cylinder map | Theorem | W1 |
+| VI | Windowed Mandelbrot | Explorer viewport + coarsenable IFS | Theorem F1; explorer mimic for \(z^2+c\) | F1, dimension, escape-time, wheel leaves |
+| VII | Minimize entropy / maximize caching | Recorded intermediates | Theorem for outputs; bookkeeping mimic for Landauer | M1, logical work |
+| VIII | Lifeform | Spec/status homeostasis | Control mimic | homeostasis |
 
----
-
-## What a later paper may still claim
-
-If the windowed aggregation pattern is wired into ComputeWheel or hierarchical workflows, Correspondence VI moves from "executable pattern" to "implemented scheduler," and fractal-style aggregation becomes a systems result. If a universe-local energy or cost accountant is added, Correspondence VII can be restated in joules-or-dollars without pretending they are \(kT\ln 2\). Neither is required to keep the present linkages honest.
+Wiring F1 into ComputeWheel as a live scheduler remains an implementation step, not a reason to drop the explorer mimic. Joules remain in nature; steps are what we count.
