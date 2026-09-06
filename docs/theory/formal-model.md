@@ -141,6 +141,12 @@ Assume \(n_c>0\). `Lookahead` is a function of \((\mathrm{wheelName},\mathrm{con
 
 **Proof.** `Lookahead` is `AdvanceAfterCompletion` followed by `ActiveContextName` and `WorkflowName`. Two calls on equal inputs therefore agree. When \(\Phi_W\) is absorbing (`Done`), the name is empty. Tests: `TestLookaheadIsAFunctionOfState`, `TestLookaheadNameMatchesBuiltWorkflow`, `TestLookaheadStopsWhenDone`. ∎
 
+### Theorem M13 (unique chain names)
+
+An execution chain is a sequence of distinct names. Duplicate labels are rejected before any step of \(\Phi_{\mathrm{chain}}\).
+
+**Proof.** `theory.UniqueNames` scans the chain into a set; a repeated or empty name is an error. `Engine.Run` also refuses a duplicate in the domino catalog (map overwrite would silently change which \(f_d\) runs). Tests: `TestUniqueNamesRejectsDuplicates`, `TestRejectsDuplicateChainNames`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

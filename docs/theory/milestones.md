@@ -18,6 +18,26 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M10 | Isolation does not imply uniqueness | **proved** | `TestIsolatedSandboxImpureIsNotUnique`, `TestExecuteSandboxImpureIsNotUnique`, `TestIsolatedSandboxDoesNotImplyUniqueness` |
 | M11 | Four-DSL orthogonality for builtins | **proved** | `TestProvisioningOrthogonalToBuiltinWorldline` |
 | M12 | Player-piano lookahead is a function of wheel state | **proved** | `TestLookaheadIsAFunctionOfState`, `TestLookaheadNameMatchesBuiltWorkflow`, `TestLookaheadStopsWhenDone` |
+| M13 | Unique names in an execution chain | **proved** | `TestRejectsDuplicateChainNames`, `TestUniqueNamesRejectsDuplicates` |
+| M14 | Engine-enforced causal past | planned | `AllowedReads` on the hot path, not only missing-key errors |
+| M15 | Partial sandbox isolation is not a cage | planned | network-none XOR read-only-root still rejected |
+| M16 | Wall-clock is not in the worldline | planned | delayed rerun: equal hashes/HeadLink, unequal timestamps |
+| M17 | Sealed snapshots are write-once | planned | different payload fails; identical rewrite is idempotent |
+| M18 | Memo key conflict is H5, not ignore | planned | same key, different output is an error |
+| M19 | Collision-safe WorkflowName truncation | planned | two long equal-length names must not collide |
+| M20 | RunSingle continues the replay spine | planned | sequential `RunSingle` verifies as one chain |
+| M21 | Store persists the replay spine | planned | reload replay rows, `VerifySpine` passes |
+| M22 | Snapshot-completed EventID is content-addressed | planned | same payload ⇒ same EventID; timestamp excluded |
+| M23 | CDC refuses orphan domino results | planned | result rows require a sealed parent snapshot |
+| M24 | Materialize/export fail closed on missing dominos | planned | incomplete chain is an error, not a short success |
+| M25 | Routing priority: time-slice beats partition | planned | overlapping rules pick the time-slice target |
+| M26 | Ambiguous partition matches are rejected | planned | two universes matching the same labels is an error |
+| M27 | CRD sandbox flags reach the Picard cage | planned | convert threads isolation into engine provisioning |
+| M28 | Workflow status exposes HeadLink and work | planned | completed reconcile records spine head and USD cost |
+| M29 | Fan-out events carry HeadLink | planned | classical record includes the Merkle receipt |
+| M30 | Fan-out refuses incomplete events | planned | empty snapshot ID / worldline does not branch |
+| M31 | Loaded snapshot matches its content address | planned | corrupt store bytes fail closed |
+| M32 | Explorer window can seat a live ComputeWheel | planned | declared depth/arity must match context count |
 
 ## Proof command
 

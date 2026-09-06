@@ -57,12 +57,21 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 	dominoMap := make(map[string]*types.Domino, len(wf.Spec.Dominos))
 	for i := range wf.Spec.Dominos {
 		d := &wf.Spec.Dominos[i]
+		if d.Metadata.Name == "" {
+			return nil, fmt.Errorf("domino at index %d has an empty name", i)
+		}
+		if _, exists := dominoMap[d.Metadata.Name]; exists {
+			return nil, fmt.Errorf("duplicate domino name %q", d.Metadata.Name)
+		}
 		dominoMap[d.Metadata.Name] = d
 	}
 
 	chain := wf.Spec.Execution.Chain
 	if len(chain) == 0 {
 		return nil, fmt.Errorf("execution chain is empty")
+	}
+	if err := theory.UniqueNames(chain); err != nil {
+		return nil, err
 	}
 
 	var entries []types.ReplayLogEntry

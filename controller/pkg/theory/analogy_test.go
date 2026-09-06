@@ -7,6 +7,18 @@ import (
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
 
+func TestUniqueNamesRejectsDuplicates(t *testing.T) {
+	if err := theory.UniqueNames([]string{"a", "b", "c"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := theory.UniqueNames([]string{"a", "b", "a"}); err == nil {
+		t.Fatal("duplicate names must be rejected")
+	}
+	if err := theory.UniqueNames([]string{"a", ""}); err == nil {
+		t.Fatal("empty names must be rejected")
+	}
+}
+
 func TestCommandRegularityLadder(t *testing.T) {
 	if theory.CommandRegularity("builtin:identity") != theory.RegularityBuiltin {
 		t.Fatal("builtin commands are the Lipschitz-grade (theorem) class")

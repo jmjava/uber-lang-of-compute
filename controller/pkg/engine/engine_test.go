@@ -183,6 +183,22 @@ func TestUnsealedSnapshotRejected(t *testing.T) {
 	}
 }
 
+func TestRejectsDuplicateChainNames(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "dup.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	wf.Spec.Execution.Chain = []string{"step-one", "step-one"}
+	_, err = engine.New(s).Run(wf)
+	if err == nil {
+		t.Fatal("duplicate chain names must be rejected")
+	}
+}
+
 func TestDeterministicWorkflowRejectsContractGradeCommand(t *testing.T) {
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "picard.db"))
