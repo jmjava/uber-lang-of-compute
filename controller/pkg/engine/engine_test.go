@@ -530,3 +530,21 @@ func TestRunSingleSpineChainsAcrossSteps(t *testing.T) {
 		t.Fatalf("prev-link %q want head %q", next.PrevLink, head.HeadLink)
 	}
 }
+
+func TestLoadedSnapshotMatchesContentAddress(t *testing.T) {
+	s, err := store.Open(filepath.Join(t.TempDir(), "addr.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	const fakeID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	if err := s.SaveSnapshot(fakeID, wf.Spec.Snapshot.Spec.TimeSlice, `{"tampered":true}`, true); err != nil {
+		t.Fatal(err)
+	}
+	wf.Spec.Snapshot.Status = &types.SnapshotStatus{SnapshotID: fakeID}
+	if _, err := engine.New(s).Run(wf); err == nil {
+		t.Fatal("store payload that does not match snapshot ID must fail closed")
+	}
+}

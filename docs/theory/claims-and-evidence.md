@@ -31,6 +31,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | M28 | Workflow status exposes HeadLink and work | Control mimic (observable essentials) | `TestWorkflowReconcilerExecutesChain` | Metabolism / joules |
 | M29 | Fan-out carries HeadLink with the worldline | Branching mimic (receipt) | `TestFanoutCarriesSealedHistoryWithoutInterference` | Cross-cluster spine gossip |
 | M30 | Fan-out refuses incomplete events | Theorem of completed records | `TestFanoutRejectsIncompleteEvent` | Amplitudes |
+| M31 | Loaded snapshot matches its content address | Theorem of self-identity | `TestLoadedSnapshotMatchesContentAddress`, `TestAssertSnapshotID` | Full 256-bit store keys |
 | M1/M2 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
 | M9 | Replay log is a hash chain from the snapshot ID | Theorem of the spine | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput` | Full Merkle DAG / blockchain |
 | Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |

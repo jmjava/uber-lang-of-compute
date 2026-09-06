@@ -1,10 +1,12 @@
 package engine_test
 
 import (
+	"encoding/json"
 	"path/filepath"
 	"testing"
 
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/engine"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/hash"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
@@ -18,8 +20,15 @@ func TestRunUsesStoreSnapshotWithoutSourceFetch(t *testing.T) {
 	}
 	defer s.Close()
 
-	const snapshotID = "presealed-snap-id"
 	const payload = `{"instruments":[{"instrument_id":"US10Y","rate":4.25}]}`
+	var parsed interface{}
+	if err := json.Unmarshal([]byte(payload), &parsed); err != nil {
+		t.Fatal(err)
+	}
+	snapshotID, err := hash.SnapshotID("2025-04-15T00:00:00Z", parsed)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := s.SaveSnapshot(snapshotID, "2025-04-15T00:00:00Z", payload, true); err != nil {
 		t.Fatal(err)
 	}

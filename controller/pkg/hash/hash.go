@@ -61,6 +61,18 @@ func SnapshotID(timeSlice string, data interface{}) (string, error) {
 	return h[:SnapshotIDHexLen], nil
 }
 
+// AssertSnapshotID reports whether snapshotID is SnapshotID(timeSlice, data).
+func AssertSnapshotID(snapshotID, timeSlice string, data interface{}) error {
+	want, err := SnapshotID(timeSlice, data)
+	if err != nil {
+		return err
+	}
+	if snapshotID != want {
+		return errors.New("hash: snapshot content does not match snapshot ID")
+	}
+	return nil
+}
+
 // SortedKeys returns sorted keys for deterministic map iteration.
 func SortedKeys(m map[string]interface{}) []string {
 	keys := make([]string, 0, len(m))

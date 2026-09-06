@@ -36,7 +36,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M28 | Workflow status exposes HeadLink and work | **proved** | `TestWorkflowReconcilerExecutesChain` (`status.headLink`, `workEvaluations`, `workCostUSD`) |
 | M29 | Fan-out events carry HeadLink | **proved** | `TestFanoutCarriesSealedHistoryWithoutInterference` |
 | M30 | Fan-out refuses incomplete events | **proved** | `TestFanoutRejectsIncompleteEvent` |
-| M31 | Loaded snapshot matches its content address | planned | corrupt store bytes fail closed |
+| M31 | Loaded snapshot matches its content address | **proved** | `TestLoadedSnapshotMatchesContentAddress`, `TestAssertSnapshotID` |
 | M32 | Explorer window can seat a live ComputeWheel | planned | declared depth/arity must match context count |
 
 ## Proof command

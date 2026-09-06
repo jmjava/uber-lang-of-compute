@@ -78,3 +78,16 @@ func TestLinkIsDeterministicAndOrderSensitive(t *testing.T) {
 		t.Fatalf("ChainKey = %q", got)
 	}
 }
+
+func TestAssertSnapshotID(t *testing.T) {
+	id, err := hash.SnapshotID("t", map[string]int{"v": 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := hash.AssertSnapshotID(id, "t", map[string]int{"v": 1}); err != nil {
+		t.Fatal(err)
+	}
+	if err := hash.AssertSnapshotID(id, "t", map[string]int{"v": 2}); err == nil {
+		t.Fatal("mismatched content must fail")
+	}
+}

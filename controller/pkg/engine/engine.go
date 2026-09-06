@@ -48,6 +48,8 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 		if err != nil {
 			return nil, fmt.Errorf("compute snapshot ID: %w", err)
 		}
+	} else if err := hash.AssertSnapshotID(snapshotID, snap.Spec.TimeSlice, content); err != nil {
+		return nil, fmt.Errorf("content-address check: %w", err)
 	}
 
 	if err := e.store.SaveSnapshot(snapshotID, snap.Spec.TimeSlice, snapshotData, true); err != nil {
