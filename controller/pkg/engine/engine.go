@@ -307,3 +307,19 @@ func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.
 	}
 	return &entry, nil
 }
+
+// RunSingleFrom is RunSingle with an explicit previous spine link so stepwise
+// execution can continue a worldline (M20). Empty prevLink means snapshotID.
+func (e *Engine) RunSingleFrom(snapshotID string, snap types.Snapshot, domino types.Domino, priorOutputs map[string]string, prevLink string) (*types.ReplayLogEntry, error) {
+	if prevLink == "" {
+		prevLink = snapshotID
+	}
+	entry, err := e.RunSingle(snapshotID, snap, domino, priorOutputs)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := attachSpine(prevLink, entry); err != nil {
+		return nil, fmt.Errorf("spine: %w", err)
+	}
+	return entry, nil
+}

@@ -463,3 +463,35 @@ func TestProvisioningOrthogonalToBuiltinWorldline(t *testing.T) {
 		t.Fatal("changing the data DSL must change the snapshot ID")
 	}
 }
+
+func TestRunSingleSpineChainsAcrossSteps(t *testing.T) {
+	s, err := store.Open(filepath.Join(t.TempDir(), "step.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	first := wf.Spec.Dominos[0]
+	second := wf.Spec.Dominos[1]
+	wf.Spec.Execution.Chain = []string{first.Metadata.Name}
+
+	eng := engine.New(s)
+	head, err := eng.Run(wf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	prior := map[string]string{first.Metadata.Name: head.FinalOutput}
+	next, err := eng.RunSingleFrom(head.SnapshotID, wf.Spec.Snapshot, second, prior, head.HeadLink)
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries := append(append([]types.ReplayLogEntry{}, head.Entries...), *next)
+	if err := theory.VerifySpine(head.SnapshotID, entries); err != nil {
+		t.Fatalf("stepwise spine must verify: %v", err)
+	}
+	if next.PrevLink != head.HeadLink {
+		t.Fatalf("prev-link %q want head %q", next.PrevLink, head.HeadLink)
+	}
+}
