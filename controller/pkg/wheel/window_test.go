@@ -28,6 +28,21 @@ func TestWindowSeatsMatchExplorerLeaves(t *testing.T) {
 	}
 }
 
+func TestValidateExplorerWindow(t *testing.T) {
+	if err := wheel.ValidateExplorerWindow(2, 0, 0); err != nil {
+		t.Fatal("unset window must be allowed")
+	}
+	if err := wheel.ValidateExplorerWindow(9, 2, 3); err != nil {
+		t.Fatal(err)
+	}
+	if err := wheel.ValidateExplorerWindow(4, 2, 3); err == nil {
+		t.Fatal("seat count must match arity^depth")
+	}
+	if err := wheel.ValidateExplorerWindow(4, 2, 0); err == nil {
+		t.Fatal("partial window spec must be rejected")
+	}
+}
+
 func TestFullTurnVisitsEveryWindowLeaf(t *testing.T) {
 	labels := wheel.SeatLabels(2, 2) // 4 leaves
 	n := len(labels)

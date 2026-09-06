@@ -68,6 +68,9 @@ func (r *ComputeWheelReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if len(w.Spec.Contexts) == 0 {
 		return r.failWheel(ctx, &w, fmt.Errorf("spec.contexts must not be empty"))
 	}
+	if err := wheel.ValidateExplorerWindow(len(w.Spec.Contexts), w.Spec.WindowDepth, w.Spec.WindowArity); err != nil {
+		return r.failWheel(ctx, &w, err)
+	}
 
 	interval, err := wheel.ParseInterval(w.Spec.TimeSliceInterval)
 	if err != nil {

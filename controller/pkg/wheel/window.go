@@ -33,3 +33,15 @@ func ValidateWindowSeats(contextCount, depth, arity int) error {
 	}
 	return nil
 }
+
+// ValidateExplorerWindow is optional: both depth and arity unset means no check.
+// When either is set, both must be positive and seats must match k^d leaves.
+func ValidateExplorerWindow(contextCount, depth, arity int) error {
+	if depth == 0 && arity == 0 {
+		return nil
+	}
+	if depth <= 0 || arity <= 0 {
+		return fmt.Errorf("windowDepth and windowArity must both be positive")
+	}
+	return ValidateWindowSeats(contextCount, depth, arity)
+}

@@ -30,6 +30,12 @@ spec:
                   items:
                     type: string
                   description: ComputeContext names forming the wheel
+                windowDepth:
+                  type: integer
+                  description: Optional explorer window depth; with windowArity, len(contexts) must equal arity^depth
+                windowArity:
+                  type: integer
+                  description: Optional explorer window arity
                 timeSliceInterval:
                   type: string
                   description: Duration between time slice rotations (e.g. 1h, 24h, 1d)

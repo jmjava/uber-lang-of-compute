@@ -255,6 +255,12 @@ If a snapshot ID is supplied (store-first load), it must equal `hash.SnapshotID(
 
 **Proof.** `hash.AssertSnapshotID` in `Engine.Run`. Tests: `TestAssertSnapshotID`, `TestLoadedSnapshotMatchesContentAddress`. ∎
 
+### Theorem M32 (explorer seats the live wheel)
+
+When `windowDepth` and `windowArity` are set on a ComputeWheel, `len(contexts)` must equal \(\mathrm{arity}^{\mathrm{depth}}\). Unset means no check.
+
+**Proof.** `ValidateExplorerWindow` is `ValidateWindowSeats` with an optional skip. The ComputeWheel reconciler calls it before rotating. Tests: `TestValidateExplorerWindow`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

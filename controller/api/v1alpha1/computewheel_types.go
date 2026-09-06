@@ -35,6 +35,10 @@ type ComputeWheel struct {
 type ComputeWheelSpec struct {
 	// Contexts is the ordered list of ComputeContext names forming the wheel.
 	Contexts []string `json:"contexts"`
+	// WindowDepth and WindowArity, when set, require len(Contexts) == arity^depth
+	// (M3/M32 explorer seats).
+	WindowDepth int `json:"windowDepth,omitempty"`
+	WindowArity int `json:"windowArity,omitempty"`
 	// TimeSliceInterval is the duration between time slice rotations (e.g. 1h, 24h, 1d).
 	TimeSliceInterval string `json:"timeSliceInterval"`
 	// WorkflowTemplate is applied to each context at each time slice.
@@ -53,13 +57,13 @@ type ComputeWheelSpec struct {
 
 // WorkflowTemplateSpec is the workflow template stamped per context/time slice.
 type WorkflowTemplateSpec struct {
-	Snapshot     SnapshotSpec       `json:"snapshot,omitempty"`
-	SnapshotRef  string             `json:"snapshotRef,omitempty"`
-	Dominos      []DominoSpec       `json:"dominos,omitempty"`
-	DominoRefs   []string           `json:"dominoRefs,omitempty"`
-	Execution    ExecutionSpec      `json:"execution"`
-	Provisioning ProvisioningSpec   `json:"provisioning,omitempty"`
-	Routing      RoutingSpec        `json:"routing,omitempty"`
+	Snapshot     SnapshotSpec     `json:"snapshot,omitempty"`
+	SnapshotRef  string           `json:"snapshotRef,omitempty"`
+	Dominos      []DominoSpec     `json:"dominos,omitempty"`
+	DominoRefs   []string         `json:"dominoRefs,omitempty"`
+	Execution    ExecutionSpec    `json:"execution"`
+	Provisioning ProvisioningSpec `json:"provisioning,omitempty"`
+	Routing      RoutingSpec      `json:"routing,omitempty"`
 }
 
 // WheelScheduleSpec configures wheel scheduling.
@@ -70,25 +74,25 @@ type WheelScheduleSpec struct {
 
 // ComputeWheelStatus defines the observed state of a ComputeWheel.
 type ComputeWheelStatus struct {
-	Phase              ComputeWheelPhase `json:"phase,omitempty"`
-	CurrentTimeSlice   string            `json:"currentTimeSlice,omitempty"`
-	ActiveContext      string            `json:"activeContext,omitempty"`
-	ActiveContextIndex int               `json:"activeContextIndex,omitempty"`
-	ActiveWorkflow     string            `json:"activeWorkflow,omitempty"`
-	LastRotation       *metav1.Time      `json:"lastRotation,omitempty"`
-	RotationCount      int               `json:"rotationCount,omitempty"`
-	ProcessedSlots     []ProcessedSlot   `json:"processedSlots,omitempty"`
-	Message            string            `json:"message,omitempty"`
+	Phase              ComputeWheelPhase  `json:"phase,omitempty"`
+	CurrentTimeSlice   string             `json:"currentTimeSlice,omitempty"`
+	ActiveContext      string             `json:"activeContext,omitempty"`
+	ActiveContextIndex int                `json:"activeContextIndex,omitempty"`
+	ActiveWorkflow     string             `json:"activeWorkflow,omitempty"`
+	LastRotation       *metav1.Time       `json:"lastRotation,omitempty"`
+	RotationCount      int                `json:"rotationCount,omitempty"`
+	ProcessedSlots     []ProcessedSlot    `json:"processedSlots,omitempty"`
+	Message            string             `json:"message,omitempty"`
 	Conditions         []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // ProcessedSlot records a completed context+time-slice slot on the wheel.
 type ProcessedSlot struct {
-	TimeSlice      string `json:"timeSlice"`
-	Context        string `json:"context"`
-	Workflow       string `json:"workflow"`
-	SnapshotID     string `json:"snapshotID,omitempty"`
-	CompletedAt    string `json:"completedAt,omitempty"`
+	TimeSlice   string `json:"timeSlice"`
+	Context     string `json:"context"`
+	Workflow    string `json:"workflow"`
+	SnapshotID  string `json:"snapshotID,omitempty"`
+	CompletedAt string `json:"completedAt,omitempty"`
 }
 
 // +kubebuilder:object:root=true
