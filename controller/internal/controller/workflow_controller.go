@@ -163,6 +163,9 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 	wf.Status.DominoResults = dominoResults
 	wf.Status.Message = fmt.Sprintf("completed: %d dominos, %d reused", len(result.Entries), reused)
 	wf.Status.Homeostatic = theory.Homeostatic(theory.PhaseHomeostasis(string(wf.Status.Phase)))
+	wf.Status.HeadLink = result.HeadLink
+	wf.Status.WorkEvaluations = result.WorkEvaluations
+	wf.Status.WorkCostUSD = result.WorkCostUSD
 	wf.Status.Conditions = []metav1.Condition{
 		{
 			Type:               conditionReady,
@@ -297,6 +300,9 @@ func (r *WorkflowReconciler) completeFromChain(ctx context.Context, wf *kblv1alp
 	wf.Status.DominoResults = dominoResults
 	wf.Status.Message = fmt.Sprintf("container chain completed: %d dominos", len(result.Entries))
 	wf.Status.Homeostatic = theory.Homeostatic(theory.PhaseHomeostasis(string(wf.Status.Phase)))
+	wf.Status.HeadLink = result.HeadLink
+	wf.Status.WorkEvaluations = result.WorkEvaluations
+	wf.Status.WorkCostUSD = result.WorkCostUSD
 	wf.Status.Conditions = []metav1.Condition{{
 		Type:               conditionReady,
 		Status:             metav1.ConditionTrue,

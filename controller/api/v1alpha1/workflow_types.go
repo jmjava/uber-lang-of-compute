@@ -111,6 +111,12 @@ type WorkflowStatus struct {
 	// Homeostatic is true when status.phase equals the desired Completed phase
 	// (Ashby essential-variable bound). Metabolism stays in nature.
 	Homeostatic bool `json:"homeostatic,omitempty"`
+	// HeadLink is the Merkle spine head of the completed run (M9/M28).
+	HeadLink string `json:"headLink,omitempty"`
+	// WorkEvaluations counts irreversible steps (M2/M28).
+	WorkEvaluations int `json:"workEvaluations,omitempty"`
+	// WorkCostUSD is the dollar cost of irreversible steps (M7/M28).
+	WorkCostUSD float64 `json:"workCostUSD,omitempty"`
 }
 
 // DominoResult summarizes one domino execution in status.

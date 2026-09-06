@@ -231,6 +231,12 @@ If two universes match the same partition labels, `Resolve` returns an error rat
 
 **Proof.** Field copy in `convert`. Test: `TestConvertPassesSandboxIntoEngineGate`. ∎
 
+### Theorem M28 (observable essentials)
+
+A completed Workflow status records `HeadLink`, `WorkEvaluations`, and `WorkCostUSD` from `RunResult`.
+
+**Proof.** Assignment in `WorkflowReconciler` after `Engine.Run`. Test: `TestWorkflowReconcilerExecutesChain`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

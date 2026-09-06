@@ -140,6 +140,12 @@ spec:
                   type: integer
                 homeostatic:
                   type: boolean
+                headLink:
+                  type: string
+                workEvaluations:
+                  type: integer
+                workCostUSD:
+                  type: number
                 lastRunTime:
                   type: string
                   format: date-time

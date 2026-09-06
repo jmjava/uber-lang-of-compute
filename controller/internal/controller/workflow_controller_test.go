@@ -108,6 +108,15 @@ func TestWorkflowReconcilerExecutesChain(t *testing.T) {
 	if !updated.Status.Homeostatic {
 		t.Error("completed workflow must be homeostatic (phase matches desired Completed)")
 	}
+	if updated.Status.HeadLink == "" {
+		t.Error("completed workflow must expose HeadLink")
+	}
+	if updated.Status.WorkEvaluations != 2 {
+		t.Errorf("first run work evaluations want 2 got %d", updated.Status.WorkEvaluations)
+	}
+	if updated.Status.WorkCostUSD <= 0 {
+		t.Error("first run must record a dollar cost")
+	}
 	if updated.Status.SnapshotID == "" {
 		t.Error("expected snapshot ID in status")
 	}

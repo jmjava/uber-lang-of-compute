@@ -28,6 +28,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | M25 | Time-slice routes beat partition routes | Theorem of selection rules | `TestRoutingPriorityTimeSliceBeatsPartition` | Learned / softmax routers |
 | M26 | Ambiguous partition matches are rejected | Theorem of unique outcome | `TestAmbiguousPartitionMatchRejected` | Soft clustering |
 | M27 | CRD sandbox flags reach the Picard cage | Theorem of the membrane | `TestConvertPassesSandboxIntoEngineGate` | Real kernel namespaces |
+| M28 | Workflow status exposes HeadLink and work | Control mimic (observable essentials) | `TestWorkflowReconcilerExecutesChain` | Metabolism / joules |
 | M1/M2 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
 | M9 | Replay log is a hash chain from the snapshot ID | Theorem of the spine | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput` | Full Merkle DAG / blockchain |
 | Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |
