@@ -223,9 +223,14 @@ See [ADR 0007](./adr/0007-hot-swapped-dominos-implementation.md), [provisioning-
 
 ## Determinism Guarantees
 
+These are the computational side of Correspondence I (unique discrete Cauchy trajectories). Hypotheses and proofs: [theory/formal-model.md](./theory/formal-model.md).
+
 | Guarantee | Mechanism |
 |-----------|-----------|
-| Same inputs → same outputs | Referentially transparent dominos, immutable snapshots |
-| Reproducible replay | Replay log + snapshot ID + input/output hashes |
-| Isolation | Snapshot immutability; no cross-snapshot reads during compute |
+| Same inputs → same outputs | Referentially transparent dominos, immutable snapshots (`deterministic: true` is a purity *contract*; the engine always requires a sealed snapshot but cannot type-check arbitrary containers) |
+| Reproducible replay | Replay log + snapshot ID + input/output hashes (wall-clock timestamps are not part of the worldline) |
+| Isolation | Snapshot immutability; no cross-snapshot reads during compute; causal past of a domino is snapshot + strict prefix of the chain |
 | Auditability | Every domino execution logged with hash chain |
+| Sealed-only signaling | Read replicas and CDC refuse unsealed snapshots (Correspondence III) |
+
+128-bit snapshot IDs (`hash.SnapshotIDHexLen`) identify sealed content. Ensemble Shannon entropy of candidate inputs collapses at seal time (Correspondence II); that is not thermodynamic entropy.

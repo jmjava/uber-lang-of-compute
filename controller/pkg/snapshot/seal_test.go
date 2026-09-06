@@ -27,8 +27,8 @@ func TestComputeIDDeterministic(t *testing.T) {
 	if id1 != id2 {
 		t.Fatalf("expected deterministic ID, got %s vs %s", id1, id2)
 	}
-	if len(id1) != 16 {
-		t.Fatalf("expected 16-char snapshot ID, got %d", len(id1))
+	if len(id1) != 32 {
+		t.Fatalf("expected 32-char (128-bit) snapshot ID, got %d", len(id1))
 	}
 }
 

@@ -84,6 +84,33 @@ func TestSnapshotReplayDeterministic(t *testing.T) {
 	}
 }
 
+func TestDominoCannotReadFutureOutput(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "causal.db"))
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	if len(wf.Spec.Execution.Chain) < 2 {
+		t.Fatal("need a multi-domino chain")
+	}
+	first := wf.Spec.Execution.Chain[0]
+	later := wf.Spec.Execution.Chain[len(wf.Spec.Execution.Chain)-1]
+	for i := range wf.Spec.Dominos {
+		if wf.Spec.Dominos[i].Metadata.Name != first {
+			continue
+		}
+		wf.Spec.Dominos[i].Spec.Inputs = []types.DominoInput{{FromDomino: later}}
+	}
+
+	_, err = engine.New(s).Run(wf)
+	if err == nil {
+		t.Fatal("expected error: first domino cannot read a later domino's output")
+	}
+}
+
 func TestMemoizationReusesResults(t *testing.T) {
 	dir := t.TempDir()
 	dbPath := filepath.Join(dir, "memo.db")

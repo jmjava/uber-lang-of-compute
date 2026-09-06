@@ -12,10 +12,10 @@ type Snapshot struct {
 }
 
 type SnapshotSpec struct {
-	TimeSlice         string                 `yaml:"timeSlice" json:"timeSlice"`
-	Source            SnapshotSource         `yaml:"source" json:"source"`
-	ComputeContextRef string                 `yaml:"computeContextRef,omitempty" json:"computeContextRef,omitempty"`
-	Sealed            bool                   `yaml:"sealed" json:"sealed"`
+	TimeSlice         string         `yaml:"timeSlice" json:"timeSlice"`
+	Source            SnapshotSource `yaml:"source" json:"source"`
+	ComputeContextRef string         `yaml:"computeContextRef,omitempty" json:"computeContextRef,omitempty"`
+	Sealed            bool           `yaml:"sealed" json:"sealed"`
 }
 
 type SnapshotSource struct {
@@ -32,10 +32,10 @@ type SnapshotStatus struct {
 
 // Domino represents a single deterministic compute step.
 type Domino struct {
-	APIVersion string       `yaml:"apiVersion" json:"apiVersion"`
-	Kind       string       `yaml:"kind" json:"kind"`
-	Metadata   ObjectMeta   `yaml:"metadata" json:"metadata"`
-	Spec       DominoSpec   `yaml:"spec" json:"spec"`
+	APIVersion string        `yaml:"apiVersion" json:"apiVersion"`
+	Kind       string        `yaml:"kind" json:"kind"`
+	Metadata   ObjectMeta    `yaml:"metadata" json:"metadata"`
+	Spec       DominoSpec    `yaml:"spec" json:"spec"`
 	Status     *DominoStatus `yaml:"status,omitempty" json:"status,omitempty"`
 }
 
@@ -62,10 +62,10 @@ type DominoStatus struct {
 
 // Workflow composes snapshot, dominos, and execution config.
 type Workflow struct {
-	APIVersion string         `yaml:"apiVersion" json:"apiVersion"`
-	Kind       string         `yaml:"kind" json:"kind"`
-	Metadata   ObjectMeta     `yaml:"metadata" json:"metadata"`
-	Spec       WorkflowSpec   `yaml:"spec" json:"spec"`
+	APIVersion string       `yaml:"apiVersion" json:"apiVersion"`
+	Kind       string       `yaml:"kind" json:"kind"`
+	Metadata   ObjectMeta   `yaml:"metadata" json:"metadata"`
+	Spec       WorkflowSpec `yaml:"spec" json:"spec"`
 }
 
 type WorkflowSpec struct {
@@ -77,8 +77,11 @@ type WorkflowSpec struct {
 }
 
 type ExecutionConfig struct {
-	Chain         []string `yaml:"chain" json:"chain"`
-	Deterministic bool     `yaml:"deterministic" json:"deterministic"`
+	Chain []string `yaml:"chain" json:"chain"`
+	// Deterministic is a purity contract: every domino is a function of
+	// declared inputs. The engine always requires a sealed snapshot; it
+	// cannot prove that user commands are referentially transparent.
+	Deterministic bool `yaml:"deterministic" json:"deterministic"`
 }
 
 type ProvisioningConfig struct {
@@ -87,8 +90,8 @@ type ProvisioningConfig struct {
 }
 
 type RoutingConfig struct {
-	Universe            string `yaml:"universe" json:"universe"`
-	ComputeContextRef   string `yaml:"computeContextRef" json:"computeContextRef"`
+	Universe          string `yaml:"universe" json:"universe"`
+	ComputeContextRef string `yaml:"computeContextRef" json:"computeContextRef"`
 }
 
 type ObjectMeta struct {
@@ -109,7 +112,7 @@ type ReplayLogEntry struct {
 
 // RunResult is the outcome of executing a domino chain.
 type RunResult struct {
-	SnapshotID string           `json:"snapshot_id"`
-	Entries    []ReplayLogEntry `json:"entries"`
-	FinalOutput string          `json:"final_output"`
+	SnapshotID  string           `json:"snapshot_id"`
+	Entries     []ReplayLogEntry `json:"entries"`
+	FinalOutput string           `json:"final_output"`
 }

@@ -39,8 +39,8 @@ func TestSnapshotIDStable(t *testing.T) {
 	if id1 != id2 {
 		t.Errorf("snapshot ID not stable: %s vs %s", id1, id2)
 	}
-	if len(id1) != 16 {
-		t.Errorf("expected 16-char snapshot ID, got %d", len(id1))
+	if len(id1) != hash.SnapshotIDHexLen {
+		t.Errorf("expected %d-char snapshot ID, got %d", hash.SnapshotIDHexLen, len(id1))
 	}
 }
 

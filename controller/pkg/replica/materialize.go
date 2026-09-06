@@ -33,7 +33,10 @@ func Materialize(cfg MaterializeConfig) (*MaterializeResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read source snapshot: %w", err)
 	}
-	if err := cfg.Target.SaveSnapshot(cfg.SnapshotID, timeSlice, data, sealed); err != nil {
+	if !sealed {
+		return nil, fmt.Errorf("refusing to materialize unsealed snapshot %s (cross-universe signaling requires a sealed Cauchy view)", cfg.SnapshotID)
+	}
+	if err := cfg.Target.SaveSnapshot(cfg.SnapshotID, timeSlice, data, true); err != nil {
 		return nil, fmt.Errorf("write target snapshot: %w", err)
 	}
 

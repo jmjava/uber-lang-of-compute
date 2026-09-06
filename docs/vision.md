@@ -10,9 +10,11 @@ The core thesis, drawn from the Uber Language of Compute blog series (2020–202
 
 > Compute rearranges around data. Bring compute to the data, not data to compute.
 
+Physics vocabulary in this project is a **correspondence layer**, not a claim that Kubernetes implements thermodynamics or many-worlds quantum mechanics. Each borrowed structure (unique Cauchy trajectories, ensemble-entropy collapse at seal time, causal past during compute, discrete cylinder flow of the wheel, windowed self-similar aggregation) is defined, bounded, and tested in [docs/theory](./theory/README.md). What does not transfer — Landauer heat, Everett branching, the map \(z\mapsto z^2+c\), biological life — is declined there as a theorem.
+
 ## Core Principles
 
-1. **Snapshot isolation** — Every computation runs against an immutable, low-entropy data view. Same snapshot + same inputs = same outputs, always.
+1. **Snapshot isolation** — Every computation runs against an immutable, **ensemble-low-entropy** data view: sealing collapses the prior over candidate inputs to a single payload (Shannon \(H_{\mathrm{ens}}=0\)), not a drop in thermodynamic \(S\). Same snapshot + same inputs = same outputs, always.
 
 2. **Data locality** — Each Compute Context binds compute to node-local storage. Work is scheduled where the data lives.
 
@@ -26,7 +28,7 @@ The core thesis, drawn from the Uber Language of Compute blog series (2020–202
 
 ## What the MVP Proves
 
-The first prototype does not build the full multiverse. It proves one slice of the physics:
+The first prototype does not build the full routed product of universes. It proves the computational correspondents of one slice (theorems D1, D2, M1 in [docs/theory](./theory/README.md)):
 
 - Define a **Snapshot** resource (immutable data view)
 - Define a **Domino** resource (deterministic compute step)
@@ -43,9 +45,9 @@ If replay + caching + locality work for one chain, the fabric scales.
 - Hot-swapped container dominos via OpenKruise daisy chains
 - Node-local TSDB DaemonSet as live-data and cached-result store
 - Debezium/Kafka routing across pluggable universes
-- Self-similar hierarchical aggregation (Windowed Mandelbrot pattern)
+- Self-similar hierarchical aggregation (Windowed Mandelbrot *pattern* — theorem F1; not yet the cluster scheduler)
 - Player-piano scheduling: pre-provision resources ahead of need
 
 ## Related Reading
 
-See the [vocabulary](./vocabulary.md) for term definitions and [architecture](./architecture.md) for system design.
+See the [vocabulary](./vocabulary.md) for term definitions, [architecture](./architecture.md) for system design, and [theory](./theory/README.md) for the physics correspondences, formal model, and simulated peer review.

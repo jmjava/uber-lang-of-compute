@@ -4,7 +4,7 @@ The controller executes domino chains against immutable snapshots with hash-base
 
 ## MVP Scope
 
-This prototype proves the core physics of the KBL Compute Engine:
+This prototype proves the core **computational correspondents** of the KBL design (theorems D1, D2, M1 — [docs/theory](../docs/theory/README.md)):
 
 1. Load a **Snapshot** (immutable, sealed data view)
 2. Execute a chain of **Dominos** in declared order

@@ -18,7 +18,7 @@ flowchart TB
 
 **A time-sliced, data-local, Kubernetes-native compute fabric**
 
-The KBL Compute Engine processes immutable time-sliced data snapshots through modular, deterministic compute dominos placed near local data stores. It uses DSLs/CRDs to describe execution, data, provisioning, and routing — minimizing entropy through snapshot isolation and maximizing reuse through memoized intermediate results.
+The KBL Compute Engine processes immutable time-sliced data snapshots through modular, deterministic compute dominos placed near local data stores. It uses DSLs/CRDs to describe execution, data, provisioning, and routing — collapsing **ensemble input entropy** through snapshot isolation and maximizing reuse through memoized intermediate results. Physics-shaped names (entropy, multiverse, Mandelbrot, lifeform) are defined as [correspondences](docs/theory/correspondences.md), not identity claims about nature.
 
 Derived from the [Uber Language of Compute](https://github.com/jmjava/uber-lang-of-compute) blog series (2020–2025), originally published at **[jmenke.blogspot.com](https://jmenke.blogspot.com/)**.
 
@@ -34,6 +34,7 @@ Derived from the [Uber Language of Compute](https://github.com/jmjava/uber-lang-
 | [Provisioning Runtimes](docs/provisioning-runtimes.md) | `kubernetes-init`, `openkruise`, `volcano-init` |
 | [Vocabulary](docs/vocabulary.md) | Glossary |
 | [Vision](docs/vision.md) | Design goals |
+| [**Theory / correspondences**](docs/theory/README.md) | Peer-review reading, physics linkages, theorems, evidence |
 | [Kind Lab](lab/README.md) | Local multi-node cluster operations |
 | [Blog — jmenke.blogspot.com](https://jmenke.blogspot.com/) | Original Uber Language of Compute series |
 
@@ -75,6 +76,7 @@ All ADRs: [docs/README.md#adrs-by-topic](docs/README.md#adrs-by-topic). Foundati
 | **Phase 30** | Architecture diagrams — Mermaid visual reference (topology, sequences, troubleshooting) |
 | **Phase 31** | Volcano lab profiles — home i9 / compact i7, 2-context wheel + parallel burst, `verify-volcano.sh` |
 | **Phase 32 (exploration)** | Courseforge integration — worker images × KBL/Volcano scheduler ([exploration doc](docs/explorations/courseforge-integration.md), [PurePlay use case](docs/explorations/pureplay-multi-tier-platform.md)) |
+| **Phase 33** | Physics correspondence layer — formal model, ensemble entropy, causal past, windowed aggregation (F1), sealed-only replica/CDC, 128-bit snapshot IDs ([docs/theory](docs/theory/README.md), [ADR 0037](docs/adr/0037-physics-correspondence-layer.md)) |
 
 ## Core Concepts
 
@@ -159,6 +161,8 @@ Run tests: `make test`
 3. **Node-local storage** — SQLite store at configurable path
 4. **Memoization** — input hash lookup skips recomputation
 5. **Replay log** — audit trail with snapshot ID, domino ID, hashes, reused/recomputed
+
+Theorems and the physics correspondence layer: [docs/theory](docs/theory/README.md).
 
 ## Performance note
 

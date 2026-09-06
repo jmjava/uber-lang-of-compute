@@ -13,6 +13,7 @@ Central index for the [Uber Language of Compute](https://jmenke.blogspot.com/) i
 | [Architecture](architecture.md) | System design | Layers, data flow, [Multiverse communication](architecture.md#multiverse-communication) |
 | [Vocabulary](vocabulary.md) | Everyone | Glossary aligned with the blog series |
 | [Vision](vision.md) | Context | Original design goals |
+| [**Theory**](theory/README.md) | Researchers | Physics correspondences, formal model, peer-review reading |
 
 ## Blog alignment
 
@@ -62,6 +63,7 @@ Skip components: `KBL_LAB_VOLCANO=0`, `KBL_LAB_OPENKURISE=0`. See [lab/README.md
 - [0002 Snapshot Isolation](adr/0002-snapshot-isolation.md)
 - [0003 Node-Local Data](adr/0003-node-local-data.md)
 - [0005 Kubernetes Controller](adr/0005-kubernetes-controller.md)
+- [0037 Physics Correspondence Layer](adr/0037-physics-correspondence-layer.md)
 
 ### Scheduling & rotation
 - [0006 Compute Wheel Rotation](adr/0006-compute-wheel-rotation.md)
@@ -94,6 +96,7 @@ Skip components: `KBL_LAB_VOLCANO=0`, `KBL_LAB_OPENKURISE=0`. See [lab/README.md
 - [0034 Architecture Diagrams](adr/0034-documentation-diagrams.md)
 - [0035 Volcano Lab Profiles](adr/0035-volcano-lab-profiles.md)
 - [0036 Courseforge Integration (exploration)](adr/0036-courseforge-integration-exploration.md)
+- [0037 Physics Correspondence Layer](adr/0037-physics-correspondence-layer.md)
 
 ## Explorations
 
@@ -114,6 +117,7 @@ Full phase table lives in the [root README](../README.md#roadmap). Recent phases
 | 28 | OpenKruise lab demo |
 | 29 | Documentation hub (this index) |
 | 30 | Architecture diagrams — Mermaid visual reference |
+| 33 | Physics correspondence layer ([theory/](theory/README.md), [ADR 0037](adr/0037-physics-correspondence-layer.md)) |
 
 ## Visual reference
 

@@ -16,4 +16,6 @@ go test ./pkg/engine/... -run TestMemoization -v
 - Final output unchanged between runs
 - Memo cache keyed by `(snapshot_id, domino_id, input_hash)`
 
+Correspondence: theorem M1 (memo observational equivalence) in [docs/theory](../../docs/theory/README.md).
+
 See `controller/pkg/engine/engine_test.go` for implementation.

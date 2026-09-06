@@ -2,6 +2,7 @@ package cdc
 
 import (
 	"encoding/json"
+	"fmt"
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
@@ -13,6 +14,9 @@ func ExportFromStore(source store.Backend, snapshotID string, dominoChain []stri
 	timeSlice, data, sealed, err := source.GetSnapshot(snapshotID)
 	if err != nil {
 		return nil, err
+	}
+	if !sealed {
+		return nil, fmt.Errorf("refusing to export unsealed snapshot %s", snapshotID)
 	}
 
 	out := []Envelope{{
@@ -50,6 +54,9 @@ func ExportFromStore(source store.Backend, snapshotID string, dominoChain []stri
 // ExportFromWorkflow builds CDC envelopes from a completed workflow run.
 func ExportFromWorkflow(wf *kblv1alpha1.Workflow, result *types.RunResult) []Envelope {
 	if result == nil || result.SnapshotID == "" {
+		return nil
+	}
+	if wf == nil || !wf.Spec.Snapshot.Sealed {
 		return nil
 	}
 

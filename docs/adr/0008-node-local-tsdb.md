@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-ADR 0003 specified SQLite for MVP and TSDB DaemonSet as the production node-local data layer. Phases 1–4 proved compute physics with SQLite files. Phase 5 adds the TSDB path described in *Minimize Entropy while maximizing Caching*.
+ADR 0003 specified SQLite for MVP and TSDB DaemonSet as the production node-local data layer. Phases 1–4 proved snapshot isolation, memoization, and replay with SQLite files (the computational side of correspondences I–II, VII). Phase 5 adds the TSDB path described in *Minimize Entropy while maximizing Caching*.
 
 ## Decision
 

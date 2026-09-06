@@ -70,6 +70,24 @@ func TestMaxRotationsStopsWheel(t *testing.T) {
 	}
 }
 
+func TestCylinderPeriodAdvancesTimeOnce(t *testing.T) {
+	// Correspondence V: n seats form a discrete circle; one full turn advances
+	// the time coordinate by exactly one interval (helix on a cylinder).
+	start := time.Date(2025, 4, 15, 0, 0, 0, 0, time.UTC)
+	state := wheel.State{CurrentTimeSlice: start}
+	const n = 5
+	interval := 12 * time.Hour
+	for i := 0; i < n; i++ {
+		state = wheel.AdvanceAfterCompletion(state, n, interval, 0).State
+	}
+	if state.ActiveContextIndex != 0 {
+		t.Errorf("expected seat 0 after full turn, got %d", state.ActiveContextIndex)
+	}
+	if !state.CurrentTimeSlice.Equal(start.Add(interval)) {
+		t.Errorf("expected slice %+v, got %+v", start.Add(interval), state.CurrentTimeSlice)
+	}
+}
+
 func TestParseIntervalDays(t *testing.T) {
 	d, err := wheel.ParseInterval("1d")
 	if err != nil {

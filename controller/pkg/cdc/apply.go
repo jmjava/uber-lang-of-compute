@@ -27,7 +27,10 @@ func applySnapshot(target store.Backend, env Envelope) error {
 	if err != nil {
 		return err
 	}
-	return target.SaveSnapshot(row.SnapshotID, row.TimeSlice, row.Data, row.Sealed)
+	if !row.Sealed {
+		return fmt.Errorf("refusing to replicate unsealed snapshot %s", row.SnapshotID)
+	}
+	return target.SaveSnapshot(row.SnapshotID, row.TimeSlice, row.Data, true)
 }
 
 func applyDominoResult(target store.Backend, env Envelope) error {

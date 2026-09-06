@@ -72,3 +72,35 @@ func TestMemoryBusPublishConsume(t *testing.T) {
 		t.Fatalf("expected 1 event, got %d", len(got))
 	}
 }
+
+func TestApplyRejectsUnsealedSnapshot(t *testing.T) {
+	target, err := store.OpenSQLite(t.TempDir() + "/target.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+
+	err = cdc.Apply(target, cdc.Envelope{
+		Op:    cdc.OpCreate,
+		Table: cdc.TableSnapshots,
+		After: cdc.SnapshotRow{SnapshotID: "live", TimeSlice: "2025-04-15", Data: "{}", Sealed: false},
+	})
+	if err == nil {
+		t.Fatal("expected error applying unsealed snapshot")
+	}
+}
+
+func TestExportFromStoreRejectsUnsealedSnapshot(t *testing.T) {
+	source, err := store.OpenSQLite(t.TempDir() + "/source.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer source.Close()
+
+	if err := source.SaveSnapshot("live", "2025-04-15", `{"v":1}`, false); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cdc.ExportFromStore(source, "live", nil); err == nil {
+		t.Fatal("expected error exporting unsealed snapshot")
+	}
+}

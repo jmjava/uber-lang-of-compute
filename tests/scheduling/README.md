@@ -18,6 +18,8 @@ go test ./pkg/wheel/... -v
 - `maxRotations` stops the wheel after N slice rotations
 - `preProvisionNext` creates the next slot's Workflow while current runs (player-piano)
 
+Correspondence: theorem W1 (discrete cylinder map) in [docs/theory](../../docs/theory/README.md).
+
 ## Future Tests
 
 - Clock-driven requeue when interval elapses with no in-flight work

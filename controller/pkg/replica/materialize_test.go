@@ -65,3 +65,31 @@ func TestMaterializeCopiesSnapshotAndDominos(t *testing.T) {
 		t.Fatal("expected domino output on target")
 	}
 }
+
+func TestMaterializeRejectsUnsealedSnapshot(t *testing.T) {
+	dir := t.TempDir()
+	source, err := store.OpenSQLite(filepath.Join(dir, "source.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer source.Close()
+	target, err := store.OpenSQLite(filepath.Join(dir, "target.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+
+	const snapshotID = "snap-live"
+	if err := source.SaveSnapshot(snapshotID, "2025-04-15", `{"key":"value"}`, false); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = replica.Materialize(replica.MaterializeConfig{
+		SnapshotID: snapshotID,
+		Source:     source,
+		Target:     target,
+	})
+	if err == nil {
+		t.Fatal("expected error materializing unsealed snapshot")
+	}
+}

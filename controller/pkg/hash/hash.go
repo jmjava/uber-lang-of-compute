@@ -31,7 +31,13 @@ func ChainKey(snapshotID, dominoID, inputHash string) string {
 	return snapshotID + ":" + dominoID + ":" + inputHash
 }
 
-// SnapshotID computes a deterministic ID from snapshot content.
+// SnapshotIDHexLen is the hex length of a snapshot ID (128 bits).
+// 64-bit (16-hex) IDs have a birthday bound near 2^32 and are not collision-resistant
+// enough for content-addressed identity. Full SHA-256 is retained via Compute;
+// the truncated ID is the public identity used in stores and replay logs.
+const SnapshotIDHexLen = 32
+
+// SnapshotID computes a deterministic 128-bit identity from snapshot content.
 func SnapshotID(timeSlice string, data interface{}) (string, error) {
 	payload := map[string]interface{}{
 		"timeSlice": timeSlice,
@@ -41,7 +47,7 @@ func SnapshotID(timeSlice string, data interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return h[:16], nil
+	return h[:SnapshotIDHexLen], nil
 }
 
 // SortedKeys returns sorted keys for deterministic map iteration.

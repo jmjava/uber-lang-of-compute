@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Deterministic, reproducible computation requires that inputs do not change mid-pipeline. The blog series uses the metaphor of "low-entropy snapshots" — frozen data views that make computation repeatable. Finance use cases (curve/risk calculations) demand that the same snapshot always produces the same curve.
+Deterministic, reproducible computation requires that inputs do not change mid-pipeline. The blog series uses the metaphor of "low-entropy snapshots" — frozen data views that make computation repeatable. That phrase is now a defined correspondence: **ensemble Shannon entropy** of candidate inputs collapses at seal time; it is not thermodynamic entropy. See [ADR 0037](0037-physics-correspondence-layer.md) and [docs/theory/correspondences.md](../theory/correspondences.md). Finance use cases (curve/risk calculations) demand that the same snapshot always produces the same curve.
 
 Without snapshot isolation, memoization caches become unreliable and replay logs lose meaning.
 

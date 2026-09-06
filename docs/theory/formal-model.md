@@ -1,0 +1,169 @@
+# Formal Model
+
+This note states the discrete dynamical system that the correspondences act on, the hypotheses they need, and proofs of the theorems named in [correspondences.md](correspondences.md). Notation is computational. Where a physics name is used, it refers to the correspondence, not to a physical quantity.
+
+---
+
+## 1. State space
+
+Fix a finite alphabet of byte strings \(\mathbf{Str}\).
+
+A **snapshot** is a triple \(s = (\tau, x, \sigma)\) where \(\tau\) is a time-slice identifier, \(x\in\mathbf{Str}\) is a payload, and \(\sigma\in\{\mathrm{open},\mathrm{sealed}\}\).
+
+A **domino** is a name \(d\) together with a command interpreted as a partial function \(f_d : \mathbf{Str}\rightharpoonup\mathbf{Str}\) and a list of input selectors (snapshot and/or earlier dominos).
+
+A **chain** is a finite sequence \(D=(d_1,\ldots,d_n)\) of distinct names.
+
+A **memo** is a partial map
+\[
+M : \mathrm{ID}\times\mathrm{Name}\times\{0,1\}^{256} \rightharpoonup \mathbf{Str}.
+\]
+
+A **wheel state** is \((i,t,r)\in\{0,\ldots,n_c-1\}\times T\times\mathbb{N}\), where \(n_c\) is the number of contexts and \(T\) is a discrete time lattice.
+
+A **universe** is a tuple \(u=(\Phi_u, \mathrm{Store}_u, \mathrm{Prov}_u)\): evolution, local store, provisioning.
+
+A **multiverse specification** is a routing function \(\rho\) as implemented by `routing.Router.Resolve`.
+
+The **engine state** relevant to one workflow is \((s, D, M, Y)\) where \(Y\) maps already-executed names to outputs.
+
+---
+
+## 2. Hypotheses
+
+| ID | Hypothesis | Role |
+|----|------------|------|
+| H1 | **Seal gate.** \(\Phi\) is undefined on \(\sigma=\mathrm{open}\). | D1 |
+| H2 | **Purity.** Each \(f_d\) used under `deterministic: true` is a total function of its resolved input string. | D2, M1 |
+| H3 | **Input resolution is a function.** `resolveInputs` depends only on \(x\) and \(\{Y(d'): d'\prec d\}\). | D2, causal past |
+| H4 | **Collision resistance.** SHA-256 is injective on the payloads that actually occur. Snapshot IDs are 128-bit prefixes (birthday bound \(\sim 2^{64}\)). | identity of worldlines |
+| H5 | **Memo integrity.** \(M(s,d,h)=y\) only if some prior execution of \(f_d\) on an input hashing to \(h\) produced \(y\). | M1 |
+| H6 | **Replica Cauchy condition.** Materialize/CDC copy only when \(\sigma=\mathrm{sealed}\). | R1 |
+
+H2 is **not discharged by the engine** for arbitrary container commands. Builtin dominos (`builtin:identity`, interpolation, DV01) and pinned-Julia scripts are the currently evidenced fragment of H2.
+
+---
+
+## 3. Evolution
+
+### 3.1 Domino step
+
+Given sealed \(s\), current \(Y\), and next name \(d\):
+
+1. \(u \leftarrow \mathrm{resolveInputs}(d,x,Y)\)
+2. \(h \leftarrow \mathrm{SHA256}(u)\)
+3. If \(M(\mathrm{id}(s),d,h)=y\), set \(Y(d)\leftarrow y\) (reuse).
+4. Else set \(y\leftarrow f_d(u)\), write \(M\), set \(Y(d)\leftarrow y\).
+
+Chain evolution \(\Phi_{\mathrm{chain}}\) is the \(n\)-fold composition of this step along \(D\).
+
+### 3.2 Wheel step
+
+`AdvanceAfterCompletion` (see `pkg/wheel`):
+
+\[
+\Phi_W(i,t,r)=
+\begin{cases}
+(i+1,t,r) & i+1 < n_c \\
+(0,t+\Delta t,r+1) & i+1 = n_c
+\end{cases}
+\]
+
+with an absorbing stop when \(r+1\) hits `maxRotations`.
+
+### 3.3 Routing
+
+\(\rho(\mathrm{event})\) is the first matching time-slice override, else the first matching partition rule, else the default universe. This is a total function whenever a default is configured.
+
+---
+
+## 4. Theorems
+
+### Theorem D1 (no trajectory without Cauchy data)
+
+Assume H1. If \(\sigma=\mathrm{open}\), `Engine.Run` returns an error and does not write a worldline.
+
+**Proof.** Immediate from the guard in `engine.go` (`snapshot … is not sealed; cannot execute deterministically`). ∎
+
+### Theorem D2 (unique hash worldline)
+
+Assume H1–H4 and a fixed chain \(D\). Let \(s\) be sealed with payload \(x\). Then any two complete executions produce the same sequence of input hashes, output hashes, and final output.
+
+**Proof.** By induction on chain position \(k\).
+
+*Base.* \(k=0\): no outputs. Snapshot ID is \(\mathrm{SHA256}(\tau,x)\) truncated to 128 bits; H4 gives uniqueness on the occurring domain.
+
+*Step.* Resolved input \(u_k\) is a function of \(x\) and \(Y_{<k}\) (H3). Those are unique by induction. \(h_k=\mathrm{SHA256}(u_k)\) is unique. Either the memo returns the unique stored \(y_k\) (H5, and H2 says it equals \(f_{d_k}(u_k)\)) or \(f_{d_k}(u_k)\) is unique (H2). Output hash is unique by H4. ∎
+
+**Remark.** Wall-clock `Timestamp` on the replay log is *not* part of the worldline. Two runs may differ in timestamps and in the `reused` bit; they must not differ in hashes or outputs.
+
+### Theorem M1 (memo observational equivalence)
+
+Assume H2, H4, H5. A memo hit for \((\mathrm{id}(s),d,h)\) yields the same output string and output hash as executing \(f_d\) on any input that hashes to \(h\).
+
+**Proof.** H5 says the stored \(y\) came from such an execution. H2 says all such executions agree. H4 says the output hash agrees. ∎
+
+### Theorem E1 (ensemble collapse)
+
+Let \(E=\{x_1,\ldots,x_N\}\) be distinct payloads, \(\mu\) uniform on \(E\). Then \(H_{\mathrm{ens}}(\mu)=\log_2 N\). After sealing a member \(x^*\in E\), the posterior is \(\delta_{x^*}\) and \(H_{\mathrm{ens}}=0\).
+
+**Proof.** Shannon entropy of the uniform law on \(N\) atoms is \(\log_2 N\). A Dirac mass has entropy 0. `SealEnsemble` implements the conditioning. ∎
+
+**Corollary (non-claim).** \(H_{\mathrm{pay}}(x^*)\) is independent of the sealing predicate. Sealing is not a compression algorithm.
+
+### Theorem W1 (unique cylinder successor)
+
+For \(n_c>0\), \(\Phi_W\) is a total function. After \(n_c\) steps from \((0,t,r)\), the state is \((0,t+\Delta t,r+1)\) if the rotation cap allows.
+
+**Proof.** Inspection of `AdvanceAfterCompletion`. Period: the index increments \(n_c-1\) times without wrapping, then wraps once. ∎
+
+### Theorem F1 (windowed self-similarity)
+
+Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).
+
+**Proof.** By induction on \(d\). For \(d=1\), children are leaves; Coarsen sums them to \(v\) and drops children, matching \(U(0,k,v)\). For \(d>1\), Coarsen acts as \(U(d-1)\) on each child subtree (induction), and the parent value is the sum of child values, which is \(v\) by construction of Unfold. Shape is the perfect \(k\)-ary tree of height \(d-1\). ∎
+
+### Theorem (causal past)
+
+Let \(D=(d_1,\ldots,d_n)\). The readable names at \(d_k\) are \(\{\mathrm{snapshot}\}\cup\{d_1,\ldots,d_{k-1}\}\). In particular \(d_j\) for \(j\ge k\) is not readable.
+
+**Proof.** `resolveInputs` looks up `fromDomino` in `priorOutputs`, which only contains previously executed names in chain order. `AllowedReads` is the static version of the same prefix check. ∎
+
+### Theorem R1 (sealed-only signaling)
+
+Assume H6. `Materialize` and CDC export/apply fail on \(\sigma=\mathrm{open}\). Therefore a replica store cannot observe a live source snapshot.
+
+**Proof.** Guards in `replica.Materialize`, `cdc.ExportFromStore`, `cdc.applySnapshot`. ∎
+
+### Theorem C1 (routing is functional)
+
+`Router.Resolve` is deterministic: it has no hidden entropy; the same `MultiverseSpec` and `SnapshotEvent` yield the same `Target` or the same error.
+
+**Proof.** The procedure is a sequence of equality tests on the spec and event. ∎
+
+---
+
+## 5. What is not a theorem
+
+- Container purity (H2 for `image:` dominos).
+- Bit-identity of unpinned floating-point libraries across machines.
+- Thermodynamic entropy or Landauer heat.
+- Everett branching.
+- Fractal dimension of a live compute DAG (Unfold is not yet the cluster scheduler).
+- Biological life.
+
+---
+
+## 6. Mapping onto code
+
+| Object | Code |
+|--------|------|
+| Seal gate | `controller/pkg/engine/engine.go` `Run` |
+| Hash / snapshot ID | `controller/pkg/hash` |
+| Memo | `store.LookupMemo` / `SaveResult` |
+| Wheel \(\Phi_W\) | `controller/pkg/wheel/rotation.go` |
+| Routing \(\rho\) | `controller/pkg/routing/router.go` |
+| Causal past | `controller/pkg/theory/causal.go` |
+| Ensemble entropy | `controller/pkg/theory/entropy.go` |
+| Windowed aggregation | `controller/pkg/theory/aggregation.go` |
+| Cauchy replica | `controller/pkg/replica/materialize.go`, `controller/pkg/cdc` |
