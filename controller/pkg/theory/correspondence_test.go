@@ -103,6 +103,9 @@ func TestTheoremM1MemoObservationallyEquivalent(t *testing.T) {
 	if first.FinalOutput != second.FinalOutput || first.Entries[0].OutputHash != second.Entries[0].OutputHash {
 		t.Fatal("memo hit is not observationally equivalent to recompute")
 	}
+	if first.WorkEvaluations != 1 || first.WorkReuses != 0 || second.WorkEvaluations != 0 || second.WorkReuses != 1 {
+		t.Fatalf("RunResult work first=%d/%d second=%d/%d", first.WorkEvaluations, first.WorkReuses, second.WorkEvaluations, second.WorkReuses)
+	}
 	if !theory.ReplaySaves(theory.WorkFromReplay(first.Entries), theory.WorkFromReplay(second.Entries)) {
 		t.Fatal("Bennett-style recording should reduce irreversible steps on replay")
 	}

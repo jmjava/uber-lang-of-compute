@@ -82,6 +82,13 @@ func TestSnapshotReplayDeterministic(t *testing.T) {
 	if result1.FinalOutput != result2.FinalOutput {
 		t.Errorf("final output mismatch:\n  run1: %s\n  run2: %s", result1.FinalOutput, result2.FinalOutput)
 	}
+
+	if result1.WorkEvaluations != len(result1.Entries) || result1.WorkReuses != 0 {
+		t.Fatalf("first run work eval=%d reuse=%d want eval=%d reuse=0", result1.WorkEvaluations, result1.WorkReuses, len(result1.Entries))
+	}
+	if result2.WorkEvaluations != 0 || result2.WorkReuses != len(result2.Entries) {
+		t.Fatalf("second run work eval=%d reuse=%d want eval=0 reuse=%d", result2.WorkEvaluations, result2.WorkReuses, len(result2.Entries))
+	}
 }
 
 func TestDominoCannotReadFutureOutput(t *testing.T) {

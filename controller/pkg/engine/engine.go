@@ -137,11 +137,14 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 	for _, name := range chain {
 		regs = append(regs, theory.CommandRegularity(dominoMap[name].Spec.Command))
 	}
+	w := theory.WorkFromReplay(entries)
 	return &types.RunResult{
-		SnapshotID:    snapshotID,
-		Entries:       entries,
-		FinalOutput:   finalOutput,
-		MinRegularity: theory.MinRegularity(regs...).String(),
+		SnapshotID:      snapshotID,
+		Entries:         entries,
+		FinalOutput:     finalOutput,
+		MinRegularity:   theory.MinRegularity(regs...).String(),
+		WorkEvaluations: w.Evaluations,
+		WorkReuses:      w.Reuses,
 	}, nil
 }
 
