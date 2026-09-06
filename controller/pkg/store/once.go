@@ -31,3 +31,13 @@ func refuseSealedMutation(getErr error, existingTime, existingData string, exist
 	}
 	return ErrSealedOverwrite
 }
+
+func refuseMemoConflict(found bool, storedHash, storedOut, outputHash, output string) error {
+	if !found {
+		return nil
+	}
+	if storedHash == outputHash && storedOut == output {
+		return nil
+	}
+	return ErrMemoConflict
+}

@@ -23,7 +23,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M15 | Partial sandbox isolation is not a cage | **proved** | `TestPartialSandboxIsolationIsNotACage`, `TestPartialSandboxIsolationRejectedByEngine` |
 | M16 | Wall-clock is not in the worldline | **proved** | `TestWallClockNotInWorldline` |
 | M17 | Sealed snapshots are write-once | **proved** | `TestSealedSnapshotIsWriteOnce`, `TestSealedSnapshotIsWriteOnceTSDB` |
-| M18 | Memo key conflict is H5, not ignore | planned | same key, different output is an error |
+| M18 | Memo key conflict is H5, not ignore | **proved** | `TestMemoRejectsConflictingOutputForSameKey` |
 | M19 | Collision-safe WorkflowName truncation | planned | two long equal-length names must not collide |
 | M20 | RunSingle continues the replay spine | planned | sequential `RunSingle` verifies as one chain |
 | M21 | Store persists the replay spine | planned | reload replay rows, `VerifySpine` passes |

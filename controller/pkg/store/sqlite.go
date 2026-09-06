@@ -132,14 +132,23 @@ func (s *SQLiteBackend) SaveResult(snapshotID, dominoID, inputHash, outputHash, 
 	defer tx.Rollback()
 
 	if !reused {
-		_, err = tx.Exec(
-			`INSERT OR IGNORE INTO domino_results
-			 (snapshot_id, domino_id, input_hash, output_hash, output, reused)
-			 VALUES (?, ?, ?, ?, ?, 0)`,
-			snapshotID, dominoID, inputHash, outputHash, output,
-		)
+		storedHash, storedOut, found, err := s.LookupMemo(snapshotID, dominoID, inputHash)
 		if err != nil {
 			return err
+		}
+		if err := refuseMemoConflict(found, storedHash, storedOut, outputHash, output); err != nil {
+			return err
+		}
+		if !found {
+			_, err = tx.Exec(
+				`INSERT INTO domino_results
+				 (snapshot_id, domino_id, input_hash, output_hash, output, reused)
+				 VALUES (?, ?, ?, ?, ?, 0)`,
+				snapshotID, dominoID, inputHash, outputHash, output,
+			)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

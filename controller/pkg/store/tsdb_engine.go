@@ -155,22 +155,36 @@ func (t *TSDBEngine) SaveResult(snapshotID, dominoID, inputHash, outputHash, out
 	defer t.mu.Unlock()
 
 	if !reused {
-		rec := memoRecord{
-			SnapshotID: snapshotID,
-			DominoID:   dominoID,
-			InputHash:  inputHash,
-			OutputHash: outputHash,
-			Output:     output,
-			CreatedAt:  time.Now().UTC(),
-		}
-		body, err := json.Marshal(rec)
-		if err != nil {
-			return err
-		}
-		if err := os.MkdirAll(filepath.Dir(t.memoPath(snapshotID, dominoID, inputHash)), 0o755); err != nil {
-			return err
-		}
-		if err := os.WriteFile(t.memoPath(snapshotID, dominoID, inputHash), body, 0o644); err != nil {
+		body, err := os.ReadFile(t.memoPath(snapshotID, dominoID, inputHash))
+		switch {
+		case err == nil:
+			var rec memoRecord
+			if err := json.Unmarshal(body, &rec); err != nil {
+				return err
+			}
+			if err := refuseMemoConflict(true, rec.OutputHash, rec.Output, outputHash, output); err != nil {
+				return err
+			}
+		case os.IsNotExist(err):
+			rec := memoRecord{
+				SnapshotID: snapshotID,
+				DominoID:   dominoID,
+				InputHash:  inputHash,
+				OutputHash: outputHash,
+				Output:     output,
+				CreatedAt:  time.Now().UTC(),
+			}
+			body, err := json.Marshal(rec)
+			if err != nil {
+				return err
+			}
+			if err := os.MkdirAll(filepath.Dir(t.memoPath(snapshotID, dominoID, inputHash)), 0o755); err != nil {
+				return err
+			}
+			if err := os.WriteFile(t.memoPath(snapshotID, dominoID, inputHash), body, 0o644); err != nil {
+				return err
+			}
+		default:
 			return err
 		}
 	}

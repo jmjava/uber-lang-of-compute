@@ -171,6 +171,12 @@ A sealed snapshot identity may be rewritten only with identical \((\tau,x)\). A 
 
 **Proof.** `SaveSnapshot` on SQLite and TSDB consults the existing row/file; `refuseSealedMutation` returns `ErrSealedOverwrite` unless the write is a no-op. Tests: `TestSealedSnapshotIsWriteOnce`. ∎
 
+### Theorem M18 (memo integrity)
+
+Assume H5. Writing \(M(s,d,h)=y'\) when \(M(s,d,h)=y\) already and \(y'\neq y\) is an error. Identical rewrite is idempotent.
+
+**Proof.** `SaveResult` looks up the key; `refuseMemoConflict` returns `ErrMemoConflict` on disagreement. Tests: `TestMemoRejectsConflictingOutputForSameKey`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

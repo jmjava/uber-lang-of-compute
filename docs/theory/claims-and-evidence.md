@@ -18,6 +18,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | M15 | Partial isolation is not a Faraday cage | Falsification of XOR⇒H2-admission | `TestPartialSandboxIsolationIsNotACage`, `TestPartialSandboxIsolationRejectedByEngine` | Real kernel namespaces |
 | M16 | Wall-clock is excluded from the worldline | Theorem of the gauge | `TestWallClockNotInWorldline` | Relativistic proper time |
 | M17 | Sealed snapshots are write-once | Theorem of crystallization | `TestSealedSnapshotIsWriteOnce`, `TestSealedSnapshotIsWriteOnceTSDB` | Physical WORM media |
+| M18 | Memo key conflict is rejected | Theorem of H5 | `TestMemoRejectsConflictingOutputForSameKey` | Byzantine multi-writer consensus |
 | M1/M2 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
 | M9 | Replay log is a hash chain from the snapshot ID | Theorem of the spine | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput` | Full Merkle DAG / blockchain |
 | Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |
