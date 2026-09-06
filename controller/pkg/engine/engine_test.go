@@ -292,6 +292,27 @@ func TestSandboxedContractCommandRequiresIsolation(t *testing.T) {
 	}
 }
 
+func TestPartialSandboxIsolationRejectedByEngine(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "partial.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	wf.Spec.Dominos[0].Spec.Command = "sandbox:identity"
+	wf.Spec.Provisioning.SandboxNetworkNone = true
+	if _, err := engine.New(s).Run(wf); err == nil {
+		t.Fatal("network-none without read-only-root must be rejected")
+	}
+	wf.Spec.Provisioning.SandboxNetworkNone = false
+	wf.Spec.Provisioning.SandboxReadOnlyRoot = true
+	if _, err := engine.New(s).Run(wf); err == nil {
+		t.Fatal("read-only-root without network-none must be rejected")
+	}
+}
+
 func TestReplaySpineIsTamperEvident(t *testing.T) {
 	dir := t.TempDir()
 	s, err := store.Open(filepath.Join(dir, "spine.db"))

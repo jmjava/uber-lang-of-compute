@@ -20,7 +20,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M12 | Player-piano lookahead is a function of wheel state | **proved** | `TestLookaheadIsAFunctionOfState`, `TestLookaheadNameMatchesBuiltWorkflow`, `TestLookaheadStopsWhenDone` |
 | M13 | Unique names in an execution chain | **proved** | `TestRejectsDuplicateChainNames`, `TestUniqueNamesRejectsDuplicates` |
 | M14 | Engine-enforced causal past | **proved** | `TestDominoCannotReadFutureOutput`, `TestRejectsDependsOnOutsideCausalPast`, `TestFutureReadRejected` |
-| M15 | Partial sandbox isolation is not a cage | planned | network-none XOR read-only-root still rejected |
+| M15 | Partial sandbox isolation is not a cage | **proved** | `TestPartialSandboxIsolationIsNotACage`, `TestPartialSandboxIsolationRejectedByEngine` |
 | M16 | Wall-clock is not in the worldline | planned | delayed rerun: equal hashes/HeadLink, unequal timestamps |
 | M17 | Sealed snapshots are write-once | planned | different payload fails; identical rewrite is idempotent |
 | M18 | Memo key conflict is H5, not ignore | planned | same key, different output is an error |

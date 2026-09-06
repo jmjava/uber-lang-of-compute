@@ -153,6 +153,12 @@ Assume the causal-past theorem. `Engine.Run` calls `AllowedReads` on every `from
 
 **Proof.** Inspection of the `Run` loop. Tests: `TestDominoCannotReadFutureOutput`, `TestRejectsDependsOnOutsideCausalPast`. ∎
 
+### Proposition M15 (partial isolation is not a cage)
+
+`SandboxPolicy.Isolated` is the conjunction of network-none and read-only-root. Either flag alone does not admit a contract-grade command.
+
+**Proof.** Inspection of `Isolated` and `AllowDeterministic`. Tests: `TestPartialSandboxIsolationIsNotACage`, `TestPartialSandboxIsolationRejectedByEngine`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

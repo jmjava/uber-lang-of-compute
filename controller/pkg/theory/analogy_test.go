@@ -82,6 +82,20 @@ func TestIsolatedSandboxDoesNotImplyUniqueness(t *testing.T) {
 	}
 }
 
+func TestPartialSandboxIsolationIsNotACage(t *testing.T) {
+	netOnly := theory.SandboxPolicy{NetworkNone: true}
+	rootOnly := theory.SandboxPolicy{ReadOnlyRoot: true}
+	if netOnly.Isolated() || rootOnly.Isolated() {
+		t.Fatal("XOR of cage walls is not Isolated")
+	}
+	if err := theory.AllowDeterministic("sandbox:identity", netOnly); err == nil {
+		t.Fatal("network-none alone must not admit contract-grade commands")
+	}
+	if err := theory.AllowDeterministic("sandbox:identity", rootOnly); err == nil {
+		t.Fatal("read-only-root alone must not admit contract-grade commands")
+	}
+}
+
 func TestLogicalWorkReplaySaves(t *testing.T) {
 	// Nature-inspired Landauer/Bennett: recording intermediates means the
 	// second pass pays fewer irreversible evaluations. Not a joule claim.
