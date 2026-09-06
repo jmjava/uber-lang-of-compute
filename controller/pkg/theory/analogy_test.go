@@ -91,6 +91,18 @@ func TestHomeostasisMatchesSpec(t *testing.T) {
 	}
 }
 
+func TestWorkflowPhaseHomeostasis(t *testing.T) {
+	if !theory.Homeostatic(theory.PhaseHomeostasis("Completed")) {
+		t.Fatal("Completed is the desired bound")
+	}
+	if theory.Homeostatic(theory.PhaseHomeostasis("Running")) {
+		t.Fatal("Running is out of bound")
+	}
+	if theory.Homeostatic(theory.PhaseHomeostasis("Error")) {
+		t.Fatal("Error is out of bound")
+	}
+}
+
 func TestSimilarityDimensionAdditiveTreeIsOne(t *testing.T) {
 	// Unfold partitions value by arity, so scale=arity and D=1.
 	d := theory.SimilarityDimension(4, 4)

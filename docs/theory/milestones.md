@@ -10,7 +10,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M2 | Bennett logical work on every run | **proved** | `TestSnapshotReplayDeterministic` work fields; `TestTheoremM1MemoObservationallyEquivalent` |
 | M3 | Explorer window seats the Compute Wheel | **proved** | `TestWindowSeatsMatchExplorerLeaves`, `TestFullTurnVisitsEveryWindowLeaf`, `TestCoarsenReducesSeatsByArity` |
 | M4 | Classical histories on snapshot-completed events | **proved** | `TestFanoutCarriesSealedHistoryWithoutInterference`, `TestWorldlineFromRun` |
-| M5 | Homeostasis on Workflow status | later | spec-phase vs status-phase error is 0 iff Ready |
+| M5 | Homeostasis on Workflow status | **proved** | `TestWorkflowPhaseHomeostasis`, `TestWorkflowReconcilerExecutesChain` (`status.homeostatic`) |
 | M6 | Unfold-driven hierarchical workflows | later | a live chain can be built from `Unfold` (F1 leaves the pattern library) |
 | M7 | Dollar/cost accountant (not joules) | later | logical work × unit cost; still not \(kT\ln 2\) |
 | M8 | Sandbox for contract-grade images | later | network/FS isolation so H2 can be evidenced for containers |
@@ -19,7 +19,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 
 ```bash
 cd controller
-go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ -count=1
+go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./internal/controller/ -count=1
 ```
 
 Or `make theory-prove` from the repository root.

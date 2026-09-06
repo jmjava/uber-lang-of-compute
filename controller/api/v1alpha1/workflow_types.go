@@ -33,21 +33,21 @@ type Workflow struct {
 
 // WorkflowSpec defines the desired state of a Workflow.
 type WorkflowSpec struct {
-	Snapshot     SnapshotSpec       `json:"snapshot,omitempty"`
-	SnapshotRef  string             `json:"snapshotRef,omitempty"`
-	Dominos      []DominoSpec       `json:"dominos,omitempty"`
-	DominoRefs   []string           `json:"dominoRefs,omitempty"`
-	Execution    ExecutionSpec      `json:"execution"`
-	Provisioning ProvisioningSpec   `json:"provisioning,omitempty"`
-	Routing      RoutingSpec        `json:"routing,omitempty"`
+	Snapshot     SnapshotSpec     `json:"snapshot,omitempty"`
+	SnapshotRef  string           `json:"snapshotRef,omitempty"`
+	Dominos      []DominoSpec     `json:"dominos,omitempty"`
+	DominoRefs   []string         `json:"dominoRefs,omitempty"`
+	Execution    ExecutionSpec    `json:"execution"`
+	Provisioning ProvisioningSpec `json:"provisioning,omitempty"`
+	Routing      RoutingSpec      `json:"routing,omitempty"`
 }
 
 // SnapshotSpec is the inline snapshot embedded in a Workflow.
 type SnapshotSpec struct {
-	TimeSlice         string                 `json:"timeSlice"`
-	Source            SnapshotSource         `json:"source"`
-	ComputeContextRef string                 `json:"computeContextRef,omitempty"`
-	Sealed            bool                   `json:"sealed"`
+	TimeSlice         string         `json:"timeSlice"`
+	Source            SnapshotSource `json:"source"`
+	ComputeContextRef string         `json:"computeContextRef,omitempty"`
+	Sealed            bool           `json:"sealed"`
 }
 
 type SnapshotSource struct {
@@ -95,17 +95,20 @@ type RoutingSpec struct {
 
 // WorkflowStatus defines the observed state of a Workflow.
 type WorkflowStatus struct {
-	ObservedGeneration int64             `json:"observedGeneration,omitempty"`
-	Phase              WorkflowPhase     `json:"phase,omitempty"`
-	SnapshotID         string            `json:"snapshotID,omitempty"`
-	DominoCount        int               `json:"dominoCount,omitempty"`
-	ReusedCount        int               `json:"reusedCount,omitempty"`
-	RecomputedCount    int               `json:"recomputedCount,omitempty"`
-	LastRunTime        *metav1.Time      `json:"lastRunTime,omitempty"`
-	Message            string            `json:"message,omitempty"`
-	ReplayLogRef       string            `json:"replayLogRef,omitempty"`
-	DominoResults      []DominoResult    `json:"dominoResults,omitempty"`
+	ObservedGeneration int64              `json:"observedGeneration,omitempty"`
+	Phase              WorkflowPhase      `json:"phase,omitempty"`
+	SnapshotID         string             `json:"snapshotID,omitempty"`
+	DominoCount        int                `json:"dominoCount,omitempty"`
+	ReusedCount        int                `json:"reusedCount,omitempty"`
+	RecomputedCount    int                `json:"recomputedCount,omitempty"`
+	LastRunTime        *metav1.Time       `json:"lastRunTime,omitempty"`
+	Message            string             `json:"message,omitempty"`
+	ReplayLogRef       string             `json:"replayLogRef,omitempty"`
+	DominoResults      []DominoResult     `json:"dominoResults,omitempty"`
 	Conditions         []metav1.Condition `json:"conditions,omitempty"`
+	// Homeostatic is true when status.phase equals the desired Completed phase
+	// (Ashby essential-variable bound). Metabolism stays in nature.
+	Homeostatic bool `json:"homeostatic,omitempty"`
 }
 
 // DominoResult summarizes one domino execution in status.

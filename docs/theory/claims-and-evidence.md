@@ -21,7 +21,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | F-esc | Escape-time is a finite iteration window | Explorer mimic | `TestEscapeTimeIsAFiniteWindow` | Connectedness locus of \(z^2+c\) |
 | F-wheel | Window leaves can be wheel seats | Explorer mimic | `TestWheelWindowLeafCount`, `TestWindowSeatsMatchExplorerLeaves`, `TestFullTurnVisitsEveryWindowLeaf` | Live CRD field for depth/arity |
 | Hist | Sealed fan-out does not interfere | Branching mimic | `TestHistoriesDoNotInterfereWhenSealed`, `TestFanoutCarriesSealedHistoryWithoutInterference` | Hilbert space |
-| Homeo | Spec=status is homeostatic | Control mimic | `TestHomeostasisMatchesSpec` | Metabolism |
+| Homeo | Spec=status is homeostatic | Control mimic | `TestHomeostasisMatchesSpec`, `TestWorkflowPhaseHomeostasis`, Workflow `status.homeostatic` | Metabolism |
 | ID128 | Snapshot IDs are 128-bit | Implemented | `hash.SnapshotIDHexLen` | Full 256-bit store keys |
 
 ## How to run the evidence

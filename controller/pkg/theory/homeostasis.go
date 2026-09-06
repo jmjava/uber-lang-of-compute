@@ -17,3 +17,12 @@ func ReconcileError(desired, observed string) float64 {
 func Homeostatic(err float64) bool {
 	return err == 0
 }
+
+// DesiredWorkflowPhase is the essential variable the reconciler holds: a
+// completed chain. Running/Pending/Error are out of bound.
+const DesiredWorkflowPhase = "Completed"
+
+// PhaseHomeostasis is the spec/status error for a Workflow phase.
+func PhaseHomeostasis(observed string) float64 {
+	return ReconcileError(DesiredWorkflowPhase, observed)
+}

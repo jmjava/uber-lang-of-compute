@@ -105,6 +105,9 @@ func TestWorkflowReconcilerExecutesChain(t *testing.T) {
 	if updated.Status.Phase != kblv1alpha1.WorkflowPhaseCompleted {
 		t.Errorf("expected phase Completed, got %s (message: %s)", updated.Status.Phase, updated.Status.Message)
 	}
+	if !updated.Status.Homeostatic {
+		t.Error("completed workflow must be homeostatic (phase matches desired Completed)")
+	}
 	if updated.Status.SnapshotID == "" {
 		t.Error("expected snapshot ID in status")
 	}
@@ -249,14 +252,14 @@ func TestWorkflowReconcilerSkipsCompleted(t *testing.T) {
 
 	wf := &kblv1alpha1.Workflow{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:              "done",
-			Namespace:         "default",
-			Generation:        2,
-			Finalizers:        []string{"kbl.io/workflow-finalizer"},
-			ResourceVersion:   "1",
+			Name:            "done",
+			Namespace:       "default",
+			Generation:      2,
+			Finalizers:      []string{"kbl.io/workflow-finalizer"},
+			ResourceVersion: "1",
 		},
 		Spec: kblv1alpha1.WorkflowSpec{
-			Snapshot: kblv1alpha1.SnapshotSpec{TimeSlice: "2025-01-01", Sealed: true},
+			Snapshot:  kblv1alpha1.SnapshotSpec{TimeSlice: "2025-01-01", Sealed: true},
 			Execution: kblv1alpha1.ExecutionSpec{Chain: []string{"a"}},
 		},
 		Status: kblv1alpha1.WorkflowStatus{

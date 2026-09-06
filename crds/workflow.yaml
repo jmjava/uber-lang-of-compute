@@ -134,6 +134,8 @@ spec:
                   type: integer
                 recomputedCount:
                   type: integer
+                homeostatic:
+                  type: boolean
                 lastRunTime:
                   type: string
                   format: date-time

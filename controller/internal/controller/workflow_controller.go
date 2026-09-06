@@ -24,14 +24,15 @@ import (
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/events"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/snapshot"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/theory"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
 
 const (
-	finalizerName    = "kbl.io/workflow-finalizer"
-	replayConfigKey  = "replay.json"
-	conditionReady   = "Ready"
-	conditionFailed  = "Failed"
+	finalizerName   = "kbl.io/workflow-finalizer"
+	replayConfigKey = "replay.json"
+	conditionReady  = "Ready"
+	conditionFailed = "Failed"
 )
 
 // WorkflowReconciler reconciles Workflow resources by executing domino chains.
@@ -89,6 +90,7 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 }) (ctrl.Result, error) {
 	wf.Status.Phase = kblv1alpha1.WorkflowPhaseRunning
 	wf.Status.Message = "executing domino chain"
+	wf.Status.Homeostatic = theory.Homeostatic(theory.PhaseHomeostasis(string(wf.Status.Phase)))
 	if err := r.Status().Update(ctx, wf); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -160,6 +162,7 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 	wf.Status.ReplayLogRef = replayRef
 	wf.Status.DominoResults = dominoResults
 	wf.Status.Message = fmt.Sprintf("completed: %d dominos, %d reused", len(result.Entries), reused)
+	wf.Status.Homeostatic = theory.Homeostatic(theory.PhaseHomeostasis(string(wf.Status.Phase)))
 	wf.Status.Conditions = []metav1.Condition{
 		{
 			Type:               conditionReady,
@@ -293,6 +296,7 @@ func (r *WorkflowReconciler) completeFromChain(ctx context.Context, wf *kblv1alp
 	wf.Status.ReplayLogRef = replayRef
 	wf.Status.DominoResults = dominoResults
 	wf.Status.Message = fmt.Sprintf("container chain completed: %d dominos", len(result.Entries))
+	wf.Status.Homeostatic = theory.Homeostatic(theory.PhaseHomeostasis(string(wf.Status.Phase)))
 	wf.Status.Conditions = []metav1.Condition{{
 		Type:               conditionReady,
 		Status:             metav1.ConditionTrue,
@@ -313,6 +317,7 @@ func (r *WorkflowReconciler) fail(ctx context.Context, wf *kblv1alpha1.Workflow,
 	now := metav1.NewTime(time.Now().UTC())
 	wf.Status.Phase = kblv1alpha1.WorkflowPhaseError
 	wf.Status.Message = execErr.Error()
+	wf.Status.Homeostatic = theory.Homeostatic(theory.PhaseHomeostasis(string(wf.Status.Phase)))
 	wf.Status.Conditions = []metav1.Condition{
 		{
 			Type:               conditionFailed,
@@ -341,7 +346,7 @@ func (r *WorkflowReconciler) writeReplayLog(ctx context.Context, wf *kblv1alpha1
 			Name:      cmName,
 			Namespace: wf.Namespace,
 			Labels: map[string]string{
-				"kbl.io/workflow": wf.Name,
+				"kbl.io/workflow":              wf.Name,
 				"app.kubernetes.io/managed-by": "kbl-controller",
 			},
 		},
