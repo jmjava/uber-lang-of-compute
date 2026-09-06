@@ -13,13 +13,13 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M5 | Homeostasis on Workflow status | **proved** | `TestWorkflowPhaseHomeostasis`, `TestWorkflowReconcilerExecutesChain` (`status.homeostatic`) |
 | M6 | Unfold-driven hierarchical workflows | **proved** | `TestWorkflowFromUnfoldRunsDeterministically`, `TestNodeCountPerfectTree` |
 | M7 | Dollar/cost accountant (not joules) | **proved** | `TestChargeUSDIsEvaluationsTimesPrice`, `TestSnapshotReplayDeterministic` cost fields |
-| M8 | Sandbox for contract-grade images | later | network/FS isolation so H2 can be evidenced for containers |
+| M8 | Sandbox for contract-grade images | **proved** | `TestAllowDeterministicWithIsolatedSandbox`, `TestSandboxedContractCommandRequiresIsolation`, `TestExecuteSandboxIdentity` |
 
 ## Proof command
 
 ```bash
 cd controller
-go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./internal/controller/ -count=1
+go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./internal/controller/ -count=1
 ```
 
 Or `make theory-prove` from the repository root.

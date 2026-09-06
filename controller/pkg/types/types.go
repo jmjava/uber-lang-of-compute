@@ -85,8 +85,10 @@ type ExecutionConfig struct {
 }
 
 type ProvisioningConfig struct {
-	StorePath string `yaml:"storePath" json:"storePath"`
-	NodeLocal bool   `yaml:"nodeLocal" json:"nodeLocal"`
+	StorePath           string `yaml:"storePath" json:"storePath"`
+	NodeLocal           bool   `yaml:"nodeLocal" json:"nodeLocal"`
+	SandboxNetworkNone  bool   `yaml:"sandboxNetworkNone,omitempty" json:"sandboxNetworkNone,omitempty"`
+	SandboxReadOnlyRoot bool   `yaml:"sandboxReadOnlyRoot,omitempty" json:"sandboxReadOnlyRoot,omitempty"`
 }
 
 type RoutingConfig struct {

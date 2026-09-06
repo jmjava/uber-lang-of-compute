@@ -36,6 +36,9 @@ func Execute(cfg Config, command, inputJSON string) (string, error) {
 		return julia.Execute(cfg.Julia, command, inputJSON)
 	case strings.HasPrefix(command, "python:"):
 		return "", fmt.Errorf("python execution is not implemented yet (command %q)", command)
+	case strings.HasPrefix(command, "sandbox:"):
+		// Isolated contract-grade stub: evidence H2 inside a Faraday cage.
+		return builtin.Execute("builtin:"+strings.TrimPrefix(command, "sandbox:"), inputJSON)
 	default:
 		return "", fmt.Errorf("unsupported command %q (expected builtin:, julia:, or python: prefix)", command)
 	}

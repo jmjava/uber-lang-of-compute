@@ -220,3 +220,31 @@ func TestDeterministicBuiltinRunRecordsRegularity(t *testing.T) {
 		}
 	}
 }
+
+func TestSandboxedContractCommandRequiresIsolation(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "cage.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	wf.Spec.Dominos[0].Spec.Command = "sandbox:identity"
+	if _, err := engine.New(s).Run(wf); err == nil {
+		t.Fatal("sandbox:identity without isolation must be rejected")
+	}
+
+	wf.Spec.Provisioning.SandboxNetworkNone = true
+	wf.Spec.Provisioning.SandboxReadOnlyRoot = true
+	result, err := engine.New(s).Run(wf)
+	if err != nil {
+		t.Fatalf("isolated sandbox should run: %v", err)
+	}
+	if result.Entries[0].Regularity != "contract" {
+		t.Fatalf("sandbox command should be contract-grade, got %s", result.Entries[0].Regularity)
+	}
+	if result.MinRegularity != "contract" {
+		t.Fatalf("min regularity %s want contract", result.MinRegularity)
+	}
+}

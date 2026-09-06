@@ -17,6 +17,16 @@ func TestExecuteBuiltinIdentity(t *testing.T) {
 	}
 }
 
+func TestExecuteSandboxIdentity(t *testing.T) {
+	out, err := executor.ExecuteDefault("sandbox:identity", `{"v":1}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out != `{"v":1}` {
+		t.Fatalf("unexpected output %q", out)
+	}
+}
+
 func TestExecuteUnsupportedCommand(t *testing.T) {
 	_, err := executor.ExecuteDefault("lua:print", `{}`)
 	if err == nil || !strings.Contains(err.Error(), "unsupported command") {

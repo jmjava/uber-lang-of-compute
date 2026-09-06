@@ -1,7 +1,6 @@
 package theory
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -74,11 +73,8 @@ func MinRegularity(regs ...Regularity) Regularity {
 }
 
 // RequireDeterministic reports whether a command is allowed when the workflow
-// asserts uniqueness (Picard regularity). Contract-grade commands are not.
+// asserts uniqueness (Picard regularity) with no sandbox. Contract-grade
+// commands are not allowed unless AllowDeterministic is used with isolation.
 func RequireDeterministic(command string) error {
-	r := CommandRegularity(command)
-	if r == RegularityContract {
-		return fmt.Errorf("command %q is contract-grade; deterministic workflows require builtin: or julia:", command)
-	}
-	return nil
+	return AllowDeterministic(command, SandboxPolicy{})
 }

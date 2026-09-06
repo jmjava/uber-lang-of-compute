@@ -76,7 +76,11 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 
 		reg := theory.CommandRegularity(d.Spec.Command)
 		if wf.Spec.Execution.Deterministic {
-			if err := theory.RequireDeterministic(d.Spec.Command); err != nil {
+			sb := theory.SandboxPolicy{
+				NetworkNone:  wf.Spec.Provisioning.SandboxNetworkNone,
+				ReadOnlyRoot: wf.Spec.Provisioning.SandboxReadOnlyRoot,
+			}
+			if err := theory.AllowDeterministic(d.Spec.Command, sb); err != nil {
 				return nil, fmt.Errorf("domino %q: %w", dominoName, err)
 			}
 		}

@@ -9,6 +9,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | D2j | Pinned Julia is unique as a discretization | Empirical discretization | `TestJuliaFinanceModelsWorkflowDeterministic` | Uniqueness on \(\mathbb{R}\) |
 | H2c | Container commands are functions | Contract | `CommandRegularity` → `RegularityContract` | Lipschitz for arbitrary images |
 | M1 | Deterministic workflows reject contract-grade commands | Theorem of the gate | `TestDeterministicWorkflowRejectsContractGradeCommand` | Purity of the image itself |
+| M8 | Isolated sandbox admits contract-grade stubs | Theorem of the cage | `TestSandboxedContractCommandRequiresIsolation` | Arbitrary container images / real kernel namespaces |
 | M1 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
 | Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |
 | E1 | Uniform \(N\)-ensemble has \(H=\log_2 N\); seal ⇒ \(H=0\) | Theorem for \(H_{\mathrm{ens}}\) | `TestEnsembleEntropyCollapsesOnSeal` | Thermodynamic \(S\) |

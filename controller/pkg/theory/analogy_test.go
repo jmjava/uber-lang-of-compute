@@ -40,6 +40,23 @@ func TestRequireDeterministicRejectsContract(t *testing.T) {
 	}
 }
 
+func TestAllowDeterministicWithIsolatedSandbox(t *testing.T) {
+	open := theory.SandboxPolicy{}
+	if err := theory.AllowDeterministic("sandbox:identity", open); err == nil {
+		t.Fatal("open sandbox must not admit contract-grade commands")
+	}
+	cage := theory.SandboxPolicy{NetworkNone: true, ReadOnlyRoot: true}
+	if !cage.Isolated() {
+		t.Fatal("expected isolated")
+	}
+	if err := theory.AllowDeterministic("sandbox:identity", cage); err != nil {
+		t.Fatal(err)
+	}
+	if theory.CommandRegularity("sandbox:identity") != theory.RegularityContract {
+		t.Fatal("sandbox: remains contract-grade")
+	}
+}
+
 func TestLogicalWorkReplaySaves(t *testing.T) {
 	// Nature-inspired Landauer/Bennett: recording intermediates means the
 	// second pass pays fewer irreversible evaluations. Not a joule claim.
