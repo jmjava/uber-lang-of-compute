@@ -1,6 +1,8 @@
 package routing
 
 import (
+	"fmt"
+
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/events"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/theory"
 )
@@ -16,16 +18,19 @@ func HistoryFromEvent(evt events.SnapshotEvent) theory.History {
 }
 
 // Fanout copies a sealed parent history into every other universe on the
-// Multiverse spec. Branches share snapshot ID and worldline; they do not
-// share live stores (Interfere with liveShare=false is false).
-func (r *Router) Fanout(evt events.SnapshotEvent) []theory.History {
-	parent := HistoryFromEvent(evt)
+// Multiverse spec. Branches share snapshot ID, worldline, and HeadLink; they
+// do not share live stores (Interfere with liveShare=false is false).
+func (r *Router) Fanout(evt events.SnapshotEvent) ([]theory.History, error) {
 	if r == nil {
-		return nil
+		return nil, fmt.Errorf("router is nil")
 	}
+	if evt.SnapshotID == "" || evt.Worldline == "" {
+		return nil, fmt.Errorf("fanout requires a complete sealed record")
+	}
+	parent := HistoryFromEvent(evt)
 	names := make([]string, 0, len(r.spec.Universes))
 	for _, u := range r.spec.Universes {
 		names = append(names, u.Name)
 	}
-	return theory.Branch(parent, names)
+	return theory.Branch(parent, names), nil
 }

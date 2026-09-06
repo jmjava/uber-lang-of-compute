@@ -243,6 +243,12 @@ Fan-out copies `HeadLink` with snapshot ID and worldline. `SameRecord` requires 
 
 **Proof.** `HistoryFromEvent` and `Branch` copy the field. Test: `TestFanoutCarriesSealedHistoryWithoutInterference`. ∎
 
+### Theorem M30 (no branching without a record)
+
+`Fanout` requires a non-empty snapshot ID and worldline.
+
+**Proof.** Guard in `Router.Fanout`. Test: `TestFanoutRejectsIncompleteEvent`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

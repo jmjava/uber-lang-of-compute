@@ -108,7 +108,10 @@ func TestFanoutCarriesSealedHistoryWithoutInterference(t *testing.T) {
 		Worldline:  "h1|h2",
 		HeadLink:   "link-head",
 	}
-	branches := r.Fanout(evt)
+	branches, err := r.Fanout(evt)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if len(branches) != 2 {
 		t.Fatalf("expected 2 branches, got %d", len(branches))
 	}
@@ -142,5 +145,14 @@ func TestAmbiguousPartitionMatchRejected(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("overlapping partition rules must be rejected")
+	}
+}
+
+func TestFanoutRejectsIncompleteEvent(t *testing.T) {
+	r := routing.NewRouter(kblv1alpha1.MultiverseSpec{
+		Universes: []kblv1alpha1.UniverseRouteSpec{{Name: "rates"}, {Name: "credit"}},
+	})
+	if _, err := r.Fanout(events.SnapshotEvent{Universe: "rates"}); err == nil {
+		t.Fatal("empty snapshot/worldline must not branch")
 	}
 }
