@@ -10,6 +10,7 @@ import (
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/events"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/theory"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
 
@@ -34,6 +35,7 @@ func (r *WorkflowReconciler) publishSnapshotEvent(ctx context.Context, wf *kblv1
 	if len(result.Entries) > 0 {
 		evt.FinalOutput = result.Entries[len(result.Entries)-1].OutputHash
 	}
+	evt.Worldline = theory.Worldline(result.Entries)
 
 	if wf.Spec.Routing.MultiverseRef != "" {
 		var mv kblv1alpha1.Multiverse

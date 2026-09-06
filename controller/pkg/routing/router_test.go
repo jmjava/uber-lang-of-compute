@@ -6,6 +6,7 @@ import (
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/events"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/routing"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/theory"
 )
 
 func TestRouterPartitionMatch(t *testing.T) {
@@ -60,5 +61,37 @@ func TestRouterTimeSliceOverride(t *testing.T) {
 	}
 	if target.Universe != "credit-universe" {
 		t.Errorf("expected credit-universe, got %s", target.Universe)
+	}
+}
+
+func TestFanoutCarriesSealedHistoryWithoutInterference(t *testing.T) {
+	spec := kblv1alpha1.MultiverseSpec{
+		Universes: []kblv1alpha1.UniverseRouteSpec{
+			{Name: "rates", PluggableUniverseRef: "rates-u"},
+			{Name: "credit", PluggableUniverseRef: "credit-u"},
+			{Name: "equities", PluggableUniverseRef: "eq-u"},
+		},
+	}
+	r := routing.NewRouter(spec)
+	evt := events.SnapshotEvent{
+		SnapshotID: "snap-sealed",
+		Universe:   "rates",
+		Worldline:  "h1|h2",
+	}
+	branches := r.Fanout(evt)
+	if len(branches) != 2 {
+		t.Fatalf("expected 2 branches, got %d", len(branches))
+	}
+	parent := routing.HistoryFromEvent(evt)
+	for _, b := range branches {
+		if b.Universe == "rates" {
+			t.Fatal("fan-out must not include the parent universe")
+		}
+		if !theory.SameRecord(parent, b) {
+			t.Fatal("sealed snapshot ID and worldline must be copied")
+		}
+		if theory.Interfere(parent, b, false) {
+			t.Fatal("sealed fan-out must not interfere")
+		}
 	}
 }

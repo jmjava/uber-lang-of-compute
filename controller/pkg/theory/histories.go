@@ -1,5 +1,11 @@
 package theory
 
+import (
+	"strings"
+
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
+)
+
 // History is one classical trajectory of one universe against one sealed snapshot.
 //
 // Nature-inspired reading: Everett's many-worlds is branching of a wavefunction.
@@ -11,6 +17,27 @@ type History struct {
 	Universe   string
 	SnapshotID string
 	Worldline  string // concatenation of output hashes
+}
+
+// Worldline is the hash spine of a run: output hashes in chain order.
+func Worldline(entries []types.ReplayLogEntry) string {
+	if len(entries) == 0 {
+		return ""
+	}
+	parts := make([]string, len(entries))
+	for i, e := range entries {
+		parts[i] = e.OutputHash
+	}
+	return strings.Join(parts, "|")
+}
+
+// HistoryFromRun builds the parent history of a completed sealed run.
+func HistoryFromRun(universe, snapshotID string, entries []types.ReplayLogEntry) History {
+	return History{
+		Universe:   universe,
+		SnapshotID: snapshotID,
+		Worldline:  Worldline(entries),
+	}
 }
 
 // Interfere reports whether two histories share a live (unsealed) channel.

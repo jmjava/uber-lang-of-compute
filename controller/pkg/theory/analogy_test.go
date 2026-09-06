@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/theory"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
 
 func TestCommandRegularityLadder(t *testing.T) {
@@ -49,6 +50,16 @@ func TestLogicalWorkReplaySaves(t *testing.T) {
 	}
 	if second.IrreversibleSteps() != 0 {
 		t.Fatal("full reuse has zero irreversible steps")
+	}
+}
+
+func TestWorldlineFromRun(t *testing.T) {
+	h := theory.HistoryFromRun("rates", "snap-1", []types.ReplayLogEntry{
+		{OutputHash: "aa"},
+		{OutputHash: "bb"},
+	})
+	if h.Worldline != "aa|bb" || h.SnapshotID != "snap-1" || h.Universe != "rates" {
+		t.Fatalf("unexpected history %+v", h)
 	}
 }
 
