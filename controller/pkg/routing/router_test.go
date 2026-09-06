@@ -64,6 +64,35 @@ func TestRouterTimeSliceOverride(t *testing.T) {
 	}
 }
 
+func TestRoutingPriorityTimeSliceBeatsPartition(t *testing.T) {
+	spec := kblv1alpha1.MultiverseSpec{
+		DefaultUniverse: "finance-local",
+		Universes: []kblv1alpha1.UniverseRouteSpec{
+			{
+				Name:                 "rates-universe",
+				PluggableUniverseRef: "rates-universe",
+				Partitions:           []kblv1alpha1.PartitionRule{{Key: "asset_class", Values: []string{"rates"}}},
+			},
+			{Name: "finance-local", PluggableUniverseRef: "finance-universe"},
+			{Name: "credit-universe", PluggableUniverseRef: "credit-universe"},
+		},
+		TimeSliceRoutes: []kblv1alpha1.TimeSliceRoute{{
+			TimeSlice: "2025-04-15",
+			Universe:  "credit-universe",
+		}},
+	}
+	target, err := routing.NewRouter(spec).Resolve(events.SnapshotEvent{
+		TimeSlice:  "2025-04-15",
+		Partitions: map[string]string{"asset_class": "rates"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if target.Universe != "credit-universe" {
+		t.Fatalf("time-slice must beat partition, got %s", target.Universe)
+	}
+}
+
 func TestFanoutCarriesSealedHistoryWithoutInterference(t *testing.T) {
 	spec := kblv1alpha1.MultiverseSpec{
 		Universes: []kblv1alpha1.UniverseRouteSpec{

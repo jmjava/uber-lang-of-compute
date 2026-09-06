@@ -25,6 +25,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | M22 | Snapshot-completed EventID is content-addressed | Theorem of the barcode | `TestSnapshotEventIDIsFunctionOfPayload` | Exactly-once bus delivery |
 | M23 | CDC refuses orphan domino results | Theorem of the Cauchy parent | `TestApplyDominoResultRequiresSealedParent` | Multi-hop causal consistency |
 | M24 | Incomplete replica copy fails closed | Theorem of conservation at a cut | `TestMaterializeFailsOnMissingDomino`, `TestExportFromStoreFailsOnMissingDomino` | Partial replica freshness SLAs |
+| M25 | Time-slice routes beat partition routes | Theorem of selection rules | `TestRoutingPriorityTimeSliceBeatsPartition` | Learned / softmax routers |
 | M1/M2 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
 | M9 | Replay log is a hash chain from the snapshot ID | Theorem of the spine | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput` | Full Merkle DAG / blockchain |
 | Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |
