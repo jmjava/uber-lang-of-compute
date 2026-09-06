@@ -17,6 +17,7 @@ type History struct {
 	Universe   string
 	SnapshotID string
 	Worldline  string // concatenation of output hashes
+	HeadLink   string // Merkle spine head (M9/M29)
 }
 
 // Worldline is the hash spine of a run: output hashes in chain order.
@@ -33,11 +34,15 @@ func Worldline(entries []types.ReplayLogEntry) string {
 
 // HistoryFromRun builds the parent history of a completed sealed run.
 func HistoryFromRun(universe, snapshotID string, entries []types.ReplayLogEntry) History {
-	return History{
+	h := History{
 		Universe:   universe,
 		SnapshotID: snapshotID,
 		Worldline:  Worldline(entries),
 	}
+	if n := len(entries); n > 0 {
+		h.HeadLink = entries[n-1].Link
+	}
+	return h
 }
 
 // Interfere reports whether two histories share a live (unsealed) channel.
@@ -64,6 +69,7 @@ func Branch(parent History, universes []string) []History {
 			Universe:   u,
 			SnapshotID: parent.SnapshotID,
 			Worldline:  parent.Worldline,
+			HeadLink:   parent.HeadLink,
 		})
 	}
 	return out
@@ -71,5 +77,11 @@ func Branch(parent History, universes []string) []History {
 
 // SameRecord reports whether two histories are copies of the same sealed result.
 func SameRecord(a, b History) bool {
-	return a.SnapshotID != "" && a.SnapshotID == b.SnapshotID && a.Worldline == b.Worldline
+	if a.SnapshotID == "" || a.SnapshotID != b.SnapshotID || a.Worldline != b.Worldline {
+		return false
+	}
+	if a.HeadLink != "" || b.HeadLink != "" {
+		return a.HeadLink == b.HeadLink
+	}
+	return true
 }

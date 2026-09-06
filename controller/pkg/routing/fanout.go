@@ -11,6 +11,7 @@ func HistoryFromEvent(evt events.SnapshotEvent) theory.History {
 		Universe:   evt.Universe,
 		SnapshotID: evt.SnapshotID,
 		Worldline:  evt.Worldline,
+		HeadLink:   evt.HeadLink,
 	}
 }
 

@@ -34,6 +34,7 @@ func (r *WorkflowReconciler) publishSnapshotEvent(ctx context.Context, wf *kblv1
 		evt.FinalOutput = result.Entries[len(result.Entries)-1].OutputHash
 	}
 	evt.Worldline = theory.Worldline(result.Entries)
+	evt.HeadLink = result.HeadLink
 	if id, err := events.EventID(result.SnapshotID, evt.Worldline, evt.Universe, wf.Name); err == nil {
 		evt.EventID = id
 	}

@@ -106,6 +106,7 @@ func TestFanoutCarriesSealedHistoryWithoutInterference(t *testing.T) {
 		SnapshotID: "snap-sealed",
 		Universe:   "rates",
 		Worldline:  "h1|h2",
+		HeadLink:   "link-head",
 	}
 	branches := r.Fanout(evt)
 	if len(branches) != 2 {
@@ -118,6 +119,9 @@ func TestFanoutCarriesSealedHistoryWithoutInterference(t *testing.T) {
 		}
 		if !theory.SameRecord(parent, b) {
 			t.Fatal("sealed snapshot ID and worldline must be copied")
+		}
+		if b.HeadLink != "link-head" {
+			t.Fatalf("fan-out must carry HeadLink, got %q", b.HeadLink)
 		}
 		if theory.Interfere(parent, b, false) {
 			t.Fatal("sealed fan-out must not interfere")

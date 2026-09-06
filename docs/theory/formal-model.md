@@ -237,6 +237,12 @@ A completed Workflow status records `HeadLink`, `WorkEvaluations`, and `WorkCost
 
 **Proof.** Assignment in `WorkflowReconciler` after `Engine.Run`. Test: `TestWorkflowReconcilerExecutesChain`. ∎
 
+### Theorem M29 (receipt on the branch)
+
+Fan-out copies `HeadLink` with snapshot ID and worldline. `SameRecord` requires HeadLink agreement when either side has one.
+
+**Proof.** `HistoryFromEvent` and `Branch` copy the field. Test: `TestFanoutCarriesSealedHistoryWithoutInterference`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

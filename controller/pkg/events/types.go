@@ -19,5 +19,6 @@ type SnapshotEvent struct {
 	Partitions  map[string]string `json:"partitions,omitempty"`
 	FinalOutput string            `json:"final_output_hash,omitempty"`
 	Worldline   string            `json:"worldline,omitempty"`
+	HeadLink    string            `json:"head_link,omitempty"`
 	OccurredAt  time.Time         `json:"occurred_at"`
 }

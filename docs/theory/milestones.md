@@ -34,7 +34,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M26 | Ambiguous partition matches are rejected | **proved** | `TestAmbiguousPartitionMatchRejected` |
 | M27 | CRD sandbox flags reach the Picard cage | **proved** | `TestConvertPassesSandboxIntoEngineGate` |
 | M28 | Workflow status exposes HeadLink and work | **proved** | `TestWorkflowReconcilerExecutesChain` (`status.headLink`, `workEvaluations`, `workCostUSD`) |
-| M29 | Fan-out events carry HeadLink | planned | classical record includes the Merkle receipt |
+| M29 | Fan-out events carry HeadLink | **proved** | `TestFanoutCarriesSealedHistoryWithoutInterference` |
 | M30 | Fan-out refuses incomplete events | planned | empty snapshot ID / worldline does not branch |
 | M31 | Loaded snapshot matches its content address | planned | corrupt store bytes fail closed |
 | M32 | Explorer window can seat a live ComputeWheel | planned | declared depth/arity must match context count |
