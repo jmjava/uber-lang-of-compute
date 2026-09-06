@@ -41,6 +41,10 @@ func applyDominoResult(target store.Backend, env Envelope) error {
 	if err != nil {
 		return err
 	}
+	_, _, sealed, err := target.GetSnapshot(row.SnapshotID)
+	if err != nil || !sealed {
+		return fmt.Errorf("refusing orphan domino result for snapshot %s (sealed parent required)", row.SnapshotID)
+	}
 	return target.SaveResult(row.SnapshotID, row.DominoID, row.InputHash, row.OutputHash, row.Output, row.Reused, "", "")
 }
 

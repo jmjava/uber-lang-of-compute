@@ -28,7 +28,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M20 | RunSingle continues the replay spine | **proved** | `TestRunSingleSpineChainsAcrossSteps` |
 | M21 | Store persists the replay spine | **proved** | `TestReplayLogRoundTripsSpine` |
 | M22 | Snapshot-completed EventID is content-addressed | **proved** | `TestSnapshotEventIDIsFunctionOfPayload` |
-| M23 | CDC refuses orphan domino results | planned | result rows require a sealed parent snapshot |
+| M23 | CDC refuses orphan domino results | **proved** | `TestApplyDominoResultRequiresSealedParent` |
 | M24 | Materialize/export fail closed on missing dominos | planned | incomplete chain is an error, not a short success |
 | M25 | Routing priority: time-slice beats partition | planned | overlapping rules pick the time-slice target |
 | M26 | Ambiguous partition matches are rejected | planned | two universes matching the same labels is an error |

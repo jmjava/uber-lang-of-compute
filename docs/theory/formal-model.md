@@ -201,6 +201,12 @@ A completed `Engine.Run` writes `PrevLink`/`Link` on each replay row. `ListRepla
 
 **Proof.** Inspection of `EventID`. Test: `TestSnapshotEventIDIsFunctionOfPayload`. ∎
 
+### Theorem M23 (no orphan excitations)
+
+A CDC domino-result envelope applies only when the target already holds a sealed parent snapshot.
+
+**Proof.** `applyDominoResult` calls `GetSnapshot` and requires `sealed`. Test: `TestApplyDominoResultRequiresSealedParent`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

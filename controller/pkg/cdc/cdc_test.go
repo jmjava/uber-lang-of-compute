@@ -104,3 +104,26 @@ func TestExportFromStoreRejectsUnsealedSnapshot(t *testing.T) {
 		t.Fatal("expected error exporting unsealed snapshot")
 	}
 }
+
+func TestApplyDominoResultRequiresSealedParent(t *testing.T) {
+	target, err := store.OpenSQLite(t.TempDir() + "/target.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+
+	resultEnv := cdc.Envelope{
+		Op:    cdc.OpCreate,
+		Table: cdc.TableDominoResults,
+		After: cdc.DominoResultRow{SnapshotID: "snap", DominoID: "load", InputHash: "in", OutputHash: "out", Output: `{}`},
+	}
+	if err := cdc.Apply(target, resultEnv); err == nil {
+		t.Fatal("orphan result must be rejected")
+	}
+	if err := target.SaveSnapshot("snap", "2025-04-15", `{}`, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := cdc.Apply(target, resultEnv); err != nil {
+		t.Fatalf("result after sealed parent should apply: %v", err)
+	}
+}
