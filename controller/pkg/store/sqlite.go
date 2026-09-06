@@ -74,6 +74,13 @@ func (s *SQLiteBackend) migrate() error {
 }
 
 func (s *SQLiteBackend) SaveSnapshot(snapshotID, timeSlice, data string, sealed bool) error {
+	existingTime, existingData, existingSealed, getErr := s.GetSnapshot(snapshotID)
+	if err := refuseSealedMutation(getErr, existingTime, existingData, existingSealed, timeSlice, data, sealed); err != nil {
+		return err
+	}
+	if getErr == nil && existingSealed {
+		return nil
+	}
 	sealedInt := 0
 	if sealed {
 		sealedInt = 1

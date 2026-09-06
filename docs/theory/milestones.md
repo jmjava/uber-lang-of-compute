@@ -22,7 +22,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M14 | Engine-enforced causal past | **proved** | `TestDominoCannotReadFutureOutput`, `TestRejectsDependsOnOutsideCausalPast`, `TestFutureReadRejected` |
 | M15 | Partial sandbox isolation is not a cage | **proved** | `TestPartialSandboxIsolationIsNotACage`, `TestPartialSandboxIsolationRejectedByEngine` |
 | M16 | Wall-clock is not in the worldline | **proved** | `TestWallClockNotInWorldline` |
-| M17 | Sealed snapshots are write-once | planned | different payload fails; identical rewrite is idempotent |
+| M17 | Sealed snapshots are write-once | **proved** | `TestSealedSnapshotIsWriteOnce`, `TestSealedSnapshotIsWriteOnceTSDB` |
 | M18 | Memo key conflict is H5, not ignore | planned | same key, different output is an error |
 | M19 | Collision-safe WorkflowName truncation | planned | two long equal-length names must not collide |
 | M20 | RunSingle continues the replay spine | planned | sequential `RunSingle` verifies as one chain |
@@ -43,7 +43,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 
 ```bash
 cd controller
-go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./internal/controller/ -count=1
+go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./pkg/store/ ./internal/controller/ -count=1
 ```
 
-Or `make theory-prove` from the repository root.
+Or `make theory-prove` from the repository root. Store invariants (M17+) are included.

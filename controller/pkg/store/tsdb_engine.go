@@ -39,6 +39,14 @@ func (t *TSDBEngine) SaveSnapshotPayload(snapshotID, timeSlice string, payload [
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
+	existingTime, existingData, existingSealed, getErr := t.getSnapshotMetaLocked(snapshotID)
+	if err := refuseSealedMutation(getErr, existingTime, existingData, existingSealed, timeSlice, string(payload), sealed); err != nil {
+		return err
+	}
+	if getErr == nil && existingSealed {
+		return nil
+	}
+
 	rec := snapshotRecord{
 		SnapshotID: snapshotID,
 		TimeSlice:  timeSlice,

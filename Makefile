@@ -12,7 +12,7 @@ test:
 	cd controller && go test ./...
 
 theory-prove:
-	cd controller && go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./internal/controller/ -count=1
+	cd controller && go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./pkg/store/ ./internal/controller/ -count=1
 
 docker-domino-runner:
 	docker build -f controller/docker/domino-runner/Dockerfile \

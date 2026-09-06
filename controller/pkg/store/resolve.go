@@ -18,12 +18,12 @@ const (
 
 // ResolveConfig determines store configuration from workflow provisioning and optional ComputeContext.
 type ResolveConfig struct {
-	StorePath          string
-	StoreType          Type
-	StoreEndpoint      string
-	ComputeContextRef  string
-	Namespace          string
-	StoreRoot          string
+	StorePath         string
+	StoreType         Type
+	StoreEndpoint     string
+	ComputeContextRef string
+	Namespace         string
+	StoreRoot         string
 }
 
 // OpenResolved opens the appropriate backend for a workflow execution.
@@ -123,6 +123,7 @@ func OpenForDominoChain(ctx context.Context, c client.Client, chain *kblv1alpha1
 	}
 	return b, nil
 }
+
 // OpenForWorkflow is a convenience wrapper.
 func OpenForWorkflow(ctx context.Context, c client.Client, wf *kblv1alpha1.Workflow, storeRoot string) (Backend, error) {
 	cfg := ConfigFromWorkflow(wf, storeRoot)

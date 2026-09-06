@@ -165,6 +165,12 @@ Assume the causal-past theorem. `Engine.Run` calls `AllowedReads` on every `from
 
 **Proof.** `attachSpine` hashes `(prev, inputHash, outputHash)` only. Tests: `TestWallClockNotInWorldline`. ∎
 
+### Theorem M17 (sealed write-once)
+
+A sealed snapshot identity may be rewritten only with identical \((\tau,x)\). A different payload, time-slice, or an unseal is rejected.
+
+**Proof.** `SaveSnapshot` on SQLite and TSDB consults the existing row/file; `refuseSealedMutation` returns `ErrSealedOverwrite` unless the write is a no-op. Tests: `TestSealedSnapshotIsWriteOnce`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

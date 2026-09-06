@@ -21,7 +21,7 @@ type TSDBClient struct {
 func OpenTSDBClient(endpoint string) (*TSDBClient, error) {
 	endpoint = strings.TrimRight(endpoint, "/")
 	c := &TSDBClient{
-		base: endpoint,
+		base:   endpoint,
 		client: &http.Client{Timeout: 10 * time.Second},
 	}
 	if err := c.ping(); err != nil {
