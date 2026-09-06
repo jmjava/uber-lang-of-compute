@@ -207,6 +207,12 @@ A CDC domino-result envelope applies only when the target already holds a sealed
 
 **Proof.** `applyDominoResult` calls `GetSnapshot` and requires `sealed`. Test: `TestApplyDominoResultRequiresSealedParent`. ∎
 
+### Theorem M24 (complete copy)
+
+`Materialize` and `ExportFromStore` error if a named chain member has no stored result. They do not return success with a short count.
+
+**Proof.** The missing-result branch returns an error instead of `continue`. Tests: `TestMaterializeFailsOnMissingDomino`, `TestExportFromStoreFailsOnMissingDomino`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

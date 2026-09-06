@@ -105,6 +105,20 @@ func TestExportFromStoreRejectsUnsealedSnapshot(t *testing.T) {
 	}
 }
 
+func TestExportFromStoreFailsOnMissingDomino(t *testing.T) {
+	source, err := store.OpenSQLite(t.TempDir() + "/source.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer source.Close()
+	if err := source.SaveSnapshot("snap", "2025-04-15", `{}`, true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := cdc.ExportFromStore(source, "snap", []string{"ghost"}); err == nil {
+		t.Fatal("export of missing domino must fail closed")
+	}
+}
+
 func TestApplyDominoResultRequiresSealedParent(t *testing.T) {
 	target, err := store.OpenSQLite(t.TempDir() + "/target.db")
 	if err != nil {

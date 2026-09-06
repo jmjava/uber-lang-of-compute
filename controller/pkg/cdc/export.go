@@ -33,7 +33,7 @@ func ExportFromStore(source store.Backend, snapshotID string, dominoChain []stri
 	for _, dominoID := range dominoChain {
 		inHash, outHash, output, err := source.GetLatestResult(snapshotID, dominoID)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("missing domino %q on sealed snapshot %s: %w", dominoID, snapshotID, err)
 		}
 		out = append(out, Envelope{
 			Op:    OpCreate,

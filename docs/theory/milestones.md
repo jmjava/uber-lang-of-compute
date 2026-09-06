@@ -29,7 +29,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M21 | Store persists the replay spine | **proved** | `TestReplayLogRoundTripsSpine` |
 | M22 | Snapshot-completed EventID is content-addressed | **proved** | `TestSnapshotEventIDIsFunctionOfPayload` |
 | M23 | CDC refuses orphan domino results | **proved** | `TestApplyDominoResultRequiresSealedParent` |
-| M24 | Materialize/export fail closed on missing dominos | planned | incomplete chain is an error, not a short success |
+| M24 | Materialize/export fail closed on missing dominos | **proved** | `TestMaterializeFailsOnMissingDomino`, `TestExportFromStoreFailsOnMissingDomino` |
 | M25 | Routing priority: time-slice beats partition | planned | overlapping rules pick the time-slice target |
 | M26 | Ambiguous partition matches are rejected | planned | two universes matching the same labels is an error |
 | M27 | CRD sandbox flags reach the Picard cage | planned | convert threads isolation into engine provisioning |

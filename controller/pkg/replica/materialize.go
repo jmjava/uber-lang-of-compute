@@ -44,7 +44,7 @@ func Materialize(cfg MaterializeConfig) (*MaterializeResult, error) {
 	for _, dominoID := range cfg.DominoChain {
 		inHash, outHash, output, err := cfg.Source.GetLatestResult(cfg.SnapshotID, dominoID)
 		if err != nil {
-			continue
+			return nil, fmt.Errorf("missing domino %q on sealed snapshot %s: %w", dominoID, cfg.SnapshotID, err)
 		}
 		if err := cfg.Target.SaveResult(cfg.SnapshotID, dominoID, inHash, outHash, output, false, "", ""); err != nil {
 			return nil, fmt.Errorf("copy domino %q: %w", dominoID, err)

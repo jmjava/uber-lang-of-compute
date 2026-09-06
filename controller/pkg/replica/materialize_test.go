@@ -93,3 +93,34 @@ func TestMaterializeRejectsUnsealedSnapshot(t *testing.T) {
 		t.Fatal("expected error materializing unsealed snapshot")
 	}
 }
+
+func TestMaterializeFailsOnMissingDomino(t *testing.T) {
+	dir := t.TempDir()
+	source, err := store.OpenSQLite(filepath.Join(dir, "source.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer source.Close()
+	target, err := store.OpenSQLite(filepath.Join(dir, "target.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+
+	const snapshotID = "snap-abc123"
+	if err := source.SaveSnapshot(snapshotID, "2025-04-15", `{"key":"value"}`, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := source.SaveResult(snapshotID, "load", "in1", "out1", `{"loaded":true}`, false, "", ""); err != nil {
+		t.Fatal(err)
+	}
+	_, err = replica.Materialize(replica.MaterializeConfig{
+		SnapshotID:  snapshotID,
+		DominoChain: []string{"load", "missing"},
+		Source:      source,
+		Target:      target,
+	})
+	if err == nil {
+		t.Fatal("incomplete chain must fail closed")
+	}
+}
