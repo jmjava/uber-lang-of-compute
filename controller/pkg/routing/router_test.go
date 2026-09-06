@@ -124,3 +124,19 @@ func TestFanoutCarriesSealedHistoryWithoutInterference(t *testing.T) {
 		}
 	}
 }
+
+func TestAmbiguousPartitionMatchRejected(t *testing.T) {
+	spec := kblv1alpha1.MultiverseSpec{
+		Universes: []kblv1alpha1.UniverseRouteSpec{
+			{Name: "u1", PluggableUniverseRef: "u1", Partitions: []kblv1alpha1.PartitionRule{{Key: "asset_class", Values: []string{"rates"}}}},
+			{Name: "u2", PluggableUniverseRef: "u2", Partitions: []kblv1alpha1.PartitionRule{{Key: "asset_class", Values: []string{"rates"}}}},
+		},
+	}
+	_, err := routing.NewRouter(spec).Resolve(events.SnapshotEvent{
+		SnapshotID: "snap",
+		Partitions: map[string]string{"asset_class": "rates"},
+	})
+	if err == nil {
+		t.Fatal("overlapping partition rules must be rejected")
+	}
+}

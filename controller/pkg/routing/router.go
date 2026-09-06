@@ -46,15 +46,22 @@ func (r *Router) Resolve(evt events.SnapshotEvent) (Target, error) {
 		}
 	}
 
-	// Partition-based routing.
+	// Partition-based routing. Two matches is ambiguity, not first-wins.
+	var matches []Target
 	for _, u := range r.spec.Universes {
 		if matchesPartitions(u.Partitions, evt.Partitions) {
-			return Target{
+			matches = append(matches, Target{
 				Universe:          u.Name,
 				PluggableUniverse: u.PluggableUniverseRef,
 				ComputeContextRef: u.ComputeContextRef,
-			}, nil
+			})
 		}
+	}
+	if len(matches) > 1 {
+		return Target{}, fmt.Errorf("ambiguous partition match for snapshot %s: %q and %q", evt.SnapshotID, matches[0].Universe, matches[1].Universe)
+	}
+	if len(matches) == 1 {
+		return matches[0], nil
 	}
 
 	// Default universe fallback.

@@ -219,6 +219,12 @@ Time-slice overrides are evaluated before partition rules. An event that matches
 
 **Proof.** Inspection of `Router.Resolve`. Test: `TestRoutingPriorityTimeSliceBeatsPartition`. ∎
 
+### Theorem M26 (unique partition outcome)
+
+If two universes match the same partition labels, `Resolve` returns an error rather than silently taking the first.
+
+**Proof.** The partition loop collects matches; `len>1` is an error. Test: `TestAmbiguousPartitionMatchRejected`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).
