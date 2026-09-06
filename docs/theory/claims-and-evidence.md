@@ -10,7 +10,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | H2c | Container commands are functions | Contract | `CommandRegularity` → `RegularityContract` | Lipschitz for arbitrary images |
 | M1 | Deterministic workflows reject contract-grade commands | Theorem of the gate | `TestDeterministicWorkflowRejectsContractGradeCommand` | Purity of the image itself |
 | M1 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
-| Bennett | Replay pays fewer irreversible *steps* | Bookkeeping mimic | `ReplaySaves`, `RunResult.WorkEvaluations`, `TestTheoremM1…` | Joules / \(kT\ln 2\) |
+| Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |
 | E1 | Uniform \(N\)-ensemble has \(H=\log_2 N\); seal ⇒ \(H=0\) | Theorem for \(H_{\mathrm{ens}}\) | `TestEnsembleEntropyCollapsesOnSeal` | Thermodynamic \(S\) |
 | C-past | Readable set at \(d_k\) is snapshot + strict prefix | Theorem | `TestCausalPastIsPrefix`, `TestDominoCannotReadFutureOutput` | Sandbox of the OS |
 | R1 | Unsealed snapshots cannot replicate | Theorem | `TestTheoremR1…` | — |

@@ -17,16 +17,18 @@ import (
 type Engine struct {
 	store    store.Backend
 	executor executor.Config
+	// DollarsPerEvaluation prices irreversible steps (M7). Zero disables charging.
+	DollarsPerEvaluation float64
 }
 
 // New creates an Engine backed by the given store.
 func New(s store.Backend) *Engine {
-	return &Engine{store: s, executor: executor.DefaultConfig()}
+	return &Engine{store: s, executor: executor.DefaultConfig(), DollarsPerEvaluation: theory.DefaultDollarsPerEvaluation}
 }
 
 // NewWithExecutor creates an Engine with explicit pluggable runtime configuration.
 func NewWithExecutor(s store.Backend, execCfg executor.Config) *Engine {
-	return &Engine{store: s, executor: execCfg}
+	return &Engine{store: s, executor: execCfg, DollarsPerEvaluation: theory.DefaultDollarsPerEvaluation}
 }
 
 // Run executes a workflow's domino chain and returns a replay log.
@@ -145,6 +147,7 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 		MinRegularity:   theory.MinRegularity(regs...).String(),
 		WorkEvaluations: w.Evaluations,
 		WorkReuses:      w.Reuses,
+		WorkCostUSD:     theory.ChargeUSD(w, e.DollarsPerEvaluation),
 	}, nil
 }
 

@@ -53,6 +53,16 @@ func TestLogicalWorkReplaySaves(t *testing.T) {
 	}
 }
 
+func TestChargeUSDIsEvaluationsTimesPrice(t *testing.T) {
+	got := theory.ChargeUSD(theory.LogicalWork{Evaluations: 3, Reuses: 9}, 0.01)
+	if got != 0.03 {
+		t.Fatalf("got %v want 0.03", got)
+	}
+	if theory.ChargeUSD(theory.LogicalWork{Reuses: 5}, 0.01) != 0 {
+		t.Fatal("reuses must not be charged")
+	}
+}
+
 func TestWorldlineFromRun(t *testing.T) {
 	h := theory.HistoryFromRun("rates", "snap-1", []types.ReplayLogEntry{
 		{OutputHash: "aa"},

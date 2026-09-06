@@ -89,6 +89,12 @@ func TestSnapshotReplayDeterministic(t *testing.T) {
 	if result2.WorkEvaluations != 0 || result2.WorkReuses != len(result2.Entries) {
 		t.Fatalf("second run work eval=%d reuse=%d want eval=0 reuse=%d", result2.WorkEvaluations, result2.WorkReuses, len(result2.Entries))
 	}
+	if result1.WorkCostUSD <= 0 {
+		t.Fatal("first run must have a dollar cost for irreversible steps")
+	}
+	if result2.WorkCostUSD != 0 {
+		t.Fatalf("replay cost want 0 got %v", result2.WorkCostUSD)
+	}
 }
 
 func TestDominoCannotReadFutureOutput(t *testing.T) {

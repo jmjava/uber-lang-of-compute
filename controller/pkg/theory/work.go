@@ -38,3 +38,15 @@ func (w LogicalWork) IrreversibleSteps() int {
 func ReplaySaves(first, second LogicalWork) bool {
 	return second.IrreversibleSteps() < first.IrreversibleSteps() && second.Reuses > 0
 }
+
+// DefaultDollarsPerEvaluation is a unit price for one irreversible step.
+// Nature-inspired reading: this is a *cost accountant*, not Landauer heat.
+const DefaultDollarsPerEvaluation = 0.01
+
+// ChargeUSD is evaluations × unit price. Reuses are free.
+func ChargeUSD(w LogicalWork, dollarsPerEval float64) float64 {
+	if dollarsPerEval < 0 {
+		dollarsPerEval = 0
+	}
+	return float64(w.Evaluations) * dollarsPerEval
+}

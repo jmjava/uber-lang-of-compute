@@ -119,4 +119,5 @@ type RunResult struct {
 	MinRegularity   string           `json:"min_regularity,omitempty"`
 	WorkEvaluations int              `json:"work_evaluations"`
 	WorkReuses      int              `json:"work_reuses"`
+	WorkCostUSD     float64          `json:"work_cost_usd"`
 }
