@@ -10,6 +10,7 @@ This directory is the academic layer of the repository. Physics-shaped names are
 | [formal-model.md](formal-model.md) | Discrete dynamical system, theorems, proofs, hypotheses |
 | [related-work.md](related-work.md) | Nature-inspired computing + systems literature |
 | [claims-and-evidence.md](claims-and-evidence.md) | Graded claims → tests |
+| [milestones.md](milestones.md) | Ordered implementation + proof plan |
 
 Implementation: `controller/pkg/theory/`.
 

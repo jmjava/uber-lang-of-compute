@@ -1,4 +1,4 @@
-.PHONY: build test tidy clean docker-domino-runner docker-domino-runner-julia \
+.PHONY: build test theory-prove tidy clean docker-domino-runner docker-domino-runner-julia \
 	docker-kbl-controller docker-kbl-tsdb lab-up lab-down lab-volcano-install lab-openkruise-install \
 	lab-verify-volcano lab-setup-wsl-home cdk-synth
 
@@ -10,6 +10,9 @@ build:
 
 test:
 	cd controller && go test ./...
+
+theory-prove:
+	cd controller && go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ -count=1
 
 docker-domino-runner:
 	docker build -f controller/docker/domino-runner/Dockerfile \
