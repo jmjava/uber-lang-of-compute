@@ -147,6 +147,12 @@ An execution chain is a sequence of distinct names. Duplicate labels are rejecte
 
 **Proof.** `theory.UniqueNames` scans the chain into a set; a repeated or empty name is an error. `Engine.Run` also refuses a duplicate in the domino catalog (map overwrite would silently change which \(f_d\) runs). Tests: `TestUniqueNamesRejectsDuplicates`, `TestRejectsDuplicateChainNames`. ∎
 
+### Theorem M14 (engine-enforced causal past)
+
+Assume the causal-past theorem. `Engine.Run` calls `AllowedReads` on every `fromDomino` and `dependsOn` name before resolving inputs. A future or unknown name fails closed even if a later map lookup might have succeeded.
+
+**Proof.** Inspection of the `Run` loop. Tests: `TestDominoCannotReadFutureOutput`, `TestRejectsDependsOnOutsideCausalPast`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

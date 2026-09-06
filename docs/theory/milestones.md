@@ -19,7 +19,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M11 | Four-DSL orthogonality for builtins | **proved** | `TestProvisioningOrthogonalToBuiltinWorldline` |
 | M12 | Player-piano lookahead is a function of wheel state | **proved** | `TestLookaheadIsAFunctionOfState`, `TestLookaheadNameMatchesBuiltWorkflow`, `TestLookaheadStopsWhenDone` |
 | M13 | Unique names in an execution chain | **proved** | `TestRejectsDuplicateChainNames`, `TestUniqueNamesRejectsDuplicates` |
-| M14 | Engine-enforced causal past | planned | `AllowedReads` on the hot path, not only missing-key errors |
+| M14 | Engine-enforced causal past | **proved** | `TestDominoCannotReadFutureOutput`, `TestRejectsDependsOnOutsideCausalPast`, `TestFutureReadRejected` |
 | M15 | Partial sandbox isolation is not a cage | planned | network-none XOR read-only-root still rejected |
 | M16 | Wall-clock is not in the worldline | planned | delayed rerun: equal hashes/HeadLink, unequal timestamps |
 | M17 | Sealed snapshots are write-once | planned | different payload fails; identical rewrite is idempotent |

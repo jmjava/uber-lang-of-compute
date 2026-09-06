@@ -95,6 +95,17 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 			}
 		}
 
+		reads := make([]string, 0, len(d.Spec.Inputs)+len(d.Spec.DependsOn))
+		for _, in := range d.Spec.Inputs {
+			if in.FromDomino != "" {
+				reads = append(reads, in.FromDomino)
+			}
+		}
+		reads = append(reads, d.Spec.DependsOn...)
+		if err := theory.AllowedReads(chain, dominoName, reads); err != nil {
+			return nil, fmt.Errorf("domino %q: %w", dominoName, err)
+		}
+
 		inputJSON, err := e.resolveInputs(d, snap, snapshotID, outputs)
 		if err != nil {
 			return nil, fmt.Errorf("domino %q resolve inputs: %w", dominoName, err)

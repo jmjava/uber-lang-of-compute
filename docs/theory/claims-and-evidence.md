@@ -14,6 +14,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | M11 | Provisioning/routing mutations do not change builtin worldlines | Theorem of the axes | `TestProvisioningOrthogonalToBuiltinWorldline` | Container images whose purity depends on the host |
 | M12 | Next wheel slot name is a function of current state | Theorem of the piano roll | `TestLookaheadIsAFunctionOfState`, `TestLookaheadNameMatchesBuiltWorkflow` | Isochronous mechanical timing / real pre-warm of pods |
 | M13 | Execution chain names are unique | Theorem of exclusion | `TestRejectsDuplicateChainNames`, `TestUniqueNamesRejectsDuplicates` | Namespaced aliases |
+| M14 | Engine rejects reads outside the causal past | Theorem of the cone | `TestDominoCannotReadFutureOutput`, `TestRejectsDependsOnOutsideCausalPast` | OS sandbox of the process |
 | M1/M2 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
 | M9 | Replay log is a hash chain from the snapshot ID | Theorem of the spine | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput` | Full Merkle DAG / blockchain |
 | Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |

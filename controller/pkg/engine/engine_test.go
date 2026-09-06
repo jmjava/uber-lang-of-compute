@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/engine"
@@ -122,6 +123,31 @@ func TestDominoCannotReadFutureOutput(t *testing.T) {
 	_, err = engine.New(s).Run(wf)
 	if err == nil {
 		t.Fatal("expected error: first domino cannot read a later domino's output")
+	}
+	if !strings.Contains(err.Error(), "future read") && !strings.Contains(err.Error(), "not strictly before") {
+		t.Fatalf("expected causal-past rejection, got %v", err)
+	}
+}
+
+func TestRejectsDependsOnOutsideCausalPast(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "depends.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	first := wf.Spec.Execution.Chain[0]
+	later := wf.Spec.Execution.Chain[len(wf.Spec.Execution.Chain)-1]
+	for i := range wf.Spec.Dominos {
+		if wf.Spec.Dominos[i].Metadata.Name == first {
+			wf.Spec.Dominos[i].Spec.DependsOn = []string{later}
+		}
+	}
+	_, err = engine.New(s).Run(wf)
+	if err == nil {
+		t.Fatal("DependsOn of a later domino must be rejected")
 	}
 }
 
