@@ -103,6 +103,12 @@ Assume H2, H4, H5. A memo hit for \((\mathrm{id}(s),d,h)\) yields the same outpu
 
 **Proof.** H5 says the stored \(y\) came from such an execution. H2 says all such executions agree. H4 says the output hash agrees. ∎
 
+### Theorem M9 (tamper-evident replay spine)
+
+Assume H4. Let \(L_0=\mathrm{id}(s)\) and \(L_k=\mathrm{SHA256}(L_{k-1}\Vert h_k^{\mathrm{in}}\Vert h_k^{\mathrm{out}})\). A complete run writes \(L_k\) on each replay entry. `VerifySpine` accepts the log iff every stored link equals this recurrence.
+
+**Proof.** Inspection of `attachSpine` and `VerifySpine`: each entry's `PrevLink` is the previous \(L\), and `Link` is `hash.Link` of that prefix plus the two hashes. Mutating an output hash without recomputing subsequent links fails the equality. This is a hash chain (Merkle spine), not a Merkle tree and not a consensus ledger. ∎
+
 ### Theorem E1 (ensemble collapse)
 
 Let \(E=\{x_1,\ldots,x_N\}\) be distinct payloads, \(\mu\) uniform on \(E\). Then \(H_{\mathrm{ens}}(\mu)=\log_2 N\). After sealing a member \(x^*\in E\), the posterior is \(\delta_{x^*}\) and \(H_{\mathrm{ens}}=0\).
@@ -175,5 +181,6 @@ The method is [nature-inspired.md](nature-inspired.md). We mimic nature; we do n
 | Regularity ladder | `controller/pkg/theory/regularity.go` |
 | Logical work (Bennett bookkeeping) | `controller/pkg/theory/work.go` |
 | Classical histories | `controller/pkg/theory/histories.go` |
+| Replay spine | `controller/pkg/theory/spine.go`, `hash.Link` |
 | Homeostasis | `controller/pkg/theory/homeostasis.go` |
 | Cauchy replica | `controller/pkg/replica/materialize.go`, `controller/pkg/cdc` |

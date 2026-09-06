@@ -111,6 +111,8 @@ type ReplayLogEntry struct {
 	Reused     bool      `json:"reused"`
 	Output     string    `json:"output,omitempty"`
 	Regularity string    `json:"regularity,omitempty"`
+	PrevLink   string    `json:"prev_link,omitempty"`
+	Link       string    `json:"link,omitempty"`
 }
 
 // RunResult is the outcome of executing a domino chain.
@@ -122,4 +124,5 @@ type RunResult struct {
 	WorkEvaluations int              `json:"work_evaluations"`
 	WorkReuses      int              `json:"work_reuses"`
 	WorkCostUSD     float64          `json:"work_cost_usd"`
+	HeadLink        string           `json:"head_link,omitempty"`
 }

@@ -14,6 +14,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M6 | Unfold-driven hierarchical workflows | **proved** | `TestWorkflowFromUnfoldRunsDeterministically`, `TestNodeCountPerfectTree` |
 | M7 | Dollar/cost accountant (not joules) | **proved** | `TestChargeUSDIsEvaluationsTimesPrice`, `TestSnapshotReplayDeterministic` cost fields |
 | M8 | Sandbox for contract-grade images | **proved** | `TestAllowDeterministicWithIsolatedSandbox`, `TestSandboxedContractCommandRequiresIsolation`, `TestExecuteSandboxIdentity` |
+| M9 | Tamper-evident Merkle-style replay spine | **proved** | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput`, `TestLinkIsDeterministicAndOrderSensitive` |
 
 ## Proof command
 

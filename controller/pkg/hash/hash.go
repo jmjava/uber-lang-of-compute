@@ -4,7 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"sort"
+	"strings"
 )
 
 // Compute returns a deterministic SHA-256 hex hash of the given data.
@@ -29,6 +31,15 @@ func normalize(data interface{}) ([]byte, error) {
 // ChainKey builds a memoization key from snapshot ID, domino ID, and input hash.
 func ChainKey(snapshotID, dominoID, inputHash string) string {
 	return snapshotID + ":" + dominoID + ":" + inputHash
+}
+
+// Link is a SHA-256 of ordered parts, used as a Merkle-style spine step.
+// The replay spine (M9) uses prevLink + ":" + inputHash + ":" + outputHash.
+func Link(parts ...string) (string, error) {
+	if len(parts) == 0 {
+		return "", errors.New("hash: empty link")
+	}
+	return Compute(strings.Join(parts, ":"))
 }
 
 // SnapshotIDHexLen is the hex length of a snapshot ID (128 bits).

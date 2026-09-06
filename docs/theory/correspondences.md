@@ -35,6 +35,7 @@ This is the same methodological move as an artificial neuron (McCulloch & Pitts 
 **Transfers \(P_+\).**
 
 - **Uniqueness (Thm. D2).** If every \(d_i\) is a function and hashing is injective on the domain of interest, the hash worldline is unique. Test: `TestTheoremD2SealedSnapshotHasUniqueTrajectory`, `TestSnapshotReplayDeterministic`.
+- **Tamper-evident spine (Thm. M9).** The replay log is a hash chain from the snapshot ID. Test: `TestReplaySpineIsTamperEvident`.
 - **No evolution without Cauchy data (Thm. D1).** Unsealed snapshots have no trajectory. Test: `TestTheoremD1UnsealedSnapshotHasNoTrajectory`.
 
 **Does not transfer \(P_-\) (left in nature, as glia are left out of an ANN).**

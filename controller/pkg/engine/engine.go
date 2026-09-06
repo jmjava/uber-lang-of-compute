@@ -67,6 +67,7 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 
 	var entries []types.ReplayLogEntry
 	outputs := make(map[string]string)
+	prev := snapshotID
 
 	for _, dominoName := range chain {
 		d, ok := dominoMap[dominoName]
@@ -135,6 +136,11 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 			}
 		}
 
+		link, err := attachSpine(prev, &entry)
+		if err != nil {
+			return nil, fmt.Errorf("domino %q spine: %w", dominoName, err)
+		}
+		prev = link
 		entries = append(entries, entry)
 	}
 
@@ -152,7 +158,18 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 		WorkEvaluations: w.Evaluations,
 		WorkReuses:      w.Reuses,
 		WorkCostUSD:     theory.ChargeUSD(w, e.DollarsPerEvaluation),
+		HeadLink:        prev,
 	}, nil
+}
+
+func attachSpine(prev string, entry *types.ReplayLogEntry) (string, error) {
+	entry.PrevLink = prev
+	link, err := hash.Link(prev, entry.InputHash, entry.OutputHash)
+	if err != nil {
+		return "", err
+	}
+	entry.Link = link
+	return link, nil
 }
 
 func (e *Engine) resolveInputs(d *types.Domino, snap types.Snapshot, snapshotID string, priorOutputs map[string]string) (string, error) {
@@ -243,6 +260,9 @@ func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.
 		if err := e.store.SaveResult(snapshotID, domino.Metadata.Name, inputHash, outHash, out, true); err != nil {
 			return nil, fmt.Errorf("save replay: %w", err)
 		}
+		if _, err := attachSpine(snapshotID, &entry); err != nil {
+			return nil, fmt.Errorf("spine: %w", err)
+		}
 		return &entry, nil
 	}
 
@@ -261,6 +281,9 @@ func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.
 	entry.Output = out
 	if err := e.store.SaveResult(snapshotID, domino.Metadata.Name, inputHash, outputHash, out, false); err != nil {
 		return nil, fmt.Errorf("save result: %w", err)
+	}
+	if _, err := attachSpine(snapshotID, &entry); err != nil {
+		return nil, fmt.Errorf("spine: %w", err)
 	}
 	return &entry, nil
 }

@@ -51,3 +51,30 @@ func TestDifferentInputsDifferentHashes(t *testing.T) {
 		t.Error("different inputs should produce different hashes")
 	}
 }
+
+func TestLinkIsDeterministicAndOrderSensitive(t *testing.T) {
+	a, err := hash.Link("prev", "in", "out")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := hash.Link("prev", "in", "out")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a != b {
+		t.Fatal("link must be a function of its parts")
+	}
+	c, err := hash.Link("prev", "out", "in")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a == c {
+		t.Fatal("reordered parts must not collide")
+	}
+	if _, err := hash.Link(); err == nil {
+		t.Fatal("empty link must be rejected")
+	}
+	if got := hash.ChainKey("s", "d", "i"); got != "s:d:i" {
+		t.Fatalf("ChainKey = %q", got)
+	}
+}

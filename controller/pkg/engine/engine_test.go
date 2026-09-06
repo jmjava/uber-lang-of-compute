@@ -9,6 +9,7 @@ import (
 
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/engine"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/theory"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 	"gopkg.in/yaml.v3"
 )
@@ -246,5 +247,44 @@ func TestSandboxedContractCommandRequiresIsolation(t *testing.T) {
 	}
 	if result.MinRegularity != "contract" {
 		t.Fatalf("min regularity %s want contract", result.MinRegularity)
+	}
+}
+
+func TestReplaySpineIsTamperEvident(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "spine.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	eng := engine.New(s)
+	result, err := eng.Run(wf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := theory.VerifySpine(result.SnapshotID, result.Entries); err != nil {
+		t.Fatalf("live replay must verify: %v", err)
+	}
+	if result.HeadLink == "" || result.HeadLink != result.Entries[len(result.Entries)-1].Link {
+		t.Fatalf("head link %q does not match last entry", result.HeadLink)
+	}
+
+	replay, err := eng.Run(wf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := theory.VerifySpine(replay.SnapshotID, replay.Entries); err != nil {
+		t.Fatalf("memoized replay must verify: %v", err)
+	}
+	if replay.HeadLink != result.HeadLink {
+		t.Fatalf("head link changed on replay: %s vs %s", result.HeadLink, replay.HeadLink)
+	}
+
+	tampered := result.Entries
+	tampered[0].OutputHash = "deadbeef"
+	if err := theory.VerifySpine(result.SnapshotID, tampered); err == nil {
+		t.Fatal("mutating an output hash must fail VerifySpine")
 	}
 }

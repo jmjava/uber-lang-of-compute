@@ -10,7 +10,8 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | H2c | Container commands are functions | Contract | `CommandRegularity` → `RegularityContract` | Lipschitz for arbitrary images |
 | M1 | Deterministic workflows reject contract-grade commands | Theorem of the gate | `TestDeterministicWorkflowRejectsContractGradeCommand` | Purity of the image itself |
 | M8 | Isolated sandbox admits contract-grade stubs | Theorem of the cage | `TestSandboxedContractCommandRequiresIsolation` | Arbitrary container images / real kernel namespaces |
-| M1 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
+| M1/M2 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
+| M9 | Replay log is a hash chain from the snapshot ID | Theorem of the spine | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput` | Full Merkle DAG / blockchain |
 | Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |
 | E1 | Uniform \(N\)-ensemble has \(H=\log_2 N\); seal ⇒ \(H=0\) | Theorem for \(H_{\mathrm{ens}}\) | `TestEnsembleEntropyCollapsesOnSeal` | Thermodynamic \(S\) |
 | C-past | Readable set at \(d_k\) is snapshot + strict prefix | Theorem | `TestCausalPastIsPrefix`, `TestDominoCannotReadFutureOutput` | Sandbox of the OS |
