@@ -464,6 +464,41 @@ func TestProvisioningOrthogonalToBuiltinWorldline(t *testing.T) {
 	}
 }
 
+func TestReplayLogRoundTripsSpine(t *testing.T) {
+	s, err := store.Open(filepath.Join(t.TempDir(), "persist.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	result, err := engine.New(s).Run(wf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := s.ListReplay(result.SnapshotID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != len(result.Entries) {
+		t.Fatalf("persisted %d entries want %d", len(rows), len(result.Entries))
+	}
+	entries := make([]types.ReplayLogEntry, len(rows))
+	for i, r := range rows {
+		entries[i] = types.ReplayLogEntry{
+			SnapshotID: r.SnapshotID,
+			DominoID:   r.DominoID,
+			InputHash:  r.InputHash,
+			OutputHash: r.OutputHash,
+			PrevLink:   r.PrevLink,
+			Link:       r.Link,
+		}
+	}
+	if err := theory.VerifySpine(result.SnapshotID, entries); err != nil {
+		t.Fatalf("stored spine must verify: %v", err)
+	}
+}
+
 func TestRunSingleSpineChainsAcrossSteps(t *testing.T) {
 	s, err := store.Open(filepath.Join(t.TempDir(), "step.db"))
 	if err != nil {

@@ -46,7 +46,7 @@ func Materialize(cfg MaterializeConfig) (*MaterializeResult, error) {
 		if err != nil {
 			continue
 		}
-		if err := cfg.Target.SaveResult(cfg.SnapshotID, dominoID, inHash, outHash, output, false); err != nil {
+		if err := cfg.Target.SaveResult(cfg.SnapshotID, dominoID, inHash, outHash, output, false, "", ""); err != nil {
 			return nil, fmt.Errorf("copy domino %q: %w", dominoID, err)
 		}
 		result.DominoCount++

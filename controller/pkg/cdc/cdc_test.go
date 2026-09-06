@@ -25,7 +25,7 @@ func TestApplyReplicatesSnapshotAndDomino(t *testing.T) {
 	if err := source.SaveSnapshot(snapshotID, "2025-04-15", `{"v":1}`, true); err != nil {
 		t.Fatal(err)
 	}
-	if err := source.SaveResult(snapshotID, "load", "in", "out", `{"ok":true}`, false); err != nil {
+	if err := source.SaveResult(snapshotID, "load", "in", "out", `{"ok":true}`, false, "", ""); err != nil {
 		t.Fatal(err)
 	}
 

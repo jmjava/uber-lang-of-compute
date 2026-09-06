@@ -21,6 +21,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | M18 | Memo key conflict is rejected | Theorem of H5 | `TestMemoRejectsConflictingOutputForSameKey` | Byzantine multi-writer consensus |
 | M19 | Long Workflow names truncate by content hash | Theorem of labels | `TestWorkflowNameTruncationDistinguishesEqualLength` | DNS-1035 aesthetics |
 | M20 | Sequential RunSingle continues the spine | Theorem of the geodesic | `TestRunSingleSpineChainsAcrossSteps` | Distributed consensus of spine heads |
+| M21 | Store persists the replay spine | Theorem of the fossil record | `TestReplayLogRoundTripsSpine` | Full Merkle DAG / blockchain |
 | M1/M2 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
 | M9 | Replay log is a hash chain from the snapshot ID | Theorem of the spine | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput` | Full Merkle DAG / blockchain |
 | Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |

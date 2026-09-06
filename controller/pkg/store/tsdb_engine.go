@@ -150,7 +150,7 @@ func (t *TSDBEngine) LookupMemo(snapshotID, dominoID, inputHash string) (outputH
 	return rec.OutputHash, rec.Output, true, nil
 }
 
-func (t *TSDBEngine) SaveResult(snapshotID, dominoID, inputHash, outputHash, output string, reused bool) error {
+func (t *TSDBEngine) SaveResult(snapshotID, dominoID, inputHash, outputHash, output string, reused bool, prevLink, link string) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
@@ -196,6 +196,8 @@ func (t *TSDBEngine) SaveResult(snapshotID, dominoID, inputHash, outputHash, out
 		OutputHash: outputHash,
 		Reused:     reused,
 		Output:     output,
+		PrevLink:   prevLink,
+		Link:       link,
 		CreatedAt:  time.Now().UTC(),
 	}
 	body, err := json.Marshal(replay)
@@ -236,6 +238,41 @@ func (t *TSDBEngine) GetLatestResult(snapshotID, dominoID string) (inputHash, ou
 }
 
 func (t *TSDBEngine) Close() error { return nil }
+
+func (t *TSDBEngine) ListReplay(snapshotID string) ([]ReplayEntry, error) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	dir := filepath.Join(t.root, "replay")
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	var out []ReplayEntry
+	for _, f := range files {
+		body, err := os.ReadFile(filepath.Join(dir, f.Name()))
+		if err != nil {
+			return nil, err
+		}
+		var rec replayRecord
+		if err := json.Unmarshal(body, &rec); err != nil {
+			return nil, err
+		}
+		if rec.SnapshotID != snapshotID {
+			continue
+		}
+		out = append(out, ReplayEntry{
+			SnapshotID: rec.SnapshotID,
+			DominoID:   rec.DominoID,
+			InputHash:  rec.InputHash,
+			OutputHash: rec.OutputHash,
+			Output:     rec.Output,
+			Reused:     rec.Reused,
+			PrevLink:   rec.PrevLink,
+			Link:       rec.Link,
+		})
+	}
+	return out, nil
+}
 
 func (t *TSDBEngine) Stats() (snapshots, memoEntries int, err error) {
 	t.mu.RLock()
@@ -294,5 +331,7 @@ type replayRecord struct {
 	OutputHash string    `json:"output_hash"`
 	Reused     bool      `json:"reused"`
 	Output     string    `json:"output,omitempty"`
+	PrevLink   string    `json:"prev_link,omitempty"`
+	Link       string    `json:"link,omitempty"`
 	CreatedAt  time.Time `json:"created_at"`
 }

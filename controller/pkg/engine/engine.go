@@ -131,10 +131,6 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 			entry.Reused = true
 			entry.Output = out
 			outputs[dominoName] = out
-
-			if err := e.store.SaveResult(snapshotID, dominoName, inputHash, outHash, out, true); err != nil {
-				return nil, fmt.Errorf("domino %q save replay: %w", dominoName, err)
-			}
 		} else {
 			out, err := e.executeDomino(d, inputJSON)
 			if err != nil {
@@ -150,15 +146,14 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 			entry.Reused = false
 			entry.Output = out
 			outputs[dominoName] = out
-
-			if err := e.store.SaveResult(snapshotID, dominoName, inputHash, outputHash, out, false); err != nil {
-				return nil, fmt.Errorf("domino %q save result: %w", dominoName, err)
-			}
 		}
 
 		link, err := attachSpine(prev, &entry)
 		if err != nil {
 			return nil, fmt.Errorf("domino %q spine: %w", dominoName, err)
+		}
+		if err := e.store.SaveResult(snapshotID, dominoName, inputHash, entry.OutputHash, entry.Output, entry.Reused, entry.PrevLink, entry.Link); err != nil {
+			return nil, fmt.Errorf("domino %q save result: %w", dominoName, err)
 		}
 		prev = link
 		entries = append(entries, entry)
@@ -277,11 +272,11 @@ func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.
 		entry.OutputHash = outHash
 		entry.Reused = true
 		entry.Output = out
-		if err := e.store.SaveResult(snapshotID, domino.Metadata.Name, inputHash, outHash, out, true); err != nil {
-			return nil, fmt.Errorf("save replay: %w", err)
-		}
 		if _, err := attachSpine(snapshotID, &entry); err != nil {
 			return nil, fmt.Errorf("spine: %w", err)
+		}
+		if err := e.store.SaveResult(snapshotID, domino.Metadata.Name, inputHash, outHash, out, true, entry.PrevLink, entry.Link); err != nil {
+			return nil, fmt.Errorf("save replay: %w", err)
 		}
 		return &entry, nil
 	}
@@ -299,11 +294,11 @@ func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.
 	entry.OutputHash = outputHash
 	entry.Reused = false
 	entry.Output = out
-	if err := e.store.SaveResult(snapshotID, domino.Metadata.Name, inputHash, outputHash, out, false); err != nil {
-		return nil, fmt.Errorf("save result: %w", err)
-	}
 	if _, err := attachSpine(snapshotID, &entry); err != nil {
 		return nil, fmt.Errorf("spine: %w", err)
+	}
+	if err := e.store.SaveResult(snapshotID, domino.Metadata.Name, inputHash, outputHash, out, false, entry.PrevLink, entry.Link); err != nil {
+		return nil, fmt.Errorf("save result: %w", err)
 	}
 	return &entry, nil
 }

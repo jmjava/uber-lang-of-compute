@@ -115,7 +115,7 @@ func (c *TSDBClient) LookupMemo(snapshotID, dominoID, inputHash string) (outputH
 	return rec.OutputHash, rec.Output, true, nil
 }
 
-func (c *TSDBClient) SaveResult(snapshotID, dominoID, inputHash, outputHash, output string, reused bool) error {
+func (c *TSDBClient) SaveResult(snapshotID, dominoID, inputHash, outputHash, output string, reused bool, prevLink, link string) error {
 	body, _ := json.Marshal(map[string]interface{}{
 		"snapshot_id": snapshotID,
 		"domino_id":   dominoID,
@@ -123,8 +123,14 @@ func (c *TSDBClient) SaveResult(snapshotID, dominoID, inputHash, outputHash, out
 		"output_hash": outputHash,
 		"output":      output,
 		"reused":      reused,
+		"prev_link":   prevLink,
+		"link":        link,
 	})
 	return c.post("/v1/results", body)
+}
+
+func (c *TSDBClient) ListReplay(snapshotID string) ([]ReplayEntry, error) {
+	return nil, fmt.Errorf("tsdb client: list replay not implemented")
 }
 
 func (c *TSDBClient) GetDominoOutput(snapshotID, dominoID string) (string, error) {

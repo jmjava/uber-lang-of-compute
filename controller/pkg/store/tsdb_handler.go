@@ -116,12 +116,14 @@ func NewTSDBHandler(engine *TSDBEngine) http.Handler {
 			OutputHash string `json:"output_hash"`
 			Output     string `json:"output"`
 			Reused     bool   `json:"reused"`
+			PrevLink   string `json:"prev_link"`
+			Link       string `json:"link"`
 		}
 		if err := readJSON(r, &req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if err := engine.SaveResult(req.SnapshotID, req.DominoID, req.InputHash, req.OutputHash, req.Output, req.Reused); err != nil {
+		if err := engine.SaveResult(req.SnapshotID, req.DominoID, req.InputHash, req.OutputHash, req.Output, req.Reused, req.PrevLink, req.Link); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

@@ -58,13 +58,13 @@ func TestMemoRejectsConflictingOutputForSameKey(t *testing.T) {
 	}
 	defer s.Close()
 
-	if err := s.SaveResult("snap", "d", "in", "out-a", `{"v":1}`, false); err != nil {
+	if err := s.SaveResult("snap", "d", "in", "out-a", `{"v":1}`, false, "", ""); err != nil {
 		t.Fatal(err)
 	}
-	if err := s.SaveResult("snap", "d", "in", "out-a", `{"v":1}`, false); err != nil {
+	if err := s.SaveResult("snap", "d", "in", "out-a", `{"v":1}`, false, "", ""); err != nil {
 		t.Fatalf("identical memo rewrite must be idempotent: %v", err)
 	}
-	if err := s.SaveResult("snap", "d", "in", "out-b", `{"v":2}`, false); err == nil || !errors.Is(err, store.ErrMemoConflict) {
+	if err := s.SaveResult("snap", "d", "in", "out-b", `{"v":2}`, false, "", ""); err == nil || !errors.Is(err, store.ErrMemoConflict) {
 		t.Fatalf("got %v want ErrMemoConflict", err)
 	}
 }

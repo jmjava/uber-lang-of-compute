@@ -189,6 +189,12 @@ If `WorkflowName` exceeds 63 characters, the suffix is a content hash of the ful
 
 **Proof.** `attachSpine(prevLink, entry)` after the step. Test: `TestRunSingleSpineChainsAcrossSteps`. ∎
 
+### Theorem M21 (persisted spine)
+
+A completed `Engine.Run` writes `PrevLink`/`Link` on each replay row. `ListReplay` reloads a chain that `VerifySpine` accepts.
+
+**Proof.** `SaveResult` inserts the links; `ListReplay` orders by row id. Test: `TestReplayLogRoundTripsSpine`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

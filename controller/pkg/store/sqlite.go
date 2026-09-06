@@ -64,13 +64,19 @@ func (s *SQLiteBackend) migrate() error {
 		output_hash TEXT NOT NULL,
 		reused      INTEGER NOT NULL,
 		output      TEXT,
+		prev_link   TEXT,
+		link        TEXT,
 		created_at  TEXT NOT NULL DEFAULT (datetime('now'))
 	);
 
 	CREATE INDEX IF NOT EXISTS idx_memo ON domino_results(snapshot_id, domino_id, input_hash);
 	`
-	_, err := s.db.Exec(schema)
-	return err
+	if _, err := s.db.Exec(schema); err != nil {
+		return err
+	}
+	_, _ = s.db.Exec(`ALTER TABLE replay_log ADD COLUMN prev_link TEXT`)
+	_, _ = s.db.Exec(`ALTER TABLE replay_log ADD COLUMN link TEXT`)
+	return nil
 }
 
 func (s *SQLiteBackend) SaveSnapshot(snapshotID, timeSlice, data string, sealed bool) error {
@@ -124,7 +130,7 @@ func (s *SQLiteBackend) LookupMemo(snapshotID, dominoID, inputHash string) (outp
 	return outputHash, output, true, nil
 }
 
-func (s *SQLiteBackend) SaveResult(snapshotID, dominoID, inputHash, outputHash, output string, reused bool) error {
+func (s *SQLiteBackend) SaveResult(snapshotID, dominoID, inputHash, outputHash, output string, reused bool, prevLink, link string) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
@@ -157,9 +163,9 @@ func (s *SQLiteBackend) SaveResult(snapshotID, dominoID, inputHash, outputHash, 
 		reusedInt = 1
 	}
 	_, err = tx.Exec(
-		`INSERT INTO replay_log (snapshot_id, domino_id, input_hash, output_hash, reused, output)
-		 VALUES (?, ?, ?, ?, ?, ?)`,
-		snapshotID, dominoID, inputHash, outputHash, reusedInt, output,
+		`INSERT INTO replay_log (snapshot_id, domino_id, input_hash, output_hash, reused, output, prev_link, link)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		snapshotID, dominoID, inputHash, outputHash, reusedInt, output, prevLink, link,
 	)
 	if err != nil {
 		return err
@@ -181,6 +187,30 @@ func (s *SQLiteBackend) GetLatestResult(snapshotID, dominoID string) (inputHash,
 	)
 	err = row.Scan(&inputHash, &outputHash, &output)
 	return
+}
+
+func (s *SQLiteBackend) ListReplay(snapshotID string) ([]ReplayEntry, error) {
+	rows, err := s.db.Query(
+		`SELECT snapshot_id, domino_id, input_hash, output_hash, COALESCE(output,''), reused,
+		        COALESCE(prev_link,''), COALESCE(link,'')
+		 FROM replay_log WHERE snapshot_id = ? ORDER BY id ASC`,
+		snapshotID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []ReplayEntry
+	for rows.Next() {
+		var e ReplayEntry
+		var reusedInt int
+		if err := rows.Scan(&e.SnapshotID, &e.DominoID, &e.InputHash, &e.OutputHash, &e.Output, &reusedInt, &e.PrevLink, &e.Link); err != nil {
+			return nil, err
+		}
+		e.Reused = reusedInt == 1
+		out = append(out, e)
+	}
+	return out, rows.Err()
 }
 
 func (s *SQLiteBackend) Close() error {

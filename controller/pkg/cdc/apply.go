@@ -41,7 +41,7 @@ func applyDominoResult(target store.Backend, env Envelope) error {
 	if err != nil {
 		return err
 	}
-	return target.SaveResult(row.SnapshotID, row.DominoID, row.InputHash, row.OutputHash, row.Output, row.Reused)
+	return target.SaveResult(row.SnapshotID, row.DominoID, row.InputHash, row.OutputHash, row.Output, row.Reused, "", "")
 }
 
 func decodeAfter[T any](after interface{}) (T, error) {

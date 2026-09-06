@@ -29,7 +29,7 @@ func TestMaterializeCopiesSnapshotAndDominos(t *testing.T) {
 	if err := source.SaveSnapshot(snapshotID, "2025-04-15", `{"key":"value"}`, true); err != nil {
 		t.Fatal(err)
 	}
-	if err := source.SaveResult(snapshotID, "load", "in1", "out1", `{"loaded":true}`, false); err != nil {
+	if err := source.SaveResult(snapshotID, "load", "in1", "out1", `{"loaded":true}`, false, "", ""); err != nil {
 		t.Fatal(err)
 	}
 

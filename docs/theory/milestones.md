@@ -26,7 +26,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M18 | Memo key conflict is H5, not ignore | **proved** | `TestMemoRejectsConflictingOutputForSameKey` |
 | M19 | Collision-safe WorkflowName truncation | **proved** | `TestWorkflowNameTruncationDistinguishesEqualLength` |
 | M20 | RunSingle continues the replay spine | **proved** | `TestRunSingleSpineChainsAcrossSteps` |
-| M21 | Store persists the replay spine | planned | reload replay rows, `VerifySpine` passes |
+| M21 | Store persists the replay spine | **proved** | `TestReplayLogRoundTripsSpine` |
 | M22 | Snapshot-completed EventID is content-addressed | planned | same payload ⇒ same EventID; timestamp excluded |
 | M23 | CDC refuses orphan domino results | planned | result rows require a sealed parent snapshot |
 | M24 | Materialize/export fail closed on missing dominos | planned | incomplete chain is an error, not a short success |

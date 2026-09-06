@@ -7,10 +7,23 @@ type Backend interface {
 	SaveSnapshot(snapshotID, timeSlice, data string, sealed bool) error
 	GetSnapshot(snapshotID string) (timeSlice, data string, sealed bool, err error)
 	LookupMemo(snapshotID, dominoID, inputHash string) (outputHash, output string, found bool, err error)
-	SaveResult(snapshotID, dominoID, inputHash, outputHash, output string, reused bool) error
+	SaveResult(snapshotID, dominoID, inputHash, outputHash, output string, reused bool, prevLink, link string) error
 	GetDominoOutput(snapshotID, dominoID string) (string, error)
 	GetLatestResult(snapshotID, dominoID string) (inputHash, outputHash, output string, err error)
+	ListReplay(snapshotID string) ([]ReplayEntry, error)
 	Close() error
+}
+
+// ReplayEntry is a persisted replay-log row (M21).
+type ReplayEntry struct {
+	SnapshotID string
+	DominoID   string
+	InputHash  string
+	OutputHash string
+	Output     string
+	Reused     bool
+	PrevLink   string
+	Link       string
 }
 
 // Type identifies a store backend implementation.
