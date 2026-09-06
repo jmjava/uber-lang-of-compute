@@ -107,6 +107,10 @@ spec:
                       type: object
                       additionalProperties:
                         type: string
+                    sandboxNetworkNone:
+                      type: boolean
+                    sandboxReadOnlyRoot:
+                      type: boolean
                 routing:
                   type: object
                   properties:

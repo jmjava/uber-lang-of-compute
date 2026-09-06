@@ -54,8 +54,10 @@ func ToEngineWorkflow(wf *kblv1alpha1.Workflow) *types.Workflow {
 				Deterministic: wf.Spec.Execution.Deterministic,
 			},
 			Provisioning: types.ProvisioningConfig{
-				StorePath: wf.Spec.Provisioning.StorePath,
-				NodeLocal: wf.Spec.Provisioning.NodeLocal,
+				StorePath:           wf.Spec.Provisioning.StorePath,
+				NodeLocal:           wf.Spec.Provisioning.NodeLocal,
+				SandboxNetworkNone:  wf.Spec.Provisioning.SandboxNetworkNone,
+				SandboxReadOnlyRoot: wf.Spec.Provisioning.SandboxReadOnlyRoot,
 			},
 			Routing: types.RoutingConfig{
 				Universe:          wf.Spec.Routing.Universe,

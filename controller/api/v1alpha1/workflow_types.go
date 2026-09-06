@@ -81,10 +81,12 @@ type ExecutionSpec struct {
 }
 
 type ProvisioningSpec struct {
-	StorePath    string            `json:"storePath,omitempty"`
-	NodeLocal    bool              `json:"nodeLocal,omitempty"`
-	RunnerImage  string            `json:"runnerImage,omitempty"`
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	StorePath           string            `json:"storePath,omitempty"`
+	NodeLocal           bool              `json:"nodeLocal,omitempty"`
+	RunnerImage         string            `json:"runnerImage,omitempty"`
+	NodeSelector        map[string]string `json:"nodeSelector,omitempty"`
+	SandboxNetworkNone  bool              `json:"sandboxNetworkNone,omitempty"`
+	SandboxReadOnlyRoot bool              `json:"sandboxReadOnlyRoot,omitempty"`
 }
 
 type RoutingSpec struct {

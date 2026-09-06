@@ -32,7 +32,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M24 | Materialize/export fail closed on missing dominos | **proved** | `TestMaterializeFailsOnMissingDomino`, `TestExportFromStoreFailsOnMissingDomino` |
 | M25 | Routing priority: time-slice beats partition | **proved** | `TestRoutingPriorityTimeSliceBeatsPartition` |
 | M26 | Ambiguous partition matches are rejected | **proved** | `TestAmbiguousPartitionMatchRejected` |
-| M27 | CRD sandbox flags reach the Picard cage | planned | convert threads isolation into engine provisioning |
+| M27 | CRD sandbox flags reach the Picard cage | **proved** | `TestConvertPassesSandboxIntoEngineGate` |
 | M28 | Workflow status exposes HeadLink and work | planned | completed reconcile records spine head and USD cost |
 | M29 | Fan-out events carry HeadLink | planned | classical record includes the Merkle receipt |
 | M30 | Fan-out refuses incomplete events | planned | empty snapshot ID / worldline does not branch |

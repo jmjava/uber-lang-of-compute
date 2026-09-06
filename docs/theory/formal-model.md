@@ -225,6 +225,12 @@ If two universes match the same partition labels, `Resolve` returns an error rat
 
 **Proof.** The partition loop collects matches; `len>1` is an error. Test: `TestAmbiguousPartitionMatchRejected`. ∎
 
+### Theorem M27 (cage at the CR boundary)
+
+`ToEngineWorkflow` copies `sandboxNetworkNone` and `sandboxReadOnlyRoot` from the Workflow CR into engine provisioning, so M8's Picard cage is reachable from the API.
+
+**Proof.** Field copy in `convert`. Test: `TestConvertPassesSandboxIntoEngineGate`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).
