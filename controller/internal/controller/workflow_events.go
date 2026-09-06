@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
@@ -21,7 +20,6 @@ func (r *WorkflowReconciler) publishSnapshotEvent(ctx context.Context, wf *kblv1
 	}
 
 	evt := events.SnapshotEvent{
-		EventID:    uuid.NewString(),
 		Type:       events.TypeSnapshotCompleted,
 		SnapshotID: result.SnapshotID,
 		TimeSlice:  wf.Spec.Snapshot.TimeSlice,
@@ -36,6 +34,9 @@ func (r *WorkflowReconciler) publishSnapshotEvent(ctx context.Context, wf *kblv1
 		evt.FinalOutput = result.Entries[len(result.Entries)-1].OutputHash
 	}
 	evt.Worldline = theory.Worldline(result.Entries)
+	if id, err := events.EventID(result.SnapshotID, evt.Worldline, evt.Universe, wf.Name); err == nil {
+		evt.EventID = id
+	}
 
 	if wf.Spec.Routing.MultiverseRef != "" {
 		var mv kblv1alpha1.Multiverse

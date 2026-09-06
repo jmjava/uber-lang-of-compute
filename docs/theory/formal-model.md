@@ -195,6 +195,12 @@ A completed `Engine.Run` writes `PrevLink`/`Link` on each replay row. `ListRepla
 
 **Proof.** `SaveResult` inserts the links; `ListReplay` orders by row id. Test: `TestReplayLogRoundTripsSpine`. ∎
 
+### Theorem M22 (content-addressed event identity)
+
+`events.EventID` is `hash.Link` of type, snapshot ID, worldline, universe, and workflow name. `OccurredAt` is excluded.
+
+**Proof.** Inspection of `EventID`. Test: `TestSnapshotEventIDIsFunctionOfPayload`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

@@ -22,6 +22,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | M19 | Long Workflow names truncate by content hash | Theorem of labels | `TestWorkflowNameTruncationDistinguishesEqualLength` | DNS-1035 aesthetics |
 | M20 | Sequential RunSingle continues the spine | Theorem of the geodesic | `TestRunSingleSpineChainsAcrossSteps` | Distributed consensus of spine heads |
 | M21 | Store persists the replay spine | Theorem of the fossil record | `TestReplayLogRoundTripsSpine` | Full Merkle DAG / blockchain |
+| M22 | Snapshot-completed EventID is content-addressed | Theorem of the barcode | `TestSnapshotEventIDIsFunctionOfPayload` | Exactly-once bus delivery |
 | M1/M2 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
 | M9 | Replay log is a hash chain from the snapshot ID | Theorem of the spine | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput` | Full Merkle DAG / blockchain |
 | Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |

@@ -18,5 +18,5 @@ type NoopBus struct{}
 func NewNoopBus() *NoopBus { return &NoopBus{} }
 
 func (n *NoopBus) Publish(_ context.Context, _ SnapshotEvent) error { return nil }
-func (n *NoopBus) Subscribe(_ context.Context, _ Handler) error   { return nil }
+func (n *NoopBus) Subscribe(_ context.Context, _ Handler) error     { return nil }
 func (n *NoopBus) Close() error                                     { return nil }
