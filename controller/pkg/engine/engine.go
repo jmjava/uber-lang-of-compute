@@ -9,6 +9,7 @@ import (
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/hash"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/snapshot"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/theory"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
 
@@ -71,6 +72,13 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 			return nil, fmt.Errorf("domino %q not found in workflow", dominoName)
 		}
 
+		reg := theory.CommandRegularity(d.Spec.Command)
+		if wf.Spec.Execution.Deterministic {
+			if err := theory.RequireDeterministic(d.Spec.Command); err != nil {
+				return nil, fmt.Errorf("domino %q: %w", dominoName, err)
+			}
+		}
+
 		inputJSON, err := e.resolveInputs(d, snap, snapshotID, outputs)
 		if err != nil {
 			return nil, fmt.Errorf("domino %q resolve inputs: %w", dominoName, err)
@@ -86,6 +94,7 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 			SnapshotID: snapshotID,
 			DominoID:   dominoName,
 			InputHash:  inputHash,
+			Regularity: reg.String(),
 		}
 
 		if outHash, out, found, err := e.store.LookupMemo(snapshotID, dominoName, inputHash); err != nil {
@@ -124,10 +133,15 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 	}
 
 	finalOutput := outputs[chain[len(chain)-1]]
+	regs := make([]theory.Regularity, 0, len(entries))
+	for _, name := range chain {
+		regs = append(regs, theory.CommandRegularity(dominoMap[name].Spec.Command))
+	}
 	return &types.RunResult{
-		SnapshotID:  snapshotID,
-		Entries:     entries,
-		FinalOutput: finalOutput,
+		SnapshotID:    snapshotID,
+		Entries:       entries,
+		FinalOutput:   finalOutput,
+		MinRegularity: theory.MinRegularity(regs...).String(),
 	}, nil
 }
 
@@ -207,6 +221,7 @@ func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.
 		SnapshotID: snapshotID,
 		DominoID:   domino.Metadata.Name,
 		InputHash:  inputHash,
+		Regularity: theory.CommandRegularity(domino.Spec.Command).String(),
 	}
 
 	if outHash, out, found, err := e.store.LookupMemo(snapshotID, domino.Metadata.Name, inputHash); err != nil {

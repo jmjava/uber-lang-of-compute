@@ -24,6 +24,21 @@ func TestCommandRegularityLadder(t *testing.T) {
 	}
 }
 
+func TestRequireDeterministicRejectsContract(t *testing.T) {
+	if err := theory.RequireDeterministic("builtin:identity"); err != nil {
+		t.Fatal(err)
+	}
+	if err := theory.RequireDeterministic("julia:greeks"); err != nil {
+		t.Fatal(err)
+	}
+	if err := theory.RequireDeterministic("image:custom"); err == nil {
+		t.Fatal("expected contract-grade rejection")
+	}
+	if theory.MinRegularity(theory.RegularityBuiltin, theory.RegularityPinned).String() != "pinned" {
+		t.Fatal("min of builtin and pinned should be pinned")
+	}
+}
+
 func TestLogicalWorkReplaySaves(t *testing.T) {
 	// Nature-inspired Landauer/Bennett: recording intermediates means the
 	// second pass pays fewer irreversible evaluations. Not a joule claim.

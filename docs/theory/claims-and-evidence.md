@@ -8,6 +8,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | D2 | Same sealed snapshot + builtin chain ⇒ same hashes | Theorem | `TestTheoremD2…`, `TestSnapshotReplayDeterministic` | Continuum mechanics |
 | D2j | Pinned Julia is unique as a discretization | Empirical discretization | `TestJuliaFinanceModelsWorkflowDeterministic` | Uniqueness on \(\mathbb{R}\) |
 | H2c | Container commands are functions | Contract | `CommandRegularity` → `RegularityContract` | Lipschitz for arbitrary images |
+| M1 | Deterministic workflows reject contract-grade commands | Theorem of the gate | `TestDeterministicWorkflowRejectsContractGradeCommand` | Purity of the image itself |
 | M1 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
 | Bennett | Replay pays fewer irreversible *steps* | Bookkeeping mimic | `ReplaySaves`, `TestLogicalWorkReplaySaves` | Joules / \(kT\ln 2\) |
 | E1 | Uniform \(N\)-ensemble has \(H=\log_2 N\); seal ⇒ \(H=0\) | Theorem for \(H_{\mathrm{ens}}\) | `TestEnsembleEntropyCollapsesOnSeal` | Thermodynamic \(S\) |

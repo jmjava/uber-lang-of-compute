@@ -1,6 +1,9 @@
 package theory
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // Regularity is the Picard-style smoothness class of a domino command.
 //
@@ -33,6 +36,17 @@ func CommandRegularity(command string) Regularity {
 	}
 }
 
+func (r Regularity) String() string {
+	switch r {
+	case RegularityBuiltin:
+		return "builtin"
+	case RegularityPinned:
+		return "pinned"
+	default:
+		return "contract"
+	}
+}
+
 // UniquenessGrade is how strongly uniqueness is warranted for this class.
 func (r Regularity) UniquenessGrade() string {
 	switch r {
@@ -43,4 +57,28 @@ func (r Regularity) UniquenessGrade() string {
 	default:
 		return "contract"
 	}
+}
+
+// MinRegularity is the weakest class in the list (contract < pinned < builtin).
+func MinRegularity(regs ...Regularity) Regularity {
+	if len(regs) == 0 {
+		return RegularityContract
+	}
+	min := RegularityBuiltin
+	for _, r := range regs {
+		if r < min {
+			min = r
+		}
+	}
+	return min
+}
+
+// RequireDeterministic reports whether a command is allowed when the workflow
+// asserts uniqueness (Picard regularity). Contract-grade commands are not.
+func RequireDeterministic(command string) error {
+	r := CommandRegularity(command)
+	if r == RegularityContract {
+		return fmt.Errorf("command %q is contract-grade; deterministic workflows require builtin: or julia:", command)
+	}
+	return nil
 }

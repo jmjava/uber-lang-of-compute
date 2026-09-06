@@ -6,7 +6,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 
 | ID | Milestone | Status | Proof |
 |----|-----------|--------|-------|
-| M1 | Picard regularity gate in the engine | pending | deterministic workflows reject contract-grade commands; replay records regularity; builtins are `builtin` |
+| M1 | Picard regularity gate in the engine | **proved** | `TestDeterministicWorkflowRejectsContractGradeCommand`, `TestDeterministicBuiltinRunRecordsRegularity`, `TestRequireDeterministicRejectsContract` |
 | M2 | Bennett logical work on every run | pending | `RunResult` reports evaluations/reuses; replay strictly saves irreversible steps |
 | M3 | Explorer window seats the Compute Wheel | pending | \(k^d\) leaves = wheel seats; one full turn visits each leaf once; coarsen ⇒ \(k^{d-1}\) seats |
 | M4 | Classical histories on snapshot-completed events | later | routing fan-out carries sealed snapshot ID; `Interfere(liveShare=false)` is false in the event path |

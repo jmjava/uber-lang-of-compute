@@ -168,3 +168,42 @@ func TestUnsealedSnapshotRejected(t *testing.T) {
 		t.Fatal("expected error for unsealed snapshot")
 	}
 }
+
+func TestDeterministicWorkflowRejectsContractGradeCommand(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "picard.db"))
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	wf.Spec.Dominos[0].Spec.Command = "image:custom"
+	_, err = engine.New(s).Run(wf)
+	if err == nil {
+		t.Fatal("expected Picard regularity rejection for contract-grade command")
+	}
+}
+
+func TestDeterministicBuiltinRunRecordsRegularity(t *testing.T) {
+	dir := t.TempDir()
+	s, err := store.Open(filepath.Join(dir, "reg.db"))
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	result, err := engine.New(s).Run(wf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.MinRegularity != "builtin" {
+		t.Fatalf("min regularity %q want builtin", result.MinRegularity)
+	}
+	for _, e := range result.Entries {
+		if e.Regularity != "builtin" {
+			t.Fatalf("entry %s regularity %q want builtin", e.DominoID, e.Regularity)
+		}
+	}
+}

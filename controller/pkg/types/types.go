@@ -108,11 +108,13 @@ type ReplayLogEntry struct {
 	OutputHash string    `json:"output_hash"`
 	Reused     bool      `json:"reused"`
 	Output     string    `json:"output,omitempty"`
+	Regularity string    `json:"regularity,omitempty"`
 }
 
 // RunResult is the outcome of executing a domino chain.
 type RunResult struct {
-	SnapshotID  string           `json:"snapshot_id"`
-	Entries     []ReplayLogEntry `json:"entries"`
-	FinalOutput string           `json:"final_output"`
+	SnapshotID    string           `json:"snapshot_id"`
+	Entries       []ReplayLogEntry `json:"entries"`
+	FinalOutput   string           `json:"final_output"`
+	MinRegularity string           `json:"min_regularity,omitempty"`
 }
