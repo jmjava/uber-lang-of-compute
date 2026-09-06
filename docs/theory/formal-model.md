@@ -115,6 +115,12 @@ An isolated sandbox is a sufficient *admission* condition for a contract-grade c
 
 **Proof.** `AllowDeterministic` returns nil for any contract-grade command under isolation, without inspecting the command body. `sandboxImpure` returns a wall-clock / counter payload that is not a function of the input string. Tests: `TestIsolatedSandboxDoesNotImplyUniqueness`, `TestExecuteSandboxImpureIsNotUnique`, `TestIsolatedSandboxImpureIsNotUnique`. ∎
 
+### Theorem M11 (four-DSL orthogonality)
+
+Assume H1–H4 and a builtin chain. Let \(W\) and \(W'\) be workflows that agree on snapshot payload, time-slice, and execution chain, and differ only in provisioning and routing fields. Then \(\mathrm{id}(s)=\mathrm{id}(s')\) and the hash worldlines coincide.
+
+**Proof.** `hash.SnapshotID` is a function of \((\tau,x)\) only. `Engine.Run` uses provisioning solely as the Picard-gate sandbox policy; builtins skip that gate. Routing fields are not read on the hot path. Therefore \(\Phi_{\mathrm{chain}}\) is independent of those axes. Changing the data payload changes \(\mathrm{id}(s)\). Test: `TestProvisioningOrthogonalToBuiltinWorldline`. ∎
+
 ### Theorem E1 (ensemble collapse)
 
 Let \(E=\{x_1,\ldots,x_N\}\) be distinct payloads, \(\mu\) uniform on \(E\). Then \(H_{\mathrm{ens}}(\mu)=\log_2 N\). After sealing a member \(x^*\in E\), the posterior is \(\delta_{x^*}\) and \(H_{\mathrm{ens}}=0\).

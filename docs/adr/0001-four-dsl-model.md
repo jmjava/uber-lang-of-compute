@@ -29,6 +29,11 @@ We adopt the four-DSL model as the foundational specification layer:
 - New compute environments (Pluggable Universes) require only new Provisioning + Data bindings; Execution and Routing DSLs remain stable
 - DSL schemas can evolve independently with versioned compatibility checks
 - Users must understand four concepts instead of one — mitigated by unified workflow examples in `specs/workflow-example.yaml`
+- For builtin chains, provisioning and routing mutations do not change snapshot identity or the hash worldline (theorem M11, `TestProvisioningOrthogonalToBuiltinWorldline`)
+
+- New compute environments (Pluggable Universes) require only new Provisioning + Data bindings; Execution and Routing DSLs remain stable
+- DSL schemas can evolve independently with versioned compatibility checks
+- Users must understand four concepts instead of one — mitigated by unified workflow examples in `specs/workflow-example.yaml`
 
 ## References
 

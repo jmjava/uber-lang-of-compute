@@ -16,6 +16,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M8 | Sandbox for contract-grade images | **proved** | `TestAllowDeterministicWithIsolatedSandbox`, `TestSandboxedContractCommandRequiresIsolation`, `TestExecuteSandboxIdentity` |
 | M9 | Tamper-evident Merkle-style replay spine | **proved** | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput`, `TestLinkIsDeterministicAndOrderSensitive` |
 | M10 | Isolation does not imply uniqueness | **proved** | `TestIsolatedSandboxImpureIsNotUnique`, `TestExecuteSandboxImpureIsNotUnique`, `TestIsolatedSandboxDoesNotImplyUniqueness` |
+| M11 | Four-DSL orthogonality for builtins | **proved** | `TestProvisioningOrthogonalToBuiltinWorldline` |
 
 ## Proof command
 

@@ -315,3 +315,58 @@ func TestIsolatedSandboxImpureIsNotUnique(t *testing.T) {
 		t.Fatal("isolated sandbox:impure must not be unique across independent evaluations")
 	}
 }
+
+func TestProvisioningOrthogonalToBuiltinWorldline(t *testing.T) {
+	run := func(t *testing.T, name string, mutate func(*types.Workflow)) *types.RunResult {
+		t.Helper()
+		s, err := store.Open(filepath.Join(t.TempDir(), name+".db"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer s.Close()
+		wf := loadTestWorkflow(t, "simple-domino-chain")
+		if mutate != nil {
+			mutate(wf)
+		}
+		result, err := engine.New(s).Run(wf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return result
+	}
+
+	baseline := run(t, "base", nil)
+	orthogonal := run(t, "prov", func(wf *types.Workflow) {
+		wf.Spec.Provisioning.StorePath = "/var/kbl/elsewhere/store.db"
+		wf.Spec.Provisioning.NodeLocal = !wf.Spec.Provisioning.NodeLocal
+		wf.Spec.Provisioning.SandboxNetworkNone = true
+		wf.Spec.Provisioning.SandboxReadOnlyRoot = true
+		wf.Spec.Routing.Universe = "credit"
+		wf.Spec.Routing.ComputeContextRef = "node-b"
+	})
+	if baseline.SnapshotID != orthogonal.SnapshotID {
+		t.Fatalf("snapshot ID must ignore provisioning/routing: %s vs %s", baseline.SnapshotID, orthogonal.SnapshotID)
+	}
+	if len(baseline.Entries) != len(orthogonal.Entries) {
+		t.Fatalf("entry count %d vs %d", len(baseline.Entries), len(orthogonal.Entries))
+	}
+	for i, e := range baseline.Entries {
+		o := orthogonal.Entries[i]
+		if e.InputHash != o.InputHash || e.OutputHash != o.OutputHash {
+			t.Fatalf("entry %d hashes changed after provisioning/routing mutation", i)
+		}
+	}
+	if baseline.FinalOutput != orthogonal.FinalOutput {
+		t.Fatal("final output must ignore provisioning/routing")
+	}
+	if baseline.HeadLink != orthogonal.HeadLink {
+		t.Fatal("spine head must ignore provisioning/routing")
+	}
+
+	shifted := run(t, "data", func(wf *types.Workflow) {
+		wf.Spec.Snapshot.Spec.Source.Inline["value"] = 43
+	})
+	if shifted.SnapshotID == baseline.SnapshotID {
+		t.Fatal("changing the data DSL must change the snapshot ID")
+	}
+}
