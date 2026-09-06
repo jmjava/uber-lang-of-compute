@@ -177,6 +177,12 @@ Assume H5. Writing \(M(s,d,h)=y'\) when \(M(s,d,h)=y\) already and \(y'\neq y\) 
 
 **Proof.** `SaveResult` looks up the key; `refuseMemoConflict` returns `ErrMemoConflict` on disagreement. Tests: `TestMemoRejectsConflictingOutputForSameKey`. ∎
 
+### Theorem M19 (collision-safe truncation)
+
+If `WorkflowName` exceeds 63 characters, the suffix is a content hash of the full name, not its length. Equal-length distinct names therefore remain distinct after truncation.
+
+**Proof.** SHA-256 of the full name, 8 hex characters, prefix truncated to fit. Test: `TestWorkflowNameTruncationDistinguishesEqualLength`. ∎
+
 ### Theorem F1 (windowed self-similarity)
 
 Let \(U(d,k,v)=\mathrm{Unfold}(d,k,\mathrm{root},v)\) with arity \(k\ge 1\) and additive child partition. Then \(\mathrm{Coarsen}(U(d,k,v))\) is shape-equal and value-equal to \(U(d-1,k,v)\) for all \(d\ge 1\).

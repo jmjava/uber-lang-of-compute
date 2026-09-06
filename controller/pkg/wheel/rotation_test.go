@@ -1,6 +1,7 @@
 package wheel_test
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -140,6 +141,19 @@ func TestLookaheadWrapsToNextSlice(t *testing.T) {
 	}
 	if slot.State.CurrentTimeSlice != start.Add(24*time.Hour) {
 		t.Fatalf("wrap should advance the slice, got %v", slot.State.CurrentTimeSlice)
+	}
+}
+
+func TestWorkflowNameTruncationDistinguishesEqualLength(t *testing.T) {
+	a := strings.Repeat("a", 40)
+	b := strings.Repeat("b", 40)
+	left := wheel.WorkflowName("wheel", a, "20250415t000000z")
+	right := wheel.WorkflowName("wheel", b, "20250415t000000z")
+	if len(left) > 63 || len(right) > 63 {
+		t.Fatalf("truncated names exceed DNS label: %d %d", len(left), len(right))
+	}
+	if left == right {
+		t.Fatal("equal-length long names must not collide")
 	}
 }
 

@@ -1,6 +1,8 @@
 package wheel
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -141,9 +143,9 @@ func WorkflowName(wheelName, contextName, timeSlice string) string {
 	if len(base) <= 63 {
 		return base
 	}
-	// Truncate preserving suffix uniqueness via hash of full name
-	hash := fmt.Sprintf("%x", len(base))
-	return base[:63-len(hash)] + hash
+	sum := sha256.Sum256([]byte(base))
+	suffix := hex.EncodeToString(sum[:4])
+	return base[:63-len(suffix)] + suffix
 }
 
 // RequeueDelay returns how long to wait before checking an in-flight workflow again.
