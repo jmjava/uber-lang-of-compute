@@ -3,6 +3,8 @@ package executor
 import (
 	"fmt"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/builtin"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/executor/julia"
@@ -37,8 +39,13 @@ func Execute(cfg Config, command, inputJSON string) (string, error) {
 	case strings.HasPrefix(command, "python:"):
 		return "", fmt.Errorf("python execution is not implemented yet (command %q)", command)
 	case strings.HasPrefix(command, "sandbox:"):
-		// Isolated contract-grade stub: evidence H2 inside a Faraday cage.
-		return builtin.Execute("builtin:"+strings.TrimPrefix(command, "sandbox:"), inputJSON)
+		name := strings.TrimPrefix(command, "sandbox:")
+		if name == "impure" {
+			// M10: isolation admits the command; it is still not a function.
+			return sandboxImpure()
+		}
+		// Isolated contract-grade stub: a Faraday cage, not a uniqueness proof.
+		return builtin.Execute("builtin:"+name, inputJSON)
 	default:
 		return "", fmt.Errorf("unsupported command %q (expected builtin:, julia:, or python: prefix)", command)
 	}
@@ -47,6 +54,13 @@ func Execute(cfg Config, command, inputJSON string) (string, error) {
 // ExecuteDefault runs a command using environment-based configuration.
 func ExecuteDefault(command, inputJSON string) (string, error) {
 	return Execute(DefaultConfig(), command, inputJSON)
+}
+
+var impureSeq atomic.Uint64
+
+func sandboxImpure() (string, error) {
+	n := impureSeq.Add(1)
+	return fmt.Sprintf(`{"t":%d,"n":%d}`, time.Now().UnixNano(), n), nil
 }
 
 // PrefixForEngine maps PluggableUniverse executionEngine.type to the domino command prefix.

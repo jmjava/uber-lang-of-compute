@@ -18,6 +18,8 @@ func (p SandboxPolicy) Isolated() bool {
 
 // AllowDeterministic is the Picard gate with an isolation exception:
 // builtin/julia pass; contract-grade passes only inside an isolated sandbox.
+// Isolation is a cage, not a uniqueness proof: sandbox:impure is admitted
+// and is still not a function of its inputs (M10).
 func AllowDeterministic(command string, sandbox SandboxPolicy) error {
 	if CommandRegularity(command) != RegularityContract {
 		return nil

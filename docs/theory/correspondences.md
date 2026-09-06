@@ -42,7 +42,7 @@ This is the same methodological move as an artificial neuron (McCulloch & Pitts 
 
 - \(F=ma\), symplectic structure, energy conservation, continuous time, or time-reversal. The replay log is not a reversed integration; it is an audit of a forward unique path.
 
-**Loose linkage (nature-inspired).** Uniqueness is *conditional on regularity*, copying Picard–Lindelöf rather than claiming every vector field is Lipschitz. `CommandRegularity` grades that hypothesis: builtins are theorem-grade, Julia is a pinned discretization (shadowing of a discrete map, not uniqueness on \(\mathbb{R}\)), containers are a contract (`deterministic: true`). Tests: `TestCommandRegularityLadder`, D1, D2.
+**Loose linkage (nature-inspired).** Uniqueness is *conditional on regularity*, copying Picard–Lindelöf rather than claiming every vector field is Lipschitz. `CommandRegularity` grades that hypothesis: builtins are theorem-grade, Julia is a pinned discretization (shadowing of a discrete map, not uniqueness on \(\mathbb{R}\)), containers are a contract (`deterministic: true`). An isolated sandbox is a Faraday cage: it admits the contract, it does not make an impure command unique (`sandbox:impure`, M10). Tests: `TestCommandRegularityLadder`, `TestIsolatedSandboxImpureIsNotUnique`, D1, D2.
 
 ---
 

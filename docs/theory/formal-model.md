@@ -40,7 +40,7 @@ The **engine state** relevant to one workflow is \((s, D, M, Y)\) where \(Y\) ma
 | H5 | **Memo integrity.** \(M(s,d,h)=y\) only if some prior execution of \(f_d\) on an input hashing to \(h\) produced \(y\). | M1 |
 | H6 | **Replica Cauchy condition.** Materialize/CDC copy only when \(\sigma=\mathrm{sealed}\). | R1 |
 
-H2 is graded, not binary. `CommandRegularity` classifies commands: builtins discharge H2 as a theorem; Julia discharges it as uniqueness of a *pinned discretization* (shadowing of a discrete map); container images leave it as a Picard-style regularity *contract*. See [nature-inspired.md](nature-inspired.md).
+H2 is graded, not binary. `CommandRegularity` classifies commands: builtins discharge H2 as a theorem; Julia discharges it as uniqueness of a *pinned discretization* (shadowing of a discrete map); container images leave it as a Picard-style regularity *contract*. Isolation (`SandboxPolicy.Isolated`) admits a contract-grade command; it does **not** discharge H2. Test: `TestIsolatedSandboxImpureIsNotUnique` (M10). See [nature-inspired.md](nature-inspired.md).
 
 ---
 
@@ -108,6 +108,12 @@ Assume H2, H4, H5. A memo hit for \((\mathrm{id}(s),d,h)\) yields the same outpu
 Assume H4. Let \(L_0=\mathrm{id}(s)\) and \(L_k=\mathrm{SHA256}(L_{k-1}\Vert h_k^{\mathrm{in}}\Vert h_k^{\mathrm{out}})\). A complete run writes \(L_k\) on each replay entry. `VerifySpine` accepts the log iff every stored link equals this recurrence.
 
 **Proof.** Inspection of `attachSpine` and `VerifySpine`: each entry's `PrevLink` is the previous \(L\), and `Link` is `hash.Link` of that prefix plus the two hashes. Mutating an output hash without recomputing subsequent links fails the equality. This is a hash chain (Merkle spine), not a Merkle tree and not a consensus ledger. ∎
+
+### Proposition M10 (isolation does not imply H2)
+
+An isolated sandbox is a sufficient *admission* condition for a contract-grade command, not a sufficient *uniqueness* condition. `sandbox:impure` is admitted by `AllowDeterministic` when `SandboxPolicy.Isolated` holds, and two independent evaluations need not agree.
+
+**Proof.** `AllowDeterministic` returns nil for any contract-grade command under isolation, without inspecting the command body. `sandboxImpure` returns a wall-clock / counter payload that is not a function of the input string. Tests: `TestIsolatedSandboxDoesNotImplyUniqueness`, `TestExecuteSandboxImpureIsNotUnique`, `TestIsolatedSandboxImpureIsNotUnique`. ∎
 
 ### Theorem E1 (ensemble collapse)
 

@@ -288,3 +288,30 @@ func TestReplaySpineIsTamperEvident(t *testing.T) {
 		t.Fatal("mutating an output hash must fail VerifySpine")
 	}
 }
+
+func TestIsolatedSandboxImpureIsNotUnique(t *testing.T) {
+	runOnce := func(t *testing.T, name string) string {
+		t.Helper()
+		s, err := store.Open(filepath.Join(t.TempDir(), name+".db"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer s.Close()
+		wf := loadTestWorkflow(t, "simple-domino-chain")
+		wf.Spec.Execution.Chain = []string{"step-one"}
+		wf.Spec.Dominos[0].Spec.Command = "sandbox:impure"
+		wf.Spec.Provisioning.SandboxNetworkNone = true
+		wf.Spec.Provisioning.SandboxReadOnlyRoot = true
+		result, err := engine.New(s).Run(wf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return result.Entries[0].Output
+	}
+
+	a := runOnce(t, "a")
+	b := runOnce(t, "b")
+	if a == b {
+		t.Fatal("isolated sandbox:impure must not be unique across independent evaluations")
+	}
+}

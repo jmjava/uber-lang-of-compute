@@ -10,6 +10,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | H2c | Container commands are functions | Contract | `CommandRegularity` → `RegularityContract` | Lipschitz for arbitrary images |
 | M1 | Deterministic workflows reject contract-grade commands | Theorem of the gate | `TestDeterministicWorkflowRejectsContractGradeCommand` | Purity of the image itself |
 | M8 | Isolated sandbox admits contract-grade stubs | Theorem of the cage | `TestSandboxedContractCommandRequiresIsolation` | Arbitrary container images / real kernel namespaces |
+| M10 | Isolated `sandbox:impure` is not unique | Falsification of cage⇒H2 | `TestIsolatedSandboxImpureIsNotUnique`, `TestExecuteSandboxImpureIsNotUnique` | Real kernel namespaces / arbitrary images |
 | M1/M2 | Memo hit ≡ recompute observationally | Theorem under H2–H5 | `TestTheoremM1…` | — |
 | M9 | Replay log is a hash chain from the snapshot ID | Theorem of the spine | `TestReplaySpineIsTamperEvident`, `TestVerifySpineRejectsTamperedOutput` | Full Merkle DAG / blockchain |
 | Cost | Evaluations × unit price in USD | Bookkeeping mimic | `TestChargeUSDIsEvaluationsTimesPrice`, `RunResult.WorkCostUSD` | \(kT\ln 2\) / joules |

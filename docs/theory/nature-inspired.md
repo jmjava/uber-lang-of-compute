@@ -46,7 +46,7 @@ Newtonian uniqueness is *conditional*: Picard–Lindelöf needs a Lipschitz fiel
 - `julia:*` → pinned discretization (the map is the floating-point program, not \(\mathbb{R}\))
 - anything else → contract
 
-We copy nature's *conditional well-posedness*, not a proof that every container is a function. Tests: `TestCommandRegularityLadder`.
+We copy nature's *conditional well-posedness*, not a proof that every container is a function. An isolated sandbox is the Faraday-cage analogue: it is an admission condition, not Lipschitz. `sandbox:impure` is allowed inside the cage and is still not unique (M10). Tests: `TestCommandRegularityLadder`, `TestIsolatedSandboxImpureIsNotUnique`.
 
 ### Julia bit-identity — shadowing, copied
 

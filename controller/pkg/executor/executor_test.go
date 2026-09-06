@@ -27,6 +27,20 @@ func TestExecuteSandboxIdentity(t *testing.T) {
 	}
 }
 
+func TestExecuteSandboxImpureIsNotUnique(t *testing.T) {
+	a, err := executor.ExecuteDefault("sandbox:impure", `{}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := executor.ExecuteDefault("sandbox:impure", `{}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a == b {
+		t.Fatal("sandbox:impure must not be a function of its inputs")
+	}
+}
+
 func TestExecuteUnsupportedCommand(t *testing.T) {
 	_, err := executor.ExecuteDefault("lua:print", `{}`)
 	if err == nil || !strings.Contains(err.Error(), "unsupported command") {

@@ -57,6 +57,19 @@ func TestAllowDeterministicWithIsolatedSandbox(t *testing.T) {
 	}
 }
 
+func TestIsolatedSandboxDoesNotImplyUniqueness(t *testing.T) {
+	cage := theory.SandboxPolicy{NetworkNone: true, ReadOnlyRoot: true}
+	if err := theory.AllowDeterministic("sandbox:impure", cage); err != nil {
+		t.Fatal("isolation admits the impure stub")
+	}
+	if theory.CommandRegularity("sandbox:impure") != theory.RegularityContract {
+		t.Fatal("sandbox:impure stays contract-grade; the cage is not Lipschitz")
+	}
+	if err := theory.RequireDeterministic("sandbox:impure"); err == nil {
+		t.Fatal("without isolation the Picard gate still rejects")
+	}
+}
+
 func TestLogicalWorkReplaySaves(t *testing.T) {
 	// Nature-inspired Landauer/Bennett: recording intermediates means the
 	// second pass pays fewer irreversible evaluations. Not a joule claim.
