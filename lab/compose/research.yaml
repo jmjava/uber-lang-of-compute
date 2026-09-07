@@ -1,0 +1,14 @@
+# Research-test TSDB (no Kind). From repo root:
+#   docker compose -f lab/compose/research.yaml up --build
+services:
+  tsdb:
+    build:
+      context: ../..
+      dockerfile: controller/docker/kbl-tsdb/Dockerfile
+    ports:
+      - "9090:9090"
+    command: ["--addr=:9090", "--data-dir=/var/kbl/tsdb"]
+    volumes:
+      - tsdb-data:/var/kbl/tsdb
+volumes:
+  tsdb-data:

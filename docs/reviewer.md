@@ -18,6 +18,15 @@ That builds `kbl-compute` and `kbl-review`, runs the proof tests for the walkthr
 
 Exit code 0 means every step below held. The JSON report on stdout is the receipt.
 
+To spin the same assets for future research (toolchain + live `kbl-tsdb` on `:9090`):
+
+```bash
+make research-up
+make research-test
+```
+
+See [research-env.md](research-env.md).
+
 ## What it proves, in order
 
 | Step | What a reviewer should see |

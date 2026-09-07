@@ -1,0 +1,29 @@
+name: Research proofs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: controller/go.sum
+
+      - name: CGO toolchain
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc libc6-dev
+
+      - name: Theory prove
+        run: make theory-prove
+
+      - name: Workshop receipt
+        run: make review
+
+      - name: Research environment smoke
+        run: make research-test

@@ -25,7 +25,8 @@ flowchart LR
 
 | Path | Requires |
 |------|----------|
-| CLI only | Go 1.22+, `make build` |
+| CLI only | Go 1.23+, gcc (CGO sqlite), `make build` |
+| Research env | `make research-up` — binaries + `kbl-tsdb :9090` ([research-env.md](research-env.md)) |
 | Julia examples | Julia 1.10+, `julia --project=controller/julia -e 'using Pkg; Pkg.instantiate()'` |
 | Kind lab | Docker, Kind, kubectl, Kustomize (~64 GiB RAM / 20 CPU recommended) |
 
@@ -58,7 +59,14 @@ Repeatable engine path a referee can run in one command (sealed snapshot → bui
 make review
 ```
 
-See [reviewer.md](reviewer.md).
+Spin the test assets (Go binaries + live TSDB) so later research does not rebuild the world:
+
+```bash
+make research-up
+make research-test
+```
+
+See [reviewer.md](reviewer.md) and [research-env.md](research-env.md).
 
 ### Julia finance chain (local)
 

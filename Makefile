@@ -1,4 +1,4 @@
-.PHONY: build test theory-prove review tidy clean docker-domino-runner docker-domino-runner-julia \
+.PHONY: build test theory-prove review research-up research-down research-test tidy clean docker-domino-runner docker-domino-runner-julia \
 	docker-kbl-controller docker-kbl-tsdb lab-up lab-down lab-volcano-install lab-openkruise-install \
 	lab-verify-volcano lab-setup-wsl-home cdk-synth
 
@@ -18,6 +18,18 @@ review: build
 	cd controller && go build -o bin/kbl-review ./cmd/kbl-review
 	cd controller && go test ./pkg/review/ ./pkg/engine/ ./pkg/store/ ./pkg/events/ ./pkg/cdc/ ./pkg/replica/ ./internal/controller/ -count=1
 	./controller/bin/kbl-review --workflow examples/finance-curve-snapshot/workflow.yaml
+
+research-up:
+	chmod +x lab/scripts/research-*.sh
+	./lab/scripts/research-up.sh
+
+research-down:
+	chmod +x lab/scripts/research-down.sh
+	./lab/scripts/research-down.sh
+
+research-test:
+	chmod +x lab/scripts/research-*.sh
+	./lab/scripts/research-smoke.sh
 
 docker-domino-runner:
 	docker build -f controller/docker/domino-runner/Dockerfile \

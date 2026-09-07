@@ -1,0 +1,15 @@
+{
+  "name": "kbl-research",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "install": "bash lab/scripts/research-install.sh",
+  "start": "KBL_RESEARCH_FOREGROUND=1 bash lab/scripts/research-start.sh",
+  "ports": [
+    {
+      "name": "kbl-tsdb",
+      "port": 9090
+    }
+  ]
+}

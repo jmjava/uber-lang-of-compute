@@ -16,7 +16,7 @@ import (
 
 func main() {
 	workflowPath := flag.String("workflow", "", "Path to workflow YAML file")
-	storePath := flag.String("store", "/tmp/kbl-store/cache.db", "Node-local SQLite store path")
+	storePath := flag.String("store", "/tmp/kbl-store/cache.db", "SQLite path or TSDB http(s) endpoint; overrides workflow provisioning.storePath when set")
 	replayLogPath := flag.String("replay-log", "", "Write replay log JSON to this path (default: stdout)")
 	flag.Parse()
 
@@ -31,7 +31,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	if wf.Spec.Provisioning.StorePath != "" {
+	storeExplicit := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "store" {
+			storeExplicit = true
+		}
+	})
+	if !storeExplicit && wf.Spec.Provisioning.StorePath != "" {
 		*storePath = wf.Spec.Provisioning.StorePath
 	}
 
