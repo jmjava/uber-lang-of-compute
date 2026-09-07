@@ -114,13 +114,13 @@ kubectl get vcjob -l kbl.io/volcano-demo=true
 ./lab/scripts/verify-volcano.sh
 ```
 
-### Verify OpenKruise path (Phase 28)
+### Verify OpenKruise path (Phase 28 / 36)
 
 ```bash
-kubectl get dchain julia-finance-openkruise -o wide
-kubectl get containerrecreaterequests.apps.kruise.io \
-  -l kbl.io/dominochain=julia-finance-openkruise
-kubectl logs -l kbl.io/openkruise-demo=true -c slot-2-compute-greeks
+kubectl get wf,dchain -l kbl.io/openkruise-demo=true
+kubectl get imagepulljobs.apps.kruise.io -l kbl.io/openkruise-demo=true
+kubectl get imagepulljobs.apps.kruise.io -l kbl.io/dominochain
+kubectl logs -l kbl.io/openkruise-demo=true -c slot-2-julia-greeks
 ```
 
 ### Tear down
@@ -158,7 +158,7 @@ For container runtimes (`kubernetes-init`, `openkruise`, `volcano-init`), apply 
 |---------|-------------|----------|
 | `local` (default) | Dev, CI, no cluster | `Workflow/finance-lab` |
 | `kubernetes-init` | Standard K8s, init-container chain | `dominochain-init.yaml` |
-| `openkruise` | Hot-swap slots, player-piano | `DominoChain/julia-finance-openkruise` |
+| `openkruise` | ImagePullJob + runner slots | `Workflow/julia-finance-openkruise` |
 | `volcano-init` | Batch scheduler, gang scheduling | `ComputeWheel/julia-finance-wheel` |
 
 Full comparison: [provisioning-runtimes.md](provisioning-runtimes.md). Diagrams: [diagrams.md §5–8](diagrams.md#5-provisioning-runtimes-compared).

@@ -82,7 +82,7 @@ section "Quick checks"
 echo "  scheduler=volcano on pods above confirms Volcano batch path"
 echo "  compact desk-day book: rates-desk-wheel (ny-rates → ln-rates) → Workflow → DominoChain → VCJob"
 echo "  compact Julia wheel: julia-finance-wheel (default-context, julia:greeks) on the same worker"
-echo "  OpenKruise runtime: julia-finance-openkruise (runner slots on kruise-managed cluster)"
+echo "  OpenKruise runtime: julia-finance-openkruise (ImagePullJob + runner slots)"
 echo "  burst demo: kubectl get dchain -l kbl.io/volcano-burst=true"
 
 section "Julia finance wheel"
@@ -99,6 +99,8 @@ if kubectl -n kruise-system get deploy kruise-controller-manager &>/dev/null; th
   kubectl get wf julia-finance-openkruise -o wide 2>/dev/null || echo "  (julia-finance-openkruise workflow not applied)"
   kubectl get dchain julia-finance-openkruise-dchain -o wide 2>/dev/null || \
     kubectl get dchain julia-finance-openkruise -o wide 2>/dev/null || echo "  (openkruise dchain not applied)"
+  kubectl get imagepulljobs.apps.kruise.io -l kbl.io/dominochain 2>/dev/null || \
+    kubectl get imagepulljobs.apps.kruise.io 2>/dev/null || true
   kubectl get pods -l kbl.io/openkruise-demo=true 2>/dev/null || true
 else
   echo "  (kruise-system not found — set KBL_LAB_OPENKURISE=1)"
@@ -128,6 +130,8 @@ if [[ "$STRICT" == "1" ]]; then
     fi
     echo "$phase" | grep -Eq 'Completed' \
       || fail "julia-finance-openkruise is not Completed"
+    kubectl get imagepulljobs.apps.kruise.io --no-headers 2>/dev/null | grep -q . \
+      || fail "no OpenKruise ImagePullJob created"
   fi
   echo ""
   echo "strict Volcano checks passed"

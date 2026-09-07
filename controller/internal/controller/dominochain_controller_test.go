@@ -458,6 +458,32 @@ func TestDominoChainOpenKruiseCompletes(t *testing.T) {
 		t.Fatalf("finalizer reconcile: %v", err)
 	}
 	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("create ImagePullJob reconcile: %v", err)
+	}
+
+	pull := &unstructured.Unstructured{}
+	pull.SetGroupVersionKind(dominochain.ImagePullJobGVK)
+	if err := cl.Get(context.Background(), types.NamespacedName{Name: "openkruise-chain-pull", Namespace: "default"}, pull); err != nil {
+		t.Fatalf("get ImagePullJob: %v", err)
+	}
+	var tooEarly corev1.Pod
+	if err := cl.Get(context.Background(), types.NamespacedName{Name: "openkruise-chain-chain", Namespace: "default"}, &tooEarly); err == nil {
+		t.Fatal("runner-slot pod must wait for ImagePullJob")
+	}
+	if err := unstructured.SetNestedField(pull.Object, int64(1), "status", "succeeded"); err != nil {
+		t.Fatalf("set succeeded: %v", err)
+	}
+	if err := unstructured.SetNestedField(pull.Object, int64(1), "status", "desired"); err != nil {
+		t.Fatalf("set desired: %v", err)
+	}
+	if err := unstructured.SetNestedField(pull.Object, int64(0), "status", "failed"); err != nil {
+		t.Fatalf("set failed: %v", err)
+	}
+	if err := cl.Update(context.Background(), pull); err != nil {
+		t.Fatalf("update ImagePullJob: %v", err)
+	}
+
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
 		t.Fatalf("create pod reconcile: %v", err)
 	}
 

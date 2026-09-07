@@ -211,11 +211,11 @@ flowchart TB
 
   DC -->|local via Workflow| LOC[engine in controller]
   DC -->|kubernetes-init| POD[Pod init chain]
-  DC -->|openkruise| OK[Pod + CRR per step]
+  DC -->|openkruise| OK[ImagePullJob then runner-slot Pod]
   DC -->|volcano-init| VJ[Volcano Job task]
 
   POD --> IC1[slot-0 init] --> IC2[slot-1 init] --> IC3[slot-2 init]
-  OK --> PH[placeholder slots] --> CRR1[CRR swap slot-0] --> CRR2[CRR swap slot-1]
+  OK --> PULL[ImagePullJob / kruise-daemon] --> SLOTS[N runner containers]
   VJ --> VQ[queue kbl-lab] --> VIC[init chain in task pod]
 ```
 
@@ -251,14 +251,19 @@ Environment per init container: `KBL_COMMAND`, `KBL_INPUT`, `KBL_OUTPUT`, option
 
 ## 7. OpenKruise runner-slot sequence
 
-Player-piano slots on an OpenKruise-enabled cluster (lab Phase 34; catalog refs Phase 35). OpenKruise 1.6 CRR cannot change image/env.
+Player-piano slots on an OpenKruise-enabled cluster (lab Phase 34; catalog refs Phase 35; ImagePullJob Phase 36). OpenKruise 1.6 CRR cannot change image/env.
 
 ```mermaid
 sequenceDiagram
   participant Ctrl as DominoChain reconciler
+  participant IPJ as ImagePullJob
+  participant Daemon as kruise-daemon
   participant Pod as Runner-slot Pod
 
-  Ctrl->>Pod: create N runner containers (julia image)
+  Ctrl->>IPJ: create ImagePullJob (julia runner)
+  IPJ->>Daemon: prefetch image on compute nodes
+  Daemon->>IPJ: succeeded >= desired
+  Ctrl->>Pod: create N runner containers
   Note over Pod: slot-0 writes /kbl/handoff/output-0.json
   Note over Pod: slot-1 waits, then interpolate
   Note over Pod: slot-2 waits, then greeks
@@ -268,13 +273,13 @@ sequenceDiagram
 
 ```mermaid
 flowchart TB
-  subgraph slots [Same Pod over time]
-    S0["slot-0: pause → runner → done"]
-    S1["slot-1: pause → runner → done"]
-    S2["slot-2: pause → runner → done"]
+  subgraph slots [Same Pod, file-wait handoff]
+    S0["slot-0: identity → output-0.json"]
+    S1["slot-1: interpolate → output-1.json"]
+    S2["slot-2: greeks → output-2.json"]
   end
   S0 --> S1 --> S2
-  H[/kbl/handoff emptyDir persists across swaps/]
+  H[/kbl/handoff emptyDir/]
   S0 --- H
   S1 --- H
   S2 --- H
@@ -396,7 +401,7 @@ flowchart TD
   CTRL -->|yes| VOL{Volcano demo stuck?}
   VOL -->|yes| FIX4[kubectl -n volcano-system get pods<br/>kubectl get vcjob,wf,wheel]
   VOL -->|no| OK{OpenKruise demo stuck?}
-  OK -->|yes| FIX5[kubectl -n kruise-system get pods<br/>kubectl get crr,pods -l kbl.io/openkruise-demo]
+  OK -->|yes| FIX5[kubectl -n kruise-system get pods<br/>kubectl get imagepulljobs,pods -l kbl.io/openkruise-demo]
   OK -->|no| DONE[Check dchain phase + controller logs]
 ```
 

@@ -51,6 +51,7 @@ Adopt **without wrapping** as `kbl.io` kinds:
 - Operators describe work as Snapshot + Domino + Wheel/Chain + Universe, same objects on NY, LN, Julia, and OpenKruise.
 - Runtime diversity stays a field on DominoChain / PluggableUniverse, not a growing CRD zoo.
 - Courseforge (Phase 32) and physics correspondence (Phase 33 / M1–M32) are independent; this phase does not reopen them.
+- Phase 36 uses OpenKruise **ImagePullJob** as a provisioning object, still not wrapped as a `kbl.io` kind ([ADR 0039](0039-openkruise-imagepulljob.md)).
 
 ## References
 

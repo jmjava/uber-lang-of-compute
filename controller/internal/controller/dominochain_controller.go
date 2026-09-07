@@ -179,6 +179,31 @@ func (r *DominoChainReconciler) reconcileInitChain(ctx context.Context, chain *k
 func (r *DominoChainReconciler) reconcileOpenKruise(ctx context.Context, chain *kblv1alpha1.DominoChain, logger interface {
 	Info(msg string, keysAndValues ...interface{})
 }) (ctrl.Result, error) {
+	images := r.builder().OpenKruisePullImages(chain)
+	for i, image := range images {
+		job := dominochain.BuildImagePullJob(chain, image, i)
+		if err := r.ensureImagePullJob(ctx, chain, job); err != nil {
+			return r.failChain(ctx, chain, err)
+		}
+
+		var live unstructured.Unstructured
+		live.SetGroupVersionKind(dominochain.ImagePullJobGVK)
+		if err := r.Get(ctx, client.ObjectKeyFromObject(job), &live); err != nil {
+			return ctrl.Result{}, err
+		}
+		if dominochain.IsImagePullJobFailed(&live) {
+			return r.failChain(ctx, chain, fmt.Errorf("openkruise ImagePullJob %s: %s", live.GetName(), dominochain.ImagePullJobStatusMessage(&live)))
+		}
+		if !dominochain.IsImagePullJobComplete(&live) {
+			chain.Status.Phase = kblv1alpha1.DominoChainPhaseRunning
+			chain.Status.Message = fmt.Sprintf("waiting for OpenKruise ImagePullJob %s (%s)", live.GetName(), image)
+			if err := r.Status().Update(ctx, chain); err != nil {
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+		}
+	}
+
 	pod := r.builder().BuildOpenKruisePod(chain)
 	if err := r.ensurePod(ctx, chain, pod); err != nil {
 		return r.failChain(ctx, chain, err)
@@ -374,6 +399,31 @@ func (r *DominoChainReconciler) ensureConfigMap(ctx context.Context, owner *kblv
 	}
 	existing.Data = cm.Data
 	return r.Update(ctx, &existing)
+}
+
+func (r *DominoChainReconciler) ensureImagePullJob(ctx context.Context, owner *kblv1alpha1.DominoChain, job *unstructured.Unstructured) error {
+	if owner.UID != "" {
+		job.SetOwnerReferences([]metav1.OwnerReference{{
+			APIVersion: "kbl.io/v1alpha1",
+			Kind:       "DominoChain",
+			Name:       owner.Name,
+			UID:        owner.UID,
+		}})
+	}
+
+	var existing unstructured.Unstructured
+	existing.SetGroupVersionKind(dominochain.ImagePullJobGVK)
+	err := r.Get(ctx, client.ObjectKeyFromObject(job), &existing)
+	if apierrors.IsNotFound(err) {
+		if err := r.Create(ctx, job); err != nil {
+			if meta.IsNoMatchError(err) {
+				return fmt.Errorf("openkruise ImagePullJob CRD not installed: %w", err)
+			}
+			return fmt.Errorf("create ImagePullJob: %w", err)
+		}
+		return nil
+	}
+	return err
 }
 
 func (r *DominoChainReconciler) ensureVolcanoJob(ctx context.Context, owner *kblv1alpha1.DominoChain, job *unstructured.Unstructured) error {

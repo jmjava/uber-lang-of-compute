@@ -7,7 +7,7 @@ In-cluster domino execution with emptyDir handoff between steps (ADR 0004 / 0007
 | Runtime | Description |
 |---------|-------------|
 | `kubernetes-init` | Init container daisy chain — works on any Kubernetes cluster |
-| `openkruise` | Placeholder pod + OpenKruise `ContainerRecreateRequest` hot-swap |
+| `openkruise` | ImagePullJob prefetch + runner-slot Pod (CRR 1.6 cannot change image/env) |
 | `local` | CLI/engine path (default for Workflow without `runtime`) |
 
 ## domino-runner
@@ -43,7 +43,7 @@ Requires [OpenKruise](https://openkruise.io/) installed:
 kubectl apply -f dominochain-openkruise.yaml
 ```
 
-The controller creates a placeholder pod and issues `ContainerRecreateRequest` objects to hot-swap each slot to `domino-runner`.
+The controller creates an OpenKruise `ImagePullJob` so `kruise-daemon` prefetches the runner image, then a runner-slot Pod. OpenKruise 1.6 CRR cannot change image or env, so the lab does not pause+CRR-swap.
 
 ## Workflow with container runtime
 

@@ -84,11 +84,11 @@ Example: [examples/julia-domino-chain/dominochain-init.yaml](../examples/julia-d
 
 ## `openkruise`
 
-One Pod with a **runner container per step**. Containers start together and serialize through a shared `emptyDir` handoff (`output-N.json`). OpenKruise 1.6 CRR cannot change image or env, so the lab does not use pause placeholders plus hot-swap.
+`kruise-daemon` **ImagePullJob** prefetches the runner image onto `spec.nodeSelector` nodes. After the job succeeds, one Pod runs a **runner container per step**. Containers start together and serialize through a shared `emptyDir` handoff (`output-N.json`). OpenKruise 1.6 CRR cannot change image or env, so the lab does not use pause placeholders plus hot-swap.
 
-**Use for:** Same-pod player-piano slots on an OpenKruise-enabled cluster.
+**Use for:** Same-pod player-piano slots on an OpenKruise-enabled cluster, with an actual OpenKruise CR (ImagePullJob).
 
-**Requires:** OpenKruise installed (`lab/scripts/install-openkruise.sh`).
+**Requires:** OpenKruise installed (`lab/scripts/install-openkruise.sh`). Missing ImagePullJob CRD fails the chain.
 
 ```yaml
 spec:
@@ -99,7 +99,7 @@ spec:
     - { name: load, command: julia:identity }
 ```
 
-Lab demo: `Workflow/julia-finance-openkruise` → `DominoChain/julia-finance-openkruise-dchain` from catalog Snapshot + Domino CRs (Phase 35).
+Lab demo: `Workflow/julia-finance-openkruise` → `DominoChain/julia-finance-openkruise-dchain` from catalog Snapshot + Domino CRs (Phase 35). Phase 36 emits `ImagePullJob` before the runner-slot Pod.
 
 ## `volcano-init`
 
@@ -181,3 +181,4 @@ See [getting-started.md](getting-started.md) and [lab/README.md](../lab/README.m
 - [ADR 0030 — Controller Volcano Emission](adr/0030-controller-volcano-emission.md)
 - [ADR 0031 — ComputeWheel Volcano Queue](adr/0031-computewheel-volcano-queue.md)
 - [ADR 0032 — OpenKruise Kind Lab](adr/0032-openkruise-kind-lab.md)
+- [ADR 0039 — OpenKruise ImagePullJob](adr/0039-openkruise-imagepulljob.md)

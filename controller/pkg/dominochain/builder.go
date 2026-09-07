@@ -12,18 +12,18 @@ import (
 )
 
 const (
-	HandoffMountPath  = "/kbl/handoff"
-	SnapshotMountPath = "/kbl/input"
-	HandoffVolumeName = "handoff"
+	HandoffMountPath   = "/kbl/handoff"
+	SnapshotMountPath  = "/kbl/input"
+	HandoffVolumeName  = "handoff"
 	SnapshotVolumeName = "snapshot"
-	PlaceholderImage  = "registry.k8s.io/pause:3.9"
+	PlaceholderImage   = "registry.k8s.io/pause:3.9"
 	DefaultRunnerImage = "ghcr.io/jmjava/kbl-domino-runner:latest"
 	// DefaultJuliaRunnerImage includes Julia + pre-instantiated controller/julia project (Phase 20).
 	DefaultJuliaRunnerImage = "ghcr.io/jmjava/kbl-domino-runner-julia:latest"
 	// JuliaProjectContainerPath is KBL_JULIA_PROJECT inside the Julia runner image.
 	JuliaProjectContainerPath = "/opt/kbl/julia"
-	LabelManagedBy    = "app.kubernetes.io/managed-by"
-	LabelDominoChain  = "kbl.io/dominochain"
+	LabelManagedBy            = "app.kubernetes.io/managed-by"
+	LabelDominoChain          = "kbl.io/dominochain"
 )
 
 // Builder constructs Kubernetes resources for domino chains.
@@ -152,7 +152,7 @@ func (b *Builder) BuildInitChainPod(chain *kblv1alpha1.DominoChain) *corev1.Pod 
 	return pod
 }
 
-// BuildOpenKruisePod returns a Pod with placeholder containers for hot-swap slots.
+// BuildOpenKruisePod returns a Pod with one runner container per step.
 func (b *Builder) BuildOpenKruisePod(chain *kblv1alpha1.DominoChain) *corev1.Pod {
 	podName := chain.Name + "-chain"
 	volumes := []corev1.Volume{
@@ -186,9 +186,9 @@ func (b *Builder) BuildOpenKruisePod(chain *kblv1alpha1.DominoChain) *corev1.Pod
 			Namespace: chain.Namespace,
 			Labels:    chainLabels(chain.Name),
 			Annotations: map[string]string{
-				"kbl.io/runtime":       string(kblv1alpha1.DominoChainRuntimeOpenKruise),
-				"kbl.io/runner-image":  b.runnerImage(chain),
-				"kbl.io/active-slots":  "2",
+				"kbl.io/runtime":      string(kblv1alpha1.DominoChainRuntimeOpenKruise),
+				"kbl.io/runner-image": b.runnerImage(chain),
+				"kbl.io/active-slots": "2",
 			},
 		},
 		Spec: corev1.PodSpec{

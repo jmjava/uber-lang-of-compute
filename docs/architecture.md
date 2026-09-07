@@ -175,8 +175,7 @@ Domino chains run on Kubernetes via `DominoChain.spec.runtime` (or `Workflow.spe
 | Runtime | Mechanism | Blog alignment |
 |---------|-----------|----------------|
 | `kubernetes-init` | Pod with sequential init containers | Standard domino chain |
-| `openkruise` | Runner-slot Pod (CRR 1.6 cannot change image/env) | Player-piano slots |
-| `volcano-init` | Volcano Job with init-container task | SyncSet / batch scheduling |
+| `openkruise` | ImagePullJob + runner-slot Pod (CRR 1.6 cannot change image/env) | Player-piano slots |
 | `volcano-init` | Volcano Job with init-container task | SyncSet / batch scheduling |
 
 See [provisioning-runtimes.md](./provisioning-runtimes.md) and [diagrams.md §5–8](./diagrams.md#5-provisioning-runtimes-compared) for visual runtime comparisons.
@@ -191,7 +190,7 @@ lab/scripts/up.sh
   → Volcano (optional) + OpenKruise (optional)
   → finance-lab Workflow (local engine)
   → julia-finance-wheel ComputeWheel (volcano-init)
-  → julia-finance-openkruise DominoChain (openkruise)
+  → julia-finance-openkruise Workflow → DominoChain (ImagePullJob + runner slots)
 ```
 
 TSDB pins to the Data Pond worker (`kbl.io/tsdb-node=true`). See [lab/README.md](../lab/README.md) and [diagrams.md §4](./diagrams.md#4-kind-lab-topology).
@@ -211,12 +210,13 @@ TSDB pins to the Data Pond worker (`kbl.io/tsdb-node=true`). See [lab/README.md]
 
 ## Hot-Swapped Dominos
 
-OpenKruise daisy-chain pods are **implemented** (Phase 4, compact lab Phase 34):
+OpenKruise daisy-chain pods are **implemented** (Phase 4, compact lab Phase 34, ImagePullJob Phase 36):
 
+- OpenKruise `ImagePullJob` prefetches the runner image via `kruise-daemon` (fail closed if the CRD is missing)
 - One Pod with one runner container per domino slot (Julia or builtin image)
 - Slots serialize through `emptyDir` handoff files (`output-N.json`); later slots wait for earlier output
 - OpenKruise 1.6 ContainerRecreateRequest cannot change image or env, so the lab does not pause+CRR-swap
-- `kruise-controller-manager` + KruiseDaemon still install with the lab
+- `kruise-controller-manager` + KruiseDaemon install with the lab
 
 Volcano batch scheduling (`volcano-init`) provides an alternative provisioning path for time-sliced batch work via ComputeWheel.
 

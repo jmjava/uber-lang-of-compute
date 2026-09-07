@@ -18,20 +18,20 @@ Phases 25–27 added Volcano to the lab with install scripts and end-to-end demo
 
 - Installs Helm 3 if missing
 - `helm upgrade --install kruise openkruise/kruise` pinned to `KBL_OPENKURISE_VERSION` (default `1.6.4`)
-- `featureGates=KruiseDaemon=false` and `manager.replicas=1` for Kind resource footprint
+- `featureGates=KruiseDaemon=true,ImagePullJobGate=true` and `manager.replicas=1` for Kind
 - Waits for `kruise-controller-manager` in `kruise-system`
 
 Skip with `KBL_LAB_OPENKURISE=0` in `up.sh`.
 
 ### 2. Lab demo manifest
 
-`lab/manifests/openkruise/dominochain-julia-finance.yaml`:
+`lab/manifests/openkruise/workflow-julia-finance.yaml`:
 
-- `DominoChain` `julia-finance-openkruise` with `runtime: openkruise`
-- Julia finance chain (`julia:identity` → `julia:interpolate` → `julia:greeks`)
+- `Workflow` `julia-finance-openkruise` with `runtime: openkruise` (catalog Snapshot + Domino refs)
+- Child `DominoChain` `julia-finance-openkruise-dchain`
 - `runnerImage: kbl-domino-runner-julia:lab`, `nodeSelector: kbl.io/lab-role=compute`
 
-Controller creates placeholder Pod + sequential CRRs; no static manifests beyond the DominoChain CR.
+Controller creates an OpenKruise **ImagePullJob**, then a runner-slot Pod. OpenKruise 1.6 CRR cannot change image/env.
 
 ### 3. Lab wiring
 
@@ -39,9 +39,9 @@ Controller creates placeholder Pod + sequential CRRs; no static manifests beyond
 
 ## Consequences
 
-- Lab validates both batch (Volcano) and hot-swap (OpenKruise) provisioning paths on the same multi-node Kind cluster
 - Helm is required for OpenKruise install (auto-installed by script if absent)
-- CRR webhook must be healthy before domino chains reconcile; install script waits for controller-manager
+- Compact lab `runtime: openkruise` uses **ImagePullJob** (Phase 36) then runner-slot Pods. CRR 1.6 cannot change image/env, so the reconciler does not emit CRRs.
+- ImagePullJob CRD must be present; missing CRD fails the chain (fail closed)
 - ComputeWheel + openkruise per time slice remains future work (apply DominoChain or Workflow with `runtime: openkruise` today)
 
 ## References

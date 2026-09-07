@@ -66,13 +66,13 @@ HELM_ARGS=(
   --wait
   --timeout 5m
   --set manager.replicas=1
-  --set featureGates="KruiseDaemon=true"
+  --set featureGates="KruiseDaemon=true\,ImagePullJobGate=true"
 )
 if [[ "$KIND_CLUSTER" == "1" ]]; then
   HELM_ARGS+=(--set manager.image.pullPolicy=IfNotPresent)
 fi
 
-echo "Installing OpenKruise ${OPENKURISE_VERSION} (KruiseDaemon on — CRR requires it)..."
+echo "Installing OpenKruise ${OPENKURISE_VERSION} (KruiseDaemon + ImagePullJobGate on)..."
 helm upgrade --install "${RELEASE_NAME}" openkruise/kruise "${HELM_ARGS[@]}"
 
 echo "Waiting for kruise-controller-manager..."

@@ -81,6 +81,7 @@ All ADRs: [docs/README.md#adrs-by-topic](docs/README.md#adrs-by-topic). Foundati
 | **Phase 33** | Physics correspondence layer — formal model, ensemble entropy, causal past, windowed aggregation (F1), sealed-only replica/CDC, 128-bit snapshot IDs ([docs/theory](docs/theory/README.md), [ADR 0037](docs/adr/0037-physics-correspondence-layer.md)) |
 | **Phase 34** | Compact Kind Julia + OpenKruise — rates desk-day wheel stays; same worker also runs `julia-finance-wheel` and `julia-finance-openkruise` (**verified**) |
 | **Phase 35** | CRD/operator standardization — catalog Snapshot+Domino CRs, PluggableUniverse selects runtime/image, fail-closed admission; **no new runtime CRDs** ([ADR 0038](docs/adr/0038-crd-operator-standardization.md)) (**verified**) |
+| **Phase 36** | OpenKruise ImagePullJob — `runtime: openkruise` prefetches the runner image via `kruise-daemon`, then starts runner-slot pods ([ADR 0039](docs/adr/0039-openkruise-imagepulljob.md)) (**verified**) |
 
 ## Core Concepts
 

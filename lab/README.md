@@ -89,7 +89,7 @@ If upgrading from an older single-node lab cluster, delete and recreate:
 | Queue `kbl-lab` | cluster | Volcano queue (profile-sized CPU/memory) |
 | ComputeWheel `julia-finance-wheel` | `default` | **2 contexts** (`compute-a` → `compute-b`), `volcanoQueue: kbl-lab`, `preProvisionNext` |
 | DominoChain `volcano-burst-a/b` | `default` | Parallel VCJobs on different workers (home/default profile) |
-| DominoChain `julia-finance-openkruise` | `default` | `runtime: openkruise` Julia runner-slot chain (OpenKruise installed) |
+| Workflow `julia-finance-openkruise` | `default` | `runtime: openkruise` — ImagePullJob then Julia runner-slot chain |
 
 Images are built locally as `*:lab` and loaded into Kind (`kind load docker-image`).
 
@@ -142,10 +142,11 @@ kubectl apply -f examples/julia-domino-chain/dominochain-init.yaml
 
 See [ADR 0031](../docs/adr/0031-computewheel-volcano-queue.md). Pipeline diagram: [diagrams.md §8](../docs/diagrams.md#8-volcano-batch-path-lab-demo).
 
-The compact OpenKruise demo installs kruise-manager and applies a **DominoChain** with `runtime: openkruise`. OpenKruise CRR 1.6 cannot change image or env, so the pod starts Julia runner slots that serialize through a shared handoff volume ([ADR 0032](../docs/adr/0032-openkruise-kind-lab.md)).
+The compact OpenKruise demo installs kruise-manager and applies a **Workflow** with `runtime: openkruise`. The controller creates an OpenKruise **ImagePullJob** (kruise-daemon prefetches the Julia runner), then a runner-slot Pod. OpenKruise CRR 1.6 cannot change image or env, so slots serialize through a shared handoff volume ([ADR 0032](../docs/adr/0032-openkruise-kind-lab.md), [ADR 0039](../docs/adr/0039-openkruise-imagepulljob.md)).
 
 ```bash
-kubectl logs -l kbl.io/openkruise-demo=true -c slot-2-compute-greeks
+kubectl get imagepulljobs.apps.kruise.io
+kubectl logs -l kbl.io/openkruise-demo=true -c slot-2-julia-greeks
 ```
 
 ## Layout

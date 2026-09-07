@@ -40,7 +40,7 @@ rules:
     resources: [leases]
     verbs: [get, list, watch, create, update, patch, delete]
   - apiGroups: [apps.kruise.io]
-    resources: [containerrecreaterequests]
+    resources: [containerrecreaterequests, imagepulljobs]
     verbs: [get, list, watch, create, update, patch, delete]
   - apiGroups: [batch.volcano.sh]
     resources: [jobs]

@@ -25,13 +25,13 @@ The [jmenke.blogspot.com](https://jmenke.blogspot.com/) series describes four DS
 |--------------|---------------|
 | Execution DSL | `Workflow`, `Domino`, `DominoChain` CRDs |
 | Data DSL | `Snapshot`, node-local TSDB/SQLite, sealed snapshots |
-| Provisioning DSL | DominoChain runtimes, Kind lab, Volcano queue, OpenKruise CRR |
+| Provisioning DSL | DominoChain runtimes, Kind lab, Volcano queue, OpenKruise ImagePullJob |
 | Routing DSL | `PluggableUniverse`, `Multiverse`, `ComputeContext` — multiple KBL fabrics coordinate **event-driven via Kafka**, not controller RPC ([architecture § Multiverse communication](architecture.md#multiverse-communication)) |
 | Ferris Wheel / time slices | `ComputeWheel` reconciler ([ADR 0006](adr/0006-compute-wheel-rotation.md)) |
 | Player-piano scheduling | `preProvisionNext` on ComputeWheel |
 | Data Pond | Node-local TSDB + `kbl.io/tsdb-node` worker pin in Kind lab |
 | Volcano SyncSet / batch | `runtime: volcano-init`, VCJob emission ([ADR 0030](adr/0030-controller-volcano-emission.md)) |
-| Hot-swapped dominos | `runtime: openkruise`, ContainerRecreateRequest ([ADR 0007](adr/0007-hot-swapped-dominos-implementation.md)) |
+| Hot-swapped dominos | `runtime: openkruise`, ImagePullJob + runner-slot Pod ([ADR 0007](adr/0007-hot-swapped-dominos-implementation.md), [ADR 0039](adr/0039-openkruise-imagepulljob.md)) |
 
 ## Examples by topic
 
@@ -100,6 +100,7 @@ Skip components: `KBL_LAB_VOLCANO=0`, `KBL_LAB_OPENKURISE=0`. See [lab/README.md
 - [0036 Courseforge Integration (exploration)](adr/0036-courseforge-integration-exploration.md)
 - [0037 Physics Correspondence Layer](adr/0037-physics-correspondence-layer.md)
 - [0038 CRD/operator standardization (after Julia + OpenKruise)](adr/0038-crd-operator-standardization.md)
+- [0039 OpenKruise ImagePullJob](adr/0039-openkruise-imagepulljob.md)
 
 ## Explorations
 
@@ -123,6 +124,7 @@ Full phase table lives in the [root README](../README.md#roadmap). Recent phases
 | 33 | Physics correspondence layer ([theory/](theory/README.md), [ADR 0037](adr/0037-physics-correspondence-layer.md)) |
 | 34 | Compact Kind: desk-day + Julia volcano wheel + OpenKruise (**verified**) |
 | 35 | Standardize on existing `kbl.io` CRDs ([ADR 0038](adr/0038-crd-operator-standardization.md)) (**verified**) |
+| 36 | OpenKruise ImagePullJob ([ADR 0039](adr/0039-openkruise-imagepulljob.md)) (**verified**) |
 
 ## Visual reference
 
