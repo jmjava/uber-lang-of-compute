@@ -17,7 +17,7 @@ flowchart TB
   subgraph runtimes [Provisioning runtimes]
     LOCAL[local — engine in controller]
     INIT[kubernetes-init — Pod init chain]
-    OK[openkruise — CRR hot-swap]
+    OK[openkruise — runner slots]
     VOL[volcano-init — VCJob batch]
   end
 
@@ -33,10 +33,10 @@ flowchart TB
 
 | | `local` | `kubernetes-init` | `openkruise` | `volcano-init` |
 |---|---------|-------------------|--------------|----------------|
-| **K8s objects** | None (in-process) | Pod + init containers | Pod + CRR per step | Volcano Job + init containers |
+| **K8s objects** | None (in-process) | Pod + init containers | Pod with runner slots | Volcano Job + init containers |
 | **Scheduler** | N/A | default-scheduler | default-scheduler | Volcano |
 | **Handoff** | In-memory / store | emptyDir `/kbl/handoff` | emptyDir `/kbl/handoff` | emptyDir `/kbl/handoff` |
-| **Step execution** | Sequential in engine | Sequential init containers | One slot hot-swapped at a time | Sequential init containers in VCJob task |
+| **Step execution** | Sequential in engine | Sequential init containers | Parallel start, file-wait serialize | Sequential init containers in VCJob task |
 | **Dependencies** | None | Standard K8s | OpenKruise CRD | Volcano CRD |
 | **Blog mapping** | CLI / dev path | Standard domino chain | Player-piano hot-swap | SyncSet / batch provisioning |
 | **ADR** | MVP | [0007](adr/0007-hot-swapped-dominos-implementation.md) | [0007](adr/0007-hot-swapped-dominos-implementation.md) | [0030](adr/0030-controller-volcano-emission.md) |
@@ -84,9 +84,9 @@ Example: [examples/julia-domino-chain/dominochain-init.yaml](../examples/julia-d
 
 ## `openkruise`
 
-Placeholder Pod with one pause container per step slot. The reconciler issues **ContainerRecreateRequest** (CRR) resources to hot-swap each slot with the real domino-runner image, one step at a time.
+One Pod with a **runner container per step**. Containers start together and serialize through a shared `emptyDir` handoff (`output-N.json`). OpenKruise 1.6 CRR cannot change image or env, so the lab does not use pause placeholders plus hot-swap.
 
-**Use for:** Player-piano scheduling, minimizing cold-start between steps on long chains.
+**Use for:** Same-pod player-piano slots on an OpenKruise-enabled cluster.
 
 **Requires:** OpenKruise installed (`lab/scripts/install-openkruise.sh`).
 
@@ -99,7 +99,7 @@ spec:
     - { name: load, command: julia:identity }
 ```
 
-Lab demo: `DominoChain/julia-finance-openkruise` (applied by `make lab-up`). Sequence: [diagrams.md §7](diagrams.md#7-openkruise-hot-swap-sequence).
+Lab demo: `Workflow/julia-finance-openkruise` → `DominoChain/julia-finance-openkruise-dchain` from catalog Snapshot + Domino CRs (Phase 35).
 
 ## `volcano-init`
 

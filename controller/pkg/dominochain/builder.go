@@ -41,6 +41,39 @@ func (b *Builder) runnerImage(chain *kblv1alpha1.DominoChain) string {
 	return DefaultRunnerImage
 }
 
+// RunnerImageFor is the image ValidateChain and tests use for the chain.
+func (b *Builder) RunnerImageFor(chain *kblv1alpha1.DominoChain) string {
+	return b.runnerImage(chain)
+}
+
+// IsJuliaRunnerImage reports whether image is a Julia domino-runner (lab or GHCR).
+func IsJuliaRunnerImage(image string) bool {
+	return strings.Contains(strings.ToLower(image), "julia")
+}
+
+// ValidateChain fails closed on unsealed snapshots and julia steps without a julia runner.
+func ValidateChain(chain *kblv1alpha1.DominoChain, runnerImage string) error {
+	if chain == nil {
+		return fmt.Errorf("domino chain is nil")
+	}
+	if !chain.Spec.Snapshot.Sealed {
+		return fmt.Errorf("snapshot is not sealed")
+	}
+	if chainHasJuliaSteps(chain) && !IsJuliaRunnerImage(runnerImage) {
+		return fmt.Errorf("julia steps require a julia runner image, got %q", runnerImage)
+	}
+	return nil
+}
+
+func chainHasJuliaSteps(chain *kblv1alpha1.DominoChain) bool {
+	for _, step := range chain.Spec.Steps {
+		if IsJuliaCommand(step.Command) {
+			return true
+		}
+	}
+	return false
+}
+
 func (b *Builder) stepImage(chain *kblv1alpha1.DominoChain, step kblv1alpha1.DominoStepSpec) string {
 	if step.Image != "" {
 		return step.Image

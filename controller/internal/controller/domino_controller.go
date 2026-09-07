@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,6 +57,19 @@ func (r *DominoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{RequeueAfter: dominoDependencyRequeue}, nil
+	}
+
+	if skipStandaloneJulia(&dom) {
+		if dom.Status.Phase == kblv1alpha1.DominoPhasePending &&
+			strings.Contains(dom.Status.Message, "in-cluster runner") {
+			return ctrl.Result{}, nil
+		}
+		dom.Status.Phase = kblv1alpha1.DominoPhasePending
+		dom.Status.Message = "julia catalog step; runs in-cluster runner (operator has no julia)"
+		if err := r.Status().Update(ctx, &dom); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
 	}
 
 	priorOutputs, requeue, err := r.loadDependencyOutputs(ctx, &dom, snap.Status.SnapshotID, &snap)

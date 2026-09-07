@@ -54,7 +54,7 @@ After `make lab-up`:
 |------|----------|---------|
 | Finance workflow (local engine) | `Workflow/finance-lab` | `local` / builtin |
 | Volcano time slice | `ComputeWheel/julia-finance-wheel` | `volcano-init` |
-| OpenKruise hot-swap | `DominoChain/julia-finance-openkruise` | `openkruise` |
+| OpenKruise runner slots | `Workflow/julia-finance-openkruise` | `openkruise` |
 
 Skip components: `KBL_LAB_VOLCANO=0`, `KBL_LAB_OPENKURISE=0`. See [lab/README.md](../lab/README.md).
 
@@ -122,7 +122,7 @@ Full phase table lives in the [root README](../README.md#roadmap). Recent phases
 | 30 | Architecture diagrams — Mermaid visual reference |
 | 33 | Physics correspondence layer ([theory/](theory/README.md), [ADR 0037](adr/0037-physics-correspondence-layer.md)) |
 | 34 | Compact Kind: desk-day + Julia volcano wheel + OpenKruise (**verified**) |
-| 35 | Standardize on existing `kbl.io` CRDs ([ADR 0038](adr/0038-crd-operator-standardization.md)) |
+| 35 | Standardize on existing `kbl.io` CRDs ([ADR 0038](adr/0038-crd-operator-standardization.md)) (**verified**) |
 
 ## Visual reference
 

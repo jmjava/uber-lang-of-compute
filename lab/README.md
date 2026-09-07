@@ -114,9 +114,9 @@ kubectl -n kbl-system get pods -o wide
 kubectl get wheel julia-finance-wheel -o wide
 kubectl get wf -l kbl.io/computewheel=julia-finance-wheel
 kubectl get dchain,vcjob -l kbl.io/volcano-demo=true
-kubectl get dchain julia-finance-openkruise -o wide
+kubectl get wf,dchain -l kbl.io/openkruise-demo=true
 kubectl get pods -l kbl.io/openkruise-demo=true
-kubectl get containerrecreaterequests.apps.kruise.io -l kbl.io/dominochain=julia-finance-openkruise
+kubectl get snapshot,domino -l kbl.io/catalog=true
 kubectl -n volcano-system get pods
 kubectl -n kruise-system get pods
 kubectl -n kbl-system logs deployment/kbl-controller --tail=50
@@ -157,8 +157,9 @@ lab/
   kustomize/overlays/kind/    # Kind overlay (TSDB node pin)
   kustomize/overlays/aws/     # ECR image patch overlay
   manifests/                  # lab ComputeContext + Workflow
+  manifests/catalog/          # Snapshot + Domino + PluggableUniverse CRs
   manifests/volcano/          # Queue + ComputeWheel volcano-init demo
-  manifests/openkruise/     # Julia hot-swap DominoChain demo
+  manifests/openkruise/       # Julia OpenKruise Workflow (catalog refs)
   scripts/up.sh | down.sh | install-volcano.sh | install-openkruise.sh
   scripts/verify-volcano.sh | apply-volcano-burst.sh | setup-wsl-home.sh
   HOME-LAB.md                 # i9 home workstation + WSL2 + remote kubectl

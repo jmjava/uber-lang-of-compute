@@ -78,6 +78,30 @@ func TestBuildInitChainPodJuliaEnv(t *testing.T) {
 	}
 }
 
+func TestValidateChain(t *testing.T) {
+	ok := &kblv1alpha1.DominoChain{
+		Spec: kblv1alpha1.DominoChainSpec{
+			Snapshot: kblv1alpha1.SnapshotSpec{Sealed: true},
+			Steps:    []kblv1alpha1.DominoStepSpec{{Name: "load", Command: "julia:identity"}},
+		},
+	}
+	if err := dominochain.ValidateChain(ok, "kbl-domino-runner-julia:lab"); err != nil {
+		t.Fatalf("expected valid julia chain: %v", err)
+	}
+	if err := dominochain.ValidateChain(ok, "kbl-domino-runner:lab"); err == nil {
+		t.Fatal("expected julia runner rejection")
+	}
+	unsealed := &kblv1alpha1.DominoChain{
+		Spec: kblv1alpha1.DominoChainSpec{
+			Snapshot: kblv1alpha1.SnapshotSpec{Sealed: false},
+			Steps:    []kblv1alpha1.DominoStepSpec{{Name: "load", Command: "builtin:identity"}},
+		},
+	}
+	if err := dominochain.ValidateChain(unsealed, "kbl-domino-runner:lab"); err == nil {
+		t.Fatal("expected unsealed snapshot rejection")
+	}
+}
+
 func TestIsJuliaCommand(t *testing.T) {
 	if !dominochain.IsJuliaCommand("julia:identity") {
 		t.Fatal("expected julia command")

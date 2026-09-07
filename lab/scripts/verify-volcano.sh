@@ -96,9 +96,10 @@ fi
 section "OpenKruise"
 if kubectl -n kruise-system get deploy kruise-controller-manager &>/dev/null; then
   kubectl -n kruise-system get pods
-  kubectl get dchain julia-finance-openkruise -o wide 2>/dev/null || echo "  (julia-finance-openkruise not applied)"
-  kubectl get containerrecreaterequests.apps.kruise.io -l kbl.io/openkruise-demo=true 2>/dev/null || \
-    kubectl get containerrecreaterequests.apps.kruise.io -l kbl.io/dominochain=julia-finance-openkruise 2>/dev/null || true
+  kubectl get wf julia-finance-openkruise -o wide 2>/dev/null || echo "  (julia-finance-openkruise workflow not applied)"
+  kubectl get dchain julia-finance-openkruise-dchain -o wide 2>/dev/null || \
+    kubectl get dchain julia-finance-openkruise -o wide 2>/dev/null || echo "  (openkruise dchain not applied)"
+  kubectl get pods -l kbl.io/openkruise-demo=true 2>/dev/null || true
 else
   echo "  (kruise-system not found — set KBL_LAB_OPENKURISE=1)"
 fi
@@ -117,7 +118,15 @@ if [[ "$STRICT" == "1" ]]; then
   if kubectl -n kruise-system get deploy kruise-controller-manager &>/dev/null; then
     kubectl -n kruise-system get deploy kruise-controller-manager -o jsonpath='{.status.readyReplicas}' 2>/dev/null | grep -qx '1' \
       || fail "kruise-controller-manager is not ready"
-    kubectl get dchain julia-finance-openkruise -o jsonpath='{.status.phase}' 2>/dev/null | grep -qx 'Completed' \
+    phase=""
+    phase="$(kubectl get dchain julia-finance-openkruise-dchain -o jsonpath='{.status.phase}' 2>/dev/null || true)"
+    if [[ -z "$phase" ]]; then
+      phase="$(kubectl get dchain julia-finance-openkruise -o jsonpath='{.status.phase}' 2>/dev/null || true)"
+    fi
+    if [[ -z "$phase" ]]; then
+      phase="$(kubectl get wf julia-finance-openkruise -o jsonpath='{.status.phase}' 2>/dev/null || true)"
+    fi
+    echo "$phase" | grep -Eq 'Completed' \
       || fail "julia-finance-openkruise is not Completed"
   fi
   echo ""

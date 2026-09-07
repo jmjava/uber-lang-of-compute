@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/universe"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/wheel"
 )
 
@@ -41,6 +42,7 @@ func (r *ComputeWheelReconciler) now() time.Time {
 // +kubebuilder:rbac:groups=kbl.io,resources=computewheels/finalizers,verbs=update
 // +kubebuilder:rbac:groups=kbl.io,resources=computecontexts,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kbl.io,resources=workflows,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=kbl.io,resources=pluggableuniverses,verbs=get;list;watch
 
 func (r *ComputeWheelReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
@@ -119,6 +121,9 @@ func (r *ComputeWheelReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	wf := wheel.BuildWorkflow(&w, computeCtxPtr, state, r.StoreRoot)
+	if err := universe.ApplyToWorkflow(ctx, r.Client, wf); err != nil {
+		return r.failWheel(ctx, &w, err)
+	}
 	wfKey := client.ObjectKeyFromObject(wf)
 
 	var existing kblv1alpha1.Workflow
@@ -245,6 +250,9 @@ func (r *ComputeWheelReconciler) preProvisionNext(
 	}
 
 	nextWF := wheel.BuildWorkflow(w, nextCtxPtr, slot.State, r.StoreRoot)
+	if err := universe.ApplyToWorkflow(ctx, r.Client, nextWF); err != nil {
+		return err
+	}
 	var existing kblv1alpha1.Workflow
 	if err := r.Get(ctx, client.ObjectKeyFromObject(nextWF), &existing); err == nil {
 		return nil

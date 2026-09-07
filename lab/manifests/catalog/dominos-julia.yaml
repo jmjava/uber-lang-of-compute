@@ -1,0 +1,41 @@
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: julia-identity
+  namespace: default
+  labels:
+    kbl.io/catalog: "true"
+    kbl.io/julia-demo: "true"
+spec:
+  snapshotRef: julia-curve-2025-04-15
+  command: julia:identity
+---
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: julia-interpolate
+  namespace: default
+  labels:
+    kbl.io/catalog: "true"
+    kbl.io/julia-demo: "true"
+spec:
+  snapshotRef: julia-curve-2025-04-15
+  command: julia:interpolate
+  dependsOn: [julia-identity]
+  inputs:
+    - fromDomino: julia-identity
+---
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: julia-greeks
+  namespace: default
+  labels:
+    kbl.io/catalog: "true"
+    kbl.io/julia-demo: "true"
+spec:
+  snapshotRef: julia-curve-2025-04-15
+  command: julia:greeks
+  dependsOn: [julia-interpolate]
+  inputs:
+    - fromDomino: julia-interpolate

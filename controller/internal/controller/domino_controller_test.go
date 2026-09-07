@@ -116,3 +116,36 @@ func TestDominoReconcilerContinuesReplaySpine(t *testing.T) {
 		t.Fatalf("stepwise CR spine: %v", err)
 	}
 }
+
+func TestDominoReconcilerParksJuliaCatalog(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = kblv1alpha1.AddToScheme(scheme)
+
+	snap := &kblv1alpha1.Snapshot{
+		ObjectMeta: metav1.ObjectMeta{Name: "julia-curve", Namespace: "default"},
+		Spec: kblv1alpha1.SnapshotSpec{
+			TimeSlice: "2025-04-15T00:00:00Z",
+			Source:    kblv1alpha1.SnapshotSource{Inline: map[string]interface{}{"v": 1}},
+			Sealed:    true,
+		},
+		Status: kblv1alpha1.SnapshotStatus{Phase: kblv1alpha1.SnapshotPhaseSealed, SnapshotID: "id-1"},
+	}
+	dom := &kblv1alpha1.Domino{
+		ObjectMeta: metav1.ObjectMeta{Name: "julia-identity", Namespace: "default", Generation: 1},
+		Spec:       kblv1alpha1.DominoResourceSpec{SnapshotRef: "julia-curve", Command: "julia:identity"},
+	}
+	cl := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(snap, dom).WithObjects(snap, dom).Build()
+	r := &kblcontroller.DominoReconciler{Client: cl, Scheme: scheme, StoreRoot: t.TempDir()}
+	if _, err := r.Reconcile(context.Background(), reconcile.Request{
+		NamespacedName: types.NamespacedName{Name: "julia-identity", Namespace: "default"},
+	}); err != nil {
+		t.Fatalf("reconcile: %v", err)
+	}
+	var updated kblv1alpha1.Domino
+	if err := cl.Get(context.Background(), types.NamespacedName{Name: "julia-identity", Namespace: "default"}, &updated); err != nil {
+		t.Fatal(err)
+	}
+	if updated.Status.Phase == kblv1alpha1.DominoPhaseError {
+		t.Fatalf("catalog julia domino should not error in operator: %s", updated.Status.Message)
+	}
+}

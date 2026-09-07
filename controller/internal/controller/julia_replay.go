@@ -40,3 +40,10 @@ func skipJuliaOperatorReplay(chain *kblv1alpha1.DominoChain, wf *kblv1alpha1.Wor
 	}
 	return !julia.Available(julia.DefaultConfig())
 }
+
+func skipStandaloneJulia(dom *kblv1alpha1.Domino) bool {
+	if dom == nil || !strings.HasPrefix(dom.Spec.Command, "julia:") {
+		return false
+	}
+	return !julia.Available(julia.DefaultConfig())
+}

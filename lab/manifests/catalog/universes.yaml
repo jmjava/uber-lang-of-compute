@@ -1,0 +1,37 @@
+# Cluster-scoped execution environments. Child Workflows take runnerImage
+# (and a default container runtime for julia) from these CRs when unset.
+apiVersion: kbl.io/v1alpha1
+kind: PluggableUniverse
+metadata:
+  name: finance-local
+spec:
+  name: finance-local
+  executionEngine:
+    type: builtin
+    runtimeImage: kbl-domino-runner:lab
+  dataLayer:
+    type: tsdb
+---
+apiVersion: kbl.io/v1alpha1
+kind: PluggableUniverse
+metadata:
+  name: rates-universe
+spec:
+  name: rates-universe
+  executionEngine:
+    type: builtin
+    runtimeImage: kbl-domino-runner:lab
+  dataLayer:
+    type: tsdb
+---
+apiVersion: kbl.io/v1alpha1
+kind: PluggableUniverse
+metadata:
+  name: julia-finance-universe
+spec:
+  name: julia-finance-universe
+  executionEngine:
+    type: julia
+    runtimeImage: kbl-domino-runner-julia:lab
+  dataLayer:
+    type: tsdb

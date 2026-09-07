@@ -26,6 +26,7 @@ import (
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/theory"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/universe"
 )
 
 const (
@@ -50,6 +51,7 @@ type WorkflowReconciler struct {
 // +kubebuilder:rbac:groups=kbl.io,resources=dominos,verbs=get;list;watch
 // +kubebuilder:rbac:groups=kbl.io,resources=dominochains,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kbl.io,resources=dominochains/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=kbl.io,resources=pluggableuniverses,verbs=get;list;watch
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps.kruise.io,resources=containerrecreaterequests,verbs=get;list;watch;create;update;patch;delete
@@ -93,6 +95,10 @@ func (r *WorkflowReconciler) execute(ctx context.Context, wf *kblv1alpha1.Workfl
 	wf.Status.Homeostatic = theory.Homeostatic(theory.PhaseHomeostasis(string(wf.Status.Phase)))
 	if err := r.Status().Update(ctx, wf); err != nil {
 		return ctrl.Result{}, err
+	}
+
+	if err := universe.ApplyToWorkflow(ctx, r.Client, wf); err != nil {
+		return r.fail(ctx, wf, err)
 	}
 
 	storePath := wf.Spec.Provisioning.StorePath
@@ -201,6 +207,9 @@ func (r *WorkflowReconciler) executeContainer(ctx context.Context, wf *kblv1alph
 	chainKey := client.ObjectKey{Namespace: wf.Namespace, Name: chainName}
 	err := r.Get(ctx, chainKey, &chain)
 	if apierrors.IsNotFound(err) {
+		if err := universe.ApplyToWorkflow(ctx, r.Client, wf); err != nil {
+			return r.fail(ctx, wf, err)
+		}
 		chainSpec, err := dominochain.FromWorkflow(ctx, r.Client, wf, storePath)
 		if err != nil {
 			if isSnapshotNotReady(err) {
@@ -218,9 +227,7 @@ func (r *WorkflowReconciler) executeContainer(ctx context.Context, wf *kblv1alph
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      chainName,
 				Namespace: wf.Namespace,
-				Labels: map[string]string{
-					"kbl.io/workflow": wf.Name,
-				},
+				Labels:    chainLabelsFromWorkflow(wf),
 			},
 			Spec: chainSpec.Spec,
 		}
@@ -422,6 +429,21 @@ func (r *WorkflowReconciler) writeReplayLog(ctx context.Context, wf *kblv1alpha1
 	}
 
 	return fmt.Sprintf("configmap/%s/%s", wf.Namespace, cmName), nil
+}
+
+func chainLabelsFromWorkflow(wf *kblv1alpha1.Workflow) map[string]string {
+	labels := map[string]string{
+		"kbl.io/workflow": wf.Name,
+	}
+	for k, v := range wf.Labels {
+		if strings.HasPrefix(k, "kbl.io/") {
+			labels[k] = v
+		}
+	}
+	if wf.Spec.Execution.Runtime == string(kblv1alpha1.DominoChainRuntimeOpenKruise) {
+		labels["kbl.io/openkruise-demo"] = "true"
+	}
+	return labels
 }
 
 func isSnapshotNotReady(err error) bool {

@@ -249,26 +249,21 @@ Environment per init container: `KBL_COMMAND`, `KBL_INPUT`, `KBL_OUTPUT`, option
 
 ---
 
-## 7. OpenKruise hot-swap sequence
+## 7. OpenKruise runner-slot sequence
 
-Player-piano pattern ([ADR 0007](adr/0007-hot-swapped-dominos-implementation.md), lab demo Phase 28):
+Player-piano slots on an OpenKruise-enabled cluster (lab Phase 34; catalog refs Phase 35). OpenKruise 1.6 CRR cannot change image/env.
 
 ```mermaid
 sequenceDiagram
   participant Ctrl as DominoChain reconciler
-  participant Pod as Placeholder Pod
-  participant CRR as ContainerRecreateRequest
-  participant OK as OpenKruise controller
+  participant Pod as Runner-slot Pod
 
-  Ctrl->>Pod: create pause slots slot-0..N
-  loop each step index
-    Ctrl->>CRR: create CRR for slot-i
-    OK->>Pod: hot-swap slot-i → domino-runner
-    Note over Pod: run julia:command<br/>read/write /kbl/handoff
-    OK->>CRR: phase Completed
-    Ctrl->>Ctrl: activeStep++
-  end
-  Ctrl->>Ctrl: engine.Run → Completed
+  Ctrl->>Pod: create N runner containers (julia image)
+  Note over Pod: slot-0 writes /kbl/handoff/output-0.json
+  Note over Pod: slot-1 waits, then interpolate
+  Note over Pod: slot-2 waits, then greeks
+  Pod->>Ctrl: all containers exit 0
+  Ctrl->>Ctrl: skip operator julia replay → Completed
 ```
 
 ```mermaid

@@ -1,0 +1,41 @@
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: rates-identity
+  namespace: default
+  labels:
+    kbl.io/catalog: "true"
+    kbl.io/desk: rates
+spec:
+  snapshotRef: ust-par-2025-04-15
+  command: builtin:identity
+---
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: rates-interpolate
+  namespace: default
+  labels:
+    kbl.io/catalog: "true"
+    kbl.io/desk: rates
+spec:
+  snapshotRef: ust-par-2025-04-15
+  command: builtin:interpolate
+  dependsOn: [rates-identity]
+  inputs:
+    - fromDomino: rates-identity
+---
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: rates-risk
+  namespace: default
+  labels:
+    kbl.io/catalog: "true"
+    kbl.io/desk: rates
+spec:
+  snapshotRef: ust-par-2025-04-15
+  command: builtin:risk-dv01
+  dependsOn: [rates-interpolate]
+  inputs:
+    - fromDomino: rates-interpolate

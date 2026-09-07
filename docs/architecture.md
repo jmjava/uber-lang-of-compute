@@ -175,7 +175,8 @@ Domino chains run on Kubernetes via `DominoChain.spec.runtime` (or `Workflow.spe
 | Runtime | Mechanism | Blog alignment |
 |---------|-----------|----------------|
 | `kubernetes-init` | Pod with sequential init containers | Standard domino chain |
-| `openkruise` | Placeholder Pod + ContainerRecreateRequest per step | Player-piano hot-swap |
+| `openkruise` | Runner-slot Pod (CRR 1.6 cannot change image/env) | Player-piano slots |
+| `volcano-init` | Volcano Job with init-container task | SyncSet / batch scheduling |
 | `volcano-init` | Volcano Job with init-container task | SyncSet / batch scheduling |
 
 See [provisioning-runtimes.md](./provisioning-runtimes.md) and [diagrams.md §5–8](./diagrams.md#5-provisioning-runtimes-compared) for visual runtime comparisons.
@@ -210,12 +211,12 @@ TSDB pins to the Data Pond worker (`kbl.io/tsdb-node=true`). See [lab/README.md]
 
 ## Hot-Swapped Dominos
 
-OpenKruise-based daisy-chain pods are **implemented** (Phase 4, lab demo Phase 28):
+OpenKruise daisy-chain pods are **implemented** (Phase 4, compact lab Phase 34):
 
-- Domino steps map to placeholder containers in one Pod
-- `ContainerRecreateRequest` hot-swaps each slot with the real domino-runner image
-- `emptyDir` handoff at `/kbl/handoff` between steps
-- Controller advances `status.activeStep` as each CRR completes
+- One Pod with one runner container per domino slot (Julia or builtin image)
+- Slots serialize through `emptyDir` handoff files (`output-N.json`); later slots wait for earlier output
+- OpenKruise 1.6 ContainerRecreateRequest cannot change image or env, so the lab does not pause+CRR-swap
+- `kruise-controller-manager` + KruiseDaemon still install with the lab
 
 Volcano batch scheduling (`volcano-init`) provides an alternative provisioning path for time-sliced batch work via ComputeWheel.
 

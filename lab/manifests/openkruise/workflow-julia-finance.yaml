@@ -1,0 +1,28 @@
+# Julia finance chain via OpenKruise runner slots. Catalog Snapshot + Domino CRs.
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: julia-finance-openkruise
+  namespace: default
+  labels:
+    kbl.io/openkruise-demo: "true"
+    kbl.io/julia-demo: "true"
+spec:
+  snapshotRef: julia-curve-2025-04-15
+  dominoRefs:
+    - julia-identity
+    - julia-interpolate
+    - julia-greeks
+  execution:
+    chain: [julia-identity, julia-interpolate, julia-greeks]
+    deterministic: true
+    runtime: openkruise
+  provisioning:
+    storePath: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+    nodeLocal: true
+    nodeSelector:
+      kbl.io/lab-role: compute
+    runnerImage: kbl-domino-runner-julia:lab
+  routing:
+    universe: julia-finance-universe
+    computeContextRef: default-context

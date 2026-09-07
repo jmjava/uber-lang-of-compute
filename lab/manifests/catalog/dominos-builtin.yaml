@@ -1,0 +1,39 @@
+# Builtin twins of the Julia 3-instrument curve (same snapshot).
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: builtin-identity
+  namespace: default
+  labels:
+    kbl.io/catalog: "true"
+spec:
+  snapshotRef: julia-curve-2025-04-15
+  command: builtin:identity
+---
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: builtin-interpolate
+  namespace: default
+  labels:
+    kbl.io/catalog: "true"
+spec:
+  snapshotRef: julia-curve-2025-04-15
+  command: builtin:interpolate
+  dependsOn: [builtin-identity]
+  inputs:
+    - fromDomino: builtin-identity
+---
+apiVersion: kbl.io/v1alpha1
+kind: Domino
+metadata:
+  name: builtin-risk-dv01
+  namespace: default
+  labels:
+    kbl.io/catalog: "true"
+spec:
+  snapshotRef: julia-curve-2025-04-15
+  command: builtin:risk-dv01
+  dependsOn: [builtin-interpolate]
+  inputs:
+    - fromDomino: builtin-interpolate

@@ -71,6 +71,10 @@ func (r *DominoChainReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		runtime = kblv1alpha1.DominoChainRuntimeKubernetesInit
 	}
 
+	if err := dominochain.ValidateChain(&chain, r.builder().RunnerImageFor(&chain)); err != nil {
+		return r.failChain(ctx, &chain, err)
+	}
+
 	snapshotJSON, err := dominochain.SnapshotJSON(chain.Spec.Snapshot)
 	if err != nil {
 		return r.failChain(ctx, &chain, err)

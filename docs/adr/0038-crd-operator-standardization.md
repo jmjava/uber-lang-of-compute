@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — **Phase 34 verified** (`verify-volcano.sh --strict`: desk-day Idle, Julia Idle, OpenKruise Completed). Phase 35 is next.
+Proposed — **Phase 35 verified** on compact Kind (`verify-volcano.sh --strict`). Catalog Snapshot/Domino CRs, PluggableUniverse fills `runnerImage`, fail-closed julia runner + unsealed snapshots.
 
 ## Context
 

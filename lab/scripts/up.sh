@@ -157,12 +157,18 @@ echo "Waiting for deployments..."
 kubectl -n kbl-system rollout status deployment/kbl-controller --timeout=120s
 kubectl -n kbl-system rollout status deployment/kbl-tsdb --timeout=120s
 
-echo "Applying lab ComputeContext + Workflow..."
+echo "Applying lab ComputeContext + catalog Snapshot/Domino/Universe CRs..."
 WORKER="$(kubectl get nodes -l kbl.io/lab-role=compute -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
 if [[ -z "$WORKER" ]]; then
   WORKER="$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')"
 fi
 sed "s/nodeName: .*/nodeName: ${WORKER}/" "$ROOT/lab/manifests/computecontext-lab.yaml" | kubectl apply -f -
+kubectl apply -k "$ROOT/lab/manifests/catalog/"
+echo "Waiting for catalog snapshots to seal..."
+kubectl wait --for=jsonpath='{.status.phase}'=Sealed snapshot/julia-curve-2025-04-15 --timeout=120s
+kubectl wait --for=jsonpath='{.status.phase}'=Sealed snapshot/ust-par-2025-04-15 --timeout=120s
+
+echo "Applying lab Workflow..."
 kubectl apply -f "$ROOT/lab/manifests/workflow-lab.yaml"
 
 if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
@@ -197,12 +203,12 @@ if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
 fi
 
 if [[ "${INSTALL_OPENKURISE}" != "0" ]]; then
-  echo "Applying OpenKruise demo (Julia hot-swap DominoChain)..."
+  echo "Applying OpenKruise demo (Julia catalog Workflow → DominoChain)..."
   kubectl apply -k "$ROOT/lab/manifests/openkruise/"
-  echo "Waiting for DominoChain julia-finance-openkruise..."
+  echo "Waiting for Workflow julia-finance-openkruise..."
   kubectl wait --for=jsonpath='{.status.phase}'=Completed \
-    dominochain/julia-finance-openkruise --timeout=600s 2>/dev/null || {
-    echo "OpenKruise chain still running — check: kubectl get dchain,pods,crr -l kbl.io/openkruise-demo=true"
+    workflow/julia-finance-openkruise --timeout=600s 2>/dev/null || {
+    echo "OpenKruise workflow still running — check: kubectl get wf,dchain,pods -l kbl.io/openkruise-demo=true"
   }
 fi
 
@@ -220,7 +226,7 @@ if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
   echo "  kubectl -n volcano-system get pods"
 fi
 if [[ "${INSTALL_OPENKURISE}" != "0" ]]; then
-  echo "  kubectl get dchain julia-finance-openkruise -o wide"
+  echo "  kubectl get wf,dchain -l kbl.io/openkruise-demo=true"
   echo "  kubectl get pods -l kbl.io/openkruise-demo=true"
 fi
 echo "  kubectl logs -n kbl-system deployment/kbl-controller -f"
