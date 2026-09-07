@@ -116,6 +116,25 @@ func (r *DominoChainReconciler) reconcileVolcano(ctx context.Context, chain *kbl
 		return r.failChain(ctx, chain, fmt.Errorf("volcano job %s: %s", live.GetName(), dominochain.VolcanoJobStatusMessage(&live)))
 	}
 
+	// Pause sidecar keeps the Volcano task Running after init containers finish.
+	// Treat that the same as kubernetes-init so memo can land without waiting
+	// for CompleteJob/TaskCompleted (which never fires while /pause is alive).
+	var pods corev1.PodList
+	if err := r.List(ctx, &pods, client.InNamespace(chain.Namespace), client.MatchingLabels{
+		dominochain.LabelDominoChain: chain.Name,
+	}); err != nil {
+		return ctrl.Result{}, err
+	}
+	for i := range pods.Items {
+		done, err := r.initChainComplete(&pods.Items[i], len(chain.Spec.Steps))
+		if err != nil {
+			return r.failChain(ctx, chain, err)
+		}
+		if done {
+			return r.completeChain(ctx, chain, logger)
+		}
+	}
+
 	if err := r.Status().Update(ctx, chain); err != nil {
 		return ctrl.Result{}, err
 	}

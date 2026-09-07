@@ -26,6 +26,16 @@ ensure_docker_sock() {
   fi
 }
 
+ensure_kind_forward() {
+  # Nested Docker (Cursor Cloud / DinD) often leaves iptables-legacy FORWARD DROP
+  # while dockerd programs nftables. Kind worker ↔ control-plane then times out
+  # (pods cannot reach https://10.96.0.1:443).
+  if command -v iptables-legacy >/dev/null 2>&1; then
+    need_sudo iptables-legacy -P FORWARD ACCEPT 2>/dev/null || true
+  fi
+  need_sudo iptables -P FORWARD ACCEPT 2>/dev/null || true
+}
+
 write_nested_daemon_json() {
   need_sudo mkdir -p /etc/docker
   if [[ -f /etc/docker/daemon.json ]] && grep -q fuse-overlayfs /etc/docker/daemon.json 2>/dev/null; then
@@ -38,12 +48,14 @@ write_nested_daemon_json() {
 start_dockerd() {
   if docker info >/dev/null 2>&1; then
     ensure_docker_sock
+    ensure_kind_forward
     return
   fi
   need_sudo service docker start 2>/dev/null || true
   need_sudo systemctl start docker 2>/dev/null || true
   if docker info >/dev/null 2>&1; then
     ensure_docker_sock
+    ensure_kind_forward
     return
   fi
 
@@ -60,6 +72,7 @@ start_dockerd() {
   for _ in $(seq 1 60); do
     if docker info >/dev/null 2>&1; then
       ensure_docker_sock
+      ensure_kind_forward
       return
     fi
     sleep 0.25

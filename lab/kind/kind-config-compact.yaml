@@ -6,6 +6,10 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: kbl-lab
+networking:
+  # Nested kernels (Cursor Cloud / DinD) lack xt_statistic; kube-proxy iptables
+  # mode then fails to install ClusterIP rules (CoreDNS + kbl-tsdb).
+  kubeProxyMode: nftables
 nodes:
   - role: control-plane
     kubeadmConfigPatches:

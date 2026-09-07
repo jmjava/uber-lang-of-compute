@@ -1,0 +1,28 @@
+# Desk-day book seats on the compact (1-worker) Kind cluster.
+# NY and London are two ComputeContexts on the same worker — two desks, one pond.
+# up.sh rewrites nodeName from the live kbl.io/lab-role=compute node.
+apiVersion: kbl.io/v1alpha1
+kind: ComputeContext
+metadata:
+  name: ny-rates
+  labels:
+    kbl.io/desk: rates
+    kbl.io/volcano-demo: "true"
+spec:
+  nodeName: kbl-lab-worker
+  storeType: tsdb
+  storeEndpoint: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+  dataPath: /var/kbl/tsdb
+---
+apiVersion: kbl.io/v1alpha1
+kind: ComputeContext
+metadata:
+  name: ln-rates
+  labels:
+    kbl.io/desk: rates
+    kbl.io/volcano-demo: "true"
+spec:
+  nodeName: kbl-lab-worker
+  storeType: tsdb
+  storeEndpoint: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+  dataPath: /var/kbl/tsdb

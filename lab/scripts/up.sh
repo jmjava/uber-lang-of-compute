@@ -9,6 +9,7 @@ INSTALL_VOLCANO="${KBL_LAB_VOLCANO:-1}"
 INSTALL_OPENKURISE="${KBL_LAB_OPENKURISE:-1}"
 INSTALL_JULIA="${KBL_LAB_JULIA:-1}"
 WHEEL_NAME="julia-finance-wheel"
+APPLY_DESK_DAY=0
 
 case "$KBL_LAB_PROFILE" in
   compact)
@@ -18,8 +19,9 @@ case "$KBL_LAB_PROFILE" in
       WHEEL_MANIFEST="$ROOT/lab/manifests/volcano/computewheel-julia-finance-compact.yaml"
       WHEEL_NAME="julia-finance-wheel"
     else
-      WHEEL_MANIFEST="$ROOT/lab/manifests/volcano/computewheel-builtin-compact.yaml"
-      WHEEL_NAME="finance-wheel"
+      WHEEL_MANIFEST="$ROOT/lab/manifests/volcano/computewheel-desk-day-compact.yaml"
+      WHEEL_NAME="rates-desk-wheel"
+      APPLY_DESK_DAY=1
     fi
     APPLY_VOLCANO_CONTEXTS=0
     APPLY_VOLCANO_BURST=0
@@ -63,9 +65,44 @@ if findmnt -n -o FSTYPE / 2>/dev/null | grep -q '^overlay'; then
   echo "nested overlay detected; Kind containerd snapshotter=${KIND_EXPERIMENTAL_CONTAINERD_SNAPSHOTTER}"
 fi
 
+# Nested Docker: iptables-legacy FORWARD DROP blocks Kind node ICC.
+if command -v iptables-legacy >/dev/null 2>&1; then
+  if [[ "$(id -u)" -eq 0 ]]; then
+    iptables-legacy -P FORWARD ACCEPT 2>/dev/null || true
+    iptables -P FORWARD ACCEPT 2>/dev/null || true
+  else
+    sudo iptables-legacy -P FORWARD ACCEPT 2>/dev/null || true
+    sudo iptables -P FORWARD ACCEPT 2>/dev/null || true
+  fi
+fi
+
 mkdir -p /tmp/kbl-lab/cp /tmp/kbl-lab/w1 /tmp/kbl-lab/w2
 
 echo "Lab profile: ${KBL_LAB_PROFILE} (Kind config: ${KIND_CONFIG##*/})"
+
+ensure_kube_proxy_nftables() {
+  # Existing clusters created with iptables mode keep that ConfigMap; nested
+  # kernels then fail kube-proxy sync (missing xt_statistic).
+  local conf
+  conf="$(kubectl -n kube-system get cm kube-proxy -o jsonpath='{.data.config\.conf}' 2>/dev/null || true)"
+  if [[ -z "$conf" ]]; then
+    return
+  fi
+  if echo "$conf" | grep -q '^mode: nftables'; then
+    return
+  fi
+  echo "switching kube-proxy to nftables (nested Kind ClusterIP)..."
+  local patch
+  patch="$(kubectl -n kube-system get cm kube-proxy -o json | python3 -c '
+import json, sys
+obj = json.load(sys.stdin)
+obj["data"]["config.conf"] = obj["data"]["config.conf"].replace("mode: iptables", "mode: nftables")
+print(json.dumps({"data": obj["data"]}))
+')"
+  kubectl -n kube-system patch cm kube-proxy --type merge -p "$patch"
+  kubectl -n kube-system rollout restart ds/kube-proxy
+  kubectl -n kube-system rollout status ds/kube-proxy --timeout=90s || true
+}
 
 if ! kind get clusters 2>/dev/null | grep -qx "$CLUSTER_NAME"; then
   echo "Creating Kind cluster $CLUSTER_NAME..."
@@ -78,6 +115,8 @@ else
     echo "         recreate: ./lab/scripts/down.sh && KBL_LAB_PROFILE=${KBL_LAB_PROFILE} ./lab/scripts/up.sh" >&2
   fi
 fi
+
+ensure_kube_proxy_nftables
 
 echo "Building lab images..."
 docker build -f "$ROOT/controller/docker/kbl-controller/Dockerfile" -t "kbl-controller:${IMAGE_TAG}" "$ROOT"
@@ -130,6 +169,10 @@ if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
   kubectl apply -f "$QUEUE_MANIFEST"
   if [[ "${APPLY_VOLCANO_CONTEXTS}" == "1" ]]; then
     kubectl apply -f "$ROOT/lab/manifests/volcano/computecontexts-volcano.yaml"
+  fi
+  if [[ "${APPLY_DESK_DAY}" == "1" ]]; then
+    echo "Applying rates desk-day book (ny-rates + ln-rates on ${WORKER})..."
+    sed "s/nodeName: .*/nodeName: ${WORKER}/" "$ROOT/lab/manifests/volcano/computecontexts-desk-day.yaml" | kubectl apply -f -
   fi
   kubectl apply -f "$WHEEL_MANIFEST"
   echo "Waiting for ComputeWheel ${WHEEL_NAME} (Workflow → DominoChain → VCJob)..."

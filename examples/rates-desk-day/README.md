@@ -16,6 +16,18 @@ This is **engine use**, not a new theorem. The 3-instrument [finance-curve-snaps
 
 Unfold still does **not** spawn live ComputeWheel contexts. The wheel YAML only names two seats.
 
+## Kind + Volcano (compact)
+
+`make lab-volcano-up` applies this book as `rates-desk-wheel`: NY then London on the same T slice, `runtime: volcano-init`, queue `kbl-lab`.
+
+```bash
+make lab-volcano-up
+./lab/scripts/verify-volcano.sh --strict
+kubectl get wheel rates-desk-wheel -o wide
+kubectl get wf -l kbl.io/computewheel=rates-desk-wheel
+kubectl get vcjob
+```
+
 ## Run (CLI)
 
 ```bash

@@ -64,6 +64,10 @@ POD=$(kubectl get pods -l kbl.io/dominochain --field-selector=status.phase=Succe
 if [[ -z "$POD" ]]; then
   POD=$(kubectl get pods -l kbl.io/volcano-demo=true --field-selector=status.phase=Succeeded -o jsonpath='{.items[-1].metadata.name}' 2>/dev/null || true)
 fi
+if [[ -z "$POD" ]]; then
+  # volcano-init keeps /pause running; inits still finished.
+  POD=$(kubectl get pods -l kbl.io/dominochain -o jsonpath='{.items[-1].metadata.name}' 2>/dev/null || true)
+fi
 if [[ -n "$POD" ]]; then
   CONTAINER=$(kubectl get pod "$POD" -o jsonpath='{.spec.initContainers[-1].name}' 2>/dev/null || true)
   if [[ -n "$CONTAINER" ]]; then
@@ -71,12 +75,12 @@ if [[ -n "$POD" ]]; then
     kubectl logs "$POD" -c "$CONTAINER" --tail=15 2>/dev/null || true
   fi
 else
-  echo "  (no succeeded volcano demo pods yet)"
+  echo "  (no volcano demo pods yet)"
 fi
 
 section "Quick checks"
 echo "  scheduler=volcano on pods above confirms Volcano batch path"
-echo "  compact builtin wheel: finance-wheel → Workflow → DominoChain → VCJob on queue kbl-lab"
+echo "  compact desk-day book: rates-desk-wheel (ny-rates → ln-rates) → Workflow → DominoChain → VCJob"
 echo "  burst demo: kubectl get dchain -l kbl.io/volcano-burst=true"
 
 if [[ "$STRICT" == "1" ]]; then

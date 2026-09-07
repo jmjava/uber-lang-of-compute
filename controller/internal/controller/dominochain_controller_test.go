@@ -251,6 +251,85 @@ func TestDominoChainVolcanoCompletes(t *testing.T) {
 	}
 }
 
+func TestDominoChainVolcanoCompletesWhenInitContainersFinish(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = kblv1alpha1.AddToScheme(scheme)
+
+	chain := &kblv1alpha1.DominoChain{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "volcano-init-done",
+			Namespace:  "default",
+			Generation: 1,
+		},
+		Spec: kblv1alpha1.DominoChainSpec{
+			Runtime: kblv1alpha1.DominoChainRuntimeVolcanoInit,
+			Snapshot: kblv1alpha1.SnapshotSpec{
+				TimeSlice: "2025-04-15T00:00:00Z",
+				Source: kblv1alpha1.SnapshotSource{
+					Inline: map[string]interface{}{"value": 42},
+				},
+				Sealed: true,
+			},
+			Steps: []kblv1alpha1.DominoStepSpec{
+				{Name: "step-one", Command: "builtin:identity"},
+			},
+			StorePath: t.TempDir() + "/volcano-init-done.db",
+		},
+	}
+
+	cl := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(chain, &corev1.Pod{}, &corev1.ConfigMap{}).
+		WithObjects(chain).
+		Build()
+
+	r := &kblcontroller.DominoChainReconciler{
+		Client:    cl,
+		Scheme:    scheme,
+		StoreRoot: t.TempDir(),
+	}
+
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: "volcano-init-done", Namespace: "default"}}
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("finalizer reconcile: %v", err)
+	}
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("create resources reconcile: %v", err)
+	}
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "volcano-init-done-chain-domino-chain-0",
+			Namespace: "default",
+			Labels: map[string]string{
+				dominochain.LabelDominoChain: "volcano-init-done",
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+			InitContainerStatuses: []corev1.ContainerStatus{
+				{State: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}},
+			},
+		},
+	}
+	if err := cl.Create(context.Background(), pod); err != nil {
+		t.Fatalf("create volcano task pod: %v", err)
+	}
+
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("complete reconcile: %v", err)
+	}
+
+	var updated kblv1alpha1.DominoChain
+	if err := cl.Get(context.Background(), req.NamespacedName, &updated); err != nil {
+		t.Fatalf("get chain: %v", err)
+	}
+	if updated.Status.Phase != kblv1alpha1.DominoChainPhaseCompleted {
+		t.Errorf("expected Completed, got %s (%s)", updated.Status.Phase, updated.Status.Message)
+	}
+}
+
 func TestDominoChainOpenKruiseCompletes(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)

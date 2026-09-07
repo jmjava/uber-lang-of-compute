@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compact Kind cluster + Volcano + builtin finance wheel (no Julia, no OpenKruise).
+# Compact Kind cluster + Volcano + rates desk-day book (no Julia, no OpenKruise).
 # Fits a 16 GiB research VM. Full home-lab remains: KBL_LAB_PROFILE=home make lab-up
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"

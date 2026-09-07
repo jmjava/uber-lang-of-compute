@@ -28,14 +28,14 @@ KBL_LAB_PROFILE=compact ./lab/scripts/up.sh   # lighter single-worker lab (i7)
 
 ## Quick start
 
-**Research VM / compact Volcano (no Julia, no OpenKruise):**
+**Research VM / compact Volcano (rates desk-day book, no Julia, no OpenKruise):**
 
 ```bash
 make lab-volcano-up
 ./lab/scripts/verify-volcano.sh --strict
 ```
 
-On research VMs without systemd, `lab/scripts/install-kind-tools.sh` starts `dockerd` directly. Nested overlay (Cursor Cloud / DinD) uses `fuse-overlayfs` plus Kind's `native` containerd snapshotter.
+On research VMs without systemd, `lab/scripts/install-kind-tools.sh` starts `dockerd` directly. Nested overlay (Cursor Cloud / DinD) uses `fuse-overlayfs`, Kind's `native` containerd snapshotter, `iptables-legacy FORWARD ACCEPT` (worker ↔ API), and kube-proxy **nftables** mode (ClusterIP without `xt_statistic`).
 
 **Full workstation lab:**
 
