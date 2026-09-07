@@ -41,12 +41,26 @@ func Materialize(cfg MaterializeConfig) (*MaterializeResult, error) {
 	}
 
 	result := &MaterializeResult{SnapshotCopied: true}
+	rows, err := cfg.Source.ListReplay(cfg.SnapshotID)
+	if err != nil {
+		return nil, fmt.Errorf("read source replay: %w", err)
+	}
 	for _, dominoID := range cfg.DominoChain {
-		inHash, outHash, output, err := cfg.Source.GetLatestResult(cfg.SnapshotID, dominoID)
-		if err != nil {
-			return nil, fmt.Errorf("missing domino %q on sealed snapshot %s: %w", dominoID, cfg.SnapshotID, err)
+		rec, ok := store.LastSpineResult(rows, dominoID)
+		if !ok {
+			inHash, outHash, output, latestErr := cfg.Source.GetLatestResult(cfg.SnapshotID, dominoID)
+			if latestErr != nil {
+				return nil, fmt.Errorf("missing domino %q on sealed snapshot %s: %w", dominoID, cfg.SnapshotID, latestErr)
+			}
+			rec = store.ReplayEntry{
+				SnapshotID: cfg.SnapshotID,
+				DominoID:   dominoID,
+				InputHash:  inHash,
+				OutputHash: outHash,
+				Output:     output,
+			}
 		}
-		if err := cfg.Target.SaveResult(cfg.SnapshotID, dominoID, inHash, outHash, output, false, "", ""); err != nil {
+		if err := cfg.Target.SaveResult(cfg.SnapshotID, rec.DominoID, rec.InputHash, rec.OutputHash, rec.Output, false, rec.PrevLink, rec.Link); err != nil {
 			return nil, fmt.Errorf("copy domino %q: %w", dominoID, err)
 		}
 		result.DominoCount++

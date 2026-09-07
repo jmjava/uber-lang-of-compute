@@ -25,9 +25,9 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 | M17 | Sealed snapshots are write-once | **proved** | `TestSealedSnapshotIsWriteOnce`, `TestSealedSnapshotIsWriteOnceTSDB` |
 | M18 | Memo key conflict is H5, not ignore | **proved** | `TestMemoRejectsConflictingOutputForSameKey` |
 | M19 | Collision-safe WorkflowName truncation | **proved** | `TestWorkflowNameTruncationDistinguishesEqualLength` |
-| M20 | RunSingle continues the replay spine | **proved** | `TestRunSingleSpineChainsAcrossSteps` |
-| M21 | Store persists the replay spine | **proved** | `TestReplayLogRoundTripsSpine` |
-| M22 | Snapshot-completed EventID is content-addressed | **proved** | `TestSnapshotEventIDIsFunctionOfPayload` |
+| M20 | RunSingle continues the replay spine | **proved** | `TestRunSingleSpineChainsAcrossSteps`, `TestDominoReconcilerContinuesReplaySpine` |
+| M21 | Store persists the replay spine | **proved** | `TestReplayLogRoundTripsSpine`, `TestTSDBClientListReplayAndSpineLatest` |
+| M22 | Snapshot-completed EventID is content-addressed | **proved** | `TestSnapshotEventIDIsFunctionOfPayload`, `TestMemoryBusPublishIsIdempotentOnEventID` |
 | M23 | CDC refuses orphan domino results | **proved** | `TestApplyDominoResultRequiresSealedParent` |
 | M24 | Materialize/export fail closed on missing dominos | **proved** | `TestMaterializeFailsOnMissingDomino`, `TestExportFromStoreFailsOnMissingDomino` |
 | M25 | Routing priority: time-slice beats partition | **proved** | `TestRoutingPriorityTimeSliceBeatsPartition` |
@@ -43,7 +43,7 @@ Nature-inspired copies, implemented and proved in order. Method: [nature-inspire
 
 ```bash
 cd controller
-go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./pkg/store/ ./pkg/events/ ./internal/controller/ -count=1
+go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./pkg/store/ ./pkg/events/ ./pkg/review/ ./internal/controller/ -count=1
 ```
 
-Or `make theory-prove` from the repository root. Store invariants (M17+) are included.
+Or `make theory-prove` from the repository root. Store invariants (M17+) are included. Workshop receipt: `make review`.

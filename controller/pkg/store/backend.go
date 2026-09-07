@@ -16,14 +16,32 @@ type Backend interface {
 
 // ReplayEntry is a persisted replay-log row (M21).
 type ReplayEntry struct {
-	SnapshotID string
-	DominoID   string
-	InputHash  string
-	OutputHash string
-	Output     string
-	Reused     bool
-	PrevLink   string
-	Link       string
+	SnapshotID string `json:"snapshot_id"`
+	DominoID   string `json:"domino_id"`
+	InputHash  string `json:"input_hash"`
+	OutputHash string `json:"output_hash"`
+	Output     string `json:"output"`
+	Reused     bool   `json:"reused"`
+	PrevLink   string `json:"prev_link,omitempty"`
+	Link       string `json:"link,omitempty"`
+}
+
+// SpineHead is the last replay link for a snapshot, or snapshotID if the log is empty.
+func SpineHead(rows []ReplayEntry, snapshotID string) string {
+	if n := len(rows); n > 0 && rows[n-1].Link != "" {
+		return rows[n-1].Link
+	}
+	return snapshotID
+}
+
+// LastSpineResult is the last replay row for a named domino on a snapshot.
+func LastSpineResult(rows []ReplayEntry, dominoID string) (ReplayEntry, bool) {
+	for i := len(rows) - 1; i >= 0; i-- {
+		if rows[i].DominoID == dominoID {
+			return rows[i], true
+		}
+	}
+	return ReplayEntry{}, false
 }
 
 // Type identifies a store backend implementation.

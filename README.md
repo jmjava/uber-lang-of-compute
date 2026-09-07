@@ -29,6 +29,7 @@ Derived from the [Uber Language of Compute](https://github.com/jmjava/uber-lang-
 | Guide | Description |
 |-------|-------------|
 | [Getting Started](docs/getting-started.md) | CLI → Kind lab → verify Volcano + OpenKruise |
+| [**Reviewer walkthrough**](docs/reviewer.md) | `make review` — sealed snapshot → memo → lookahead → HeadLink fan-out |
 | [**Architecture Diagrams**](docs/diagrams.md) | Mermaid — topology, runtimes, troubleshooting |
 | [Architecture](docs/architecture.md) | System layers, data flow, runtimes |
 | [Provisioning Runtimes](docs/provisioning-runtimes.md) | `kubernetes-init`, `openkruise`, `volcano-init` |
@@ -110,6 +111,7 @@ For step-by-step paths (CLI, controller, Kind lab, Volcano, OpenKruise), see **[
 ### CLI (local)
 
 ```bash
+make review    # workshop receipt: seal → chain → memo → lookahead → fan-out
 make build
 
 ./controller/bin/kbl-compute \

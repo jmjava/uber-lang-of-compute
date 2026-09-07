@@ -185,21 +185,21 @@ If `WorkflowName` exceeds 63 characters, the suffix is a content hash of the ful
 
 ### Theorem M20 (stepwise spine)
 
-`RunSingleFrom(..., prevLink)` writes `PrevLink=prevLink` so a sequence of standalone steps is a single hash chain from the snapshot ID.
+`RunSingleFrom(..., prevLink)` writes `PrevLink=prevLink` so a sequence of standalone steps is a single hash chain from the snapshot ID. The stepwise Domino reconciler reads the store spine head and persists `status.prevLink` / `status.headLink`.
 
-**Proof.** `attachSpine(prevLink, entry)` after the step. Test: `TestRunSingleSpineChainsAcrossSteps`. ∎
+**Proof.** `attachSpine(prevLink, entry)` before `SaveResult`. Tests: `TestRunSingleSpineChainsAcrossSteps`, `TestDominoReconcilerContinuesReplaySpine`. ∎
 
 ### Theorem M21 (persisted spine)
 
-A completed `Engine.Run` writes `PrevLink`/`Link` on each replay row. `ListReplay` reloads a chain that `VerifySpine` accepts.
+A completed `Engine.Run` writes `PrevLink`/`Link` on each replay row. `ListReplay` reloads a chain that `VerifySpine` accepts on SQLite and the TSDB client.
 
-**Proof.** `SaveResult` inserts the links; `ListReplay` orders by row id. Test: `TestReplayLogRoundTripsSpine`. ∎
+**Proof.** `SaveResult` inserts the links; SQLite `ListReplay` orders by row id; TSDB lists `/v1/replay` in created-at order. Tests: `TestReplayLogRoundTripsSpine`, `TestTSDBClientListReplayAndSpineLatest`. ∎
 
 ### Theorem M22 (content-addressed event identity)
 
-`events.EventID` is `hash.Link` of type, snapshot ID, worldline, universe, and workflow name. `OccurredAt` is excluded.
+`events.EventID` is `hash.Link` of type, snapshot ID, worldline, universe, and workflow name. `OccurredAt` is excluded. A bus `Publish` of an EventID already seen is a no-op.
 
-**Proof.** Inspection of `EventID`. Test: `TestSnapshotEventIDIsFunctionOfPayload`. ∎
+**Proof.** Inspection of `EventID`. Tests: `TestSnapshotEventIDIsFunctionOfPayload`, `TestMemoryBusPublishIsIdempotentOnEventID`. ∎
 
 ### Theorem M23 (no orphan excitations)
 

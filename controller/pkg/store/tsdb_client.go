@@ -130,7 +130,19 @@ func (c *TSDBClient) SaveResult(snapshotID, dominoID, inputHash, outputHash, out
 }
 
 func (c *TSDBClient) ListReplay(snapshotID string) ([]ReplayEntry, error) {
-	return nil, fmt.Errorf("tsdb client: list replay not implemented")
+	resp, err := c.client.Get(c.base + "/v1/replay?snapshot_id=" + url.QueryEscape(snapshotID))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, c.readError(resp)
+	}
+	var rows []ReplayEntry
+	if err := json.NewDecoder(resp.Body).Decode(&rows); err != nil {
+		return nil, err
+	}
+	return rows, nil
 }
 
 func (c *TSDBClient) GetDominoOutput(snapshotID, dominoID string) (string, error) {

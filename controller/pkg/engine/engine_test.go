@@ -529,6 +529,25 @@ func TestRunSingleSpineChainsAcrossSteps(t *testing.T) {
 	if next.PrevLink != head.HeadLink {
 		t.Fatalf("prev-link %q want head %q", next.PrevLink, head.HeadLink)
 	}
+
+	rows, err := s.ListReplay(head.SnapshotID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	persisted := make([]types.ReplayLogEntry, len(rows))
+	for i, r := range rows {
+		persisted[i] = types.ReplayLogEntry{
+			SnapshotID: r.SnapshotID,
+			DominoID:   r.DominoID,
+			InputHash:  r.InputHash,
+			OutputHash: r.OutputHash,
+			PrevLink:   r.PrevLink,
+			Link:       r.Link,
+		}
+	}
+	if err := theory.VerifySpine(head.SnapshotID, persisted); err != nil {
+		t.Fatalf("persisted stepwise spine must verify: %v", err)
+	}
 }
 
 func TestLoadedSnapshotMatchesContentAddress(t *testing.T) {

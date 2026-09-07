@@ -1,4 +1,4 @@
-.PHONY: build test theory-prove tidy clean docker-domino-runner docker-domino-runner-julia \
+.PHONY: build test theory-prove review tidy clean docker-domino-runner docker-domino-runner-julia \
 	docker-kbl-controller docker-kbl-tsdb lab-up lab-down lab-volcano-install lab-openkruise-install \
 	lab-verify-volcano lab-setup-wsl-home cdk-synth
 
@@ -12,7 +12,12 @@ test:
 	cd controller && go test ./...
 
 theory-prove:
-	cd controller && go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./pkg/store/ ./pkg/events/ ./internal/controller/ -count=1
+	cd controller && go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./pkg/store/ ./pkg/events/ ./pkg/review/ ./internal/controller/ -count=1
+
+review: build
+	cd controller && go build -o bin/kbl-review ./cmd/kbl-review
+	cd controller && go test ./pkg/review/ ./pkg/engine/ ./pkg/store/ ./pkg/events/ ./pkg/cdc/ ./pkg/replica/ ./internal/controller/ -count=1
+	./controller/bin/kbl-review --workflow examples/finance-curve-snapshot/workflow.yaml
 
 docker-domino-runner:
 	docker build -f controller/docker/domino-runner/Dockerfile \

@@ -241,12 +241,23 @@ func (e *Engine) executeDomino(d *types.Domino, inputJSON string) (string, error
 }
 
 // RunSingle executes one domino against a sealed snapshot with optional dependency outputs.
+// The spine previous link is the snapshot ID (a new worldline root).
 func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.Domino, priorOutputs map[string]string) (*types.ReplayLogEntry, error) {
+	return e.RunSingleFrom(snapshotID, snap, domino, priorOutputs, snapshotID)
+}
+
+// RunSingleFrom is RunSingle with an explicit previous spine link so stepwise
+// execution can continue a worldline (M20). Empty prevLink means snapshotID.
+// The persisted replay row uses prevLink; it is not rewritten only in memory.
+func (e *Engine) RunSingleFrom(snapshotID string, snap types.Snapshot, domino types.Domino, priorOutputs map[string]string, prevLink string) (*types.ReplayLogEntry, error) {
 	if !snap.Spec.Sealed {
 		return nil, fmt.Errorf("snapshot %q is not sealed", snap.Metadata.Name)
 	}
 	if snapshotID == "" {
 		return nil, fmt.Errorf("snapshot ID is required")
+	}
+	if prevLink == "" {
+		prevLink = snapshotID
 	}
 
 	d := &domino
@@ -274,49 +285,25 @@ func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.
 		entry.OutputHash = outHash
 		entry.Reused = true
 		entry.Output = out
-		if _, err := attachSpine(snapshotID, &entry); err != nil {
-			return nil, fmt.Errorf("spine: %w", err)
+	} else {
+		out, err := e.executeDomino(d, inputJSON)
+		if err != nil {
+			return nil, err
 		}
-		if err := e.store.SaveResult(snapshotID, domino.Metadata.Name, inputHash, outHash, out, true, entry.PrevLink, entry.Link); err != nil {
-			return nil, fmt.Errorf("save replay: %w", err)
+		outputHash, err := hash.Compute(out)
+		if err != nil {
+			return nil, fmt.Errorf("hash output: %w", err)
 		}
-		return &entry, nil
+		entry.OutputHash = outputHash
+		entry.Reused = false
+		entry.Output = out
 	}
 
-	out, err := e.executeDomino(d, inputJSON)
-	if err != nil {
-		return nil, err
-	}
-
-	outputHash, err := hash.Compute(out)
-	if err != nil {
-		return nil, fmt.Errorf("hash output: %w", err)
-	}
-
-	entry.OutputHash = outputHash
-	entry.Reused = false
-	entry.Output = out
-	if _, err := attachSpine(snapshotID, &entry); err != nil {
+	if _, err := attachSpine(prevLink, &entry); err != nil {
 		return nil, fmt.Errorf("spine: %w", err)
 	}
-	if err := e.store.SaveResult(snapshotID, domino.Metadata.Name, inputHash, outputHash, out, false, entry.PrevLink, entry.Link); err != nil {
+	if err := e.store.SaveResult(snapshotID, domino.Metadata.Name, inputHash, entry.OutputHash, entry.Output, entry.Reused, entry.PrevLink, entry.Link); err != nil {
 		return nil, fmt.Errorf("save result: %w", err)
 	}
 	return &entry, nil
-}
-
-// RunSingleFrom is RunSingle with an explicit previous spine link so stepwise
-// execution can continue a worldline (M20). Empty prevLink means snapshotID.
-func (e *Engine) RunSingleFrom(snapshotID string, snap types.Snapshot, domino types.Domino, priorOutputs map[string]string, prevLink string) (*types.ReplayLogEntry, error) {
-	if prevLink == "" {
-		prevLink = snapshotID
-	}
-	entry, err := e.RunSingle(snapshotID, snap, domino, priorOutputs)
-	if err != nil {
-		return nil, err
-	}
-	if _, err := attachSpine(prevLink, entry); err != nil {
-		return nil, fmt.Errorf("spine: %w", err)
-	}
-	return entry, nil
 }

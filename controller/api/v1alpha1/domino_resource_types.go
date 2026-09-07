@@ -49,6 +49,8 @@ type DominoResourceStatus struct {
 	Reused             bool               `json:"reused,omitempty"`
 	CompletedAt        *metav1.Time       `json:"completedAt,omitempty"`
 	Message            string             `json:"message,omitempty"`
+	PrevLink           string             `json:"prevLink,omitempty"`
+	HeadLink           string             `json:"headLink,omitempty"`
 	Conditions         []metav1.Condition `json:"conditions,omitempty"`
 }
 

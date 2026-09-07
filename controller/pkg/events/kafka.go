@@ -16,6 +16,7 @@ type KafkaBus struct {
 	reader   *kafka.Reader
 	mu       sync.RWMutex
 	handlers []Handler
+	seen     map[string]struct{}
 	closed   bool
 }
 
@@ -54,20 +55,31 @@ func NewKafkaBus(cfg KafkaConfig) (*KafkaBus, error) {
 		MaxWait:  500 * time.Millisecond,
 	})
 
-	return &KafkaBus{writer: writer, reader: reader}, nil
+	return &KafkaBus{writer: writer, reader: reader, seen: make(map[string]struct{})}, nil
 }
 
 func (k *KafkaBus) Publish(ctx context.Context, evt SnapshotEvent) error {
 	k.mu.Lock()
-	defer k.mu.Unlock()
 	if k.closed {
+		k.mu.Unlock()
 		return context.Canceled
 	}
+	if evt.EventID != "" {
+		if _, ok := k.seen[evt.EventID]; ok {
+			k.mu.Unlock()
+			return nil
+		}
+		k.seen[evt.EventID] = struct{}{}
+	}
+	k.mu.Unlock()
 	body, err := json.Marshal(evt)
 	if err != nil {
 		return err
 	}
-	key := []byte(evt.SnapshotID)
+	key := []byte(evt.EventID)
+	if len(key) == 0 {
+		key = []byte(evt.SnapshotID)
+	}
 	if len(key) == 0 {
 		key = []byte(evt.Workflow)
 	}

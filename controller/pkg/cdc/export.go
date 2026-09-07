@@ -56,7 +56,7 @@ func ExportFromWorkflow(wf *kblv1alpha1.Workflow, result *types.RunResult) []Env
 	if result == nil || result.SnapshotID == "" {
 		return nil
 	}
-	if wf == nil || !wf.Spec.Snapshot.Sealed {
+	if wf == nil || !workflowExportable(wf) {
 		return nil
 	}
 
@@ -68,7 +68,7 @@ func ExportFromWorkflow(wf *kblv1alpha1.Workflow, result *types.RunResult) []Env
 			SnapshotID: result.SnapshotID,
 			TimeSlice:  wf.Spec.Snapshot.TimeSlice,
 			Data:       data,
-			Sealed:     wf.Spec.Snapshot.Sealed,
+			Sealed:     true,
 		},
 	}}
 
@@ -87,6 +87,13 @@ func ExportFromWorkflow(wf *kblv1alpha1.Workflow, result *types.RunResult) []Env
 		})
 	}
 	return out
+}
+
+func workflowExportable(wf *kblv1alpha1.Workflow) bool {
+	if wf.Spec.Snapshot.Sealed {
+		return true
+	}
+	return wf.Spec.SnapshotRef != ""
 }
 
 func snapshotDataJSON(wf *kblv1alpha1.Workflow) (string, error) {

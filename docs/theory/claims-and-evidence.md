@@ -20,9 +20,9 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | M17 | Sealed snapshots are write-once | Theorem of crystallization | `TestSealedSnapshotIsWriteOnce`, `TestSealedSnapshotIsWriteOnceTSDB` | Physical WORM media |
 | M18 | Memo key conflict is rejected | Theorem of H5 | `TestMemoRejectsConflictingOutputForSameKey` | Byzantine multi-writer consensus |
 | M19 | Long Workflow names truncate by content hash | Theorem of labels | `TestWorkflowNameTruncationDistinguishesEqualLength` | DNS-1035 aesthetics |
-| M20 | Sequential RunSingle continues the spine | Theorem of the geodesic | `TestRunSingleSpineChainsAcrossSteps` | Distributed consensus of spine heads |
-| M21 | Store persists the replay spine | Theorem of the fossil record | `TestReplayLogRoundTripsSpine` | Full Merkle DAG / blockchain |
-| M22 | Snapshot-completed EventID is content-addressed | Theorem of the barcode | `TestSnapshotEventIDIsFunctionOfPayload` | Exactly-once bus delivery |
+| M20 | Sequential RunSingle continues the spine | Theorem of the geodesic | `TestRunSingleSpineChainsAcrossSteps`, `TestDominoReconcilerContinuesReplaySpine` | Distributed consensus of spine heads |
+| M21 | Store persists the replay spine | Theorem of the fossil record | `TestReplayLogRoundTripsSpine`, `TestTSDBClientListReplayAndSpineLatest` | Full Merkle DAG / blockchain |
+| M22 | Snapshot-completed EventID is content-addressed | Theorem of the barcode | `TestSnapshotEventIDIsFunctionOfPayload`, `TestMemoryBusPublishIsIdempotentOnEventID` | Kafka broker exactly-once |
 | M23 | CDC refuses orphan domino results | Theorem of the Cauchy parent | `TestApplyDominoResultRequiresSealedParent` | Multi-hop causal consistency |
 | M24 | Incomplete replica copy fails closed | Theorem of conservation at a cut | `TestMaterializeFailsOnMissingDomino`, `TestExportFromStoreFailsOnMissingDomino` | Partial replica freshness SLAs |
 | M25 | Time-slice routes beat partition routes | Theorem of selection rules | `TestRoutingPriorityTimeSliceBeatsPartition` | Learned / softmax routers |
@@ -53,7 +53,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 
 ```bash
 cd controller
-go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ -count=1
+go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./pkg/store/ ./pkg/events/ ./pkg/review/ ./internal/controller/ -count=1
 ```
 
 Julia discretization (optional, skipped if Julia is missing):

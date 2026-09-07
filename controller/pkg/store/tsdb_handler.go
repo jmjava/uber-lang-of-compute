@@ -167,6 +167,26 @@ func NewTSDBHandler(engine *TSDBEngine) http.Handler {
 			"output":      out,
 		})
 	})
+	mux.HandleFunc("/v1/replay", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		snapshotID := r.URL.Query().Get("snapshot_id")
+		if snapshotID == "" {
+			http.Error(w, "snapshot_id is required", http.StatusBadRequest)
+			return
+		}
+		rows, err := engine.ListReplay(snapshotID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if rows == nil {
+			rows = []ReplayEntry{}
+		}
+		writeJSON(w, rows)
+	})
 	return mux
 }
 

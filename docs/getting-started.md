@@ -50,6 +50,16 @@ make build
 
 Inspect the replay log for `reused: true` on the second run.
 
+### Workshop / reviewer receipt
+
+Repeatable engine path a referee can run in one command (sealed snapshot → builtin chain → memo → wheel lookahead → HeadLink fan-out):
+
+```bash
+make review
+```
+
+See [reviewer.md](reviewer.md).
+
 ### Julia finance chain (local)
 
 ```bash

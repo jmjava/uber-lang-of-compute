@@ -4,8 +4,10 @@ import (
 	"context"
 	"testing"
 
+	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/cdc"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
 
 func TestApplyReplicatesSnapshotAndDomino(t *testing.T) {
@@ -139,5 +141,32 @@ func TestApplyDominoResultRequiresSealedParent(t *testing.T) {
 	}
 	if err := cdc.Apply(target, resultEnv); err != nil {
 		t.Fatalf("result after sealed parent should apply: %v", err)
+	}
+}
+
+func TestExportFromWorkflowSnapshotRefEmitsEnvelopes(t *testing.T) {
+	wf := &kblv1alpha1.Workflow{
+		Spec: kblv1alpha1.WorkflowSpec{
+			SnapshotRef: "curve-snap",
+		},
+	}
+	result := &types.RunResult{
+		SnapshotID: "snap-ref",
+		HeadLink:   "link-head",
+		Entries: []types.ReplayLogEntry{{
+			DominoID:   "load",
+			InputHash:  "in",
+			OutputHash: "out",
+			Output:     `{"ok":true}`,
+		}},
+	}
+	envs := cdc.ExportFromWorkflow(wf, result)
+	if len(envs) != 2 {
+		t.Fatalf("SnapshotRef workflow must export snapshot + results, got %d", len(envs))
+	}
+
+	unsealed := &kblv1alpha1.Workflow{Spec: kblv1alpha1.WorkflowSpec{}}
+	if got := cdc.ExportFromWorkflow(unsealed, result); len(got) != 0 {
+		t.Fatalf("unsealed inline workflow without SnapshotRef must not export, got %d", len(got))
 	}
 }

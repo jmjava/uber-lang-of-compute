@@ -180,12 +180,21 @@ func (s *SQLiteBackend) GetDominoOutput(snapshotID, dominoID string) (string, er
 
 func (s *SQLiteBackend) GetLatestResult(snapshotID, dominoID string) (inputHash, outputHash, output string, err error) {
 	row := s.db.QueryRow(
-		`SELECT input_hash, output_hash, output FROM domino_results
+		`SELECT input_hash, output_hash, output FROM replay_log
 		 WHERE snapshot_id = ? AND domino_id = ?
-		 ORDER BY created_at DESC LIMIT 1`,
+		 ORDER BY id DESC LIMIT 1`,
 		snapshotID, dominoID,
 	)
 	err = row.Scan(&inputHash, &outputHash, &output)
+	if err == sql.ErrNoRows {
+		row = s.db.QueryRow(
+			`SELECT input_hash, output_hash, output FROM domino_results
+			 WHERE snapshot_id = ? AND domino_id = ?
+			 ORDER BY id DESC LIMIT 1`,
+			snapshotID, dominoID,
+		)
+		err = row.Scan(&inputHash, &outputHash, &output)
+	}
 	return
 }
 

@@ -7,6 +7,7 @@ Central index for the [Uber Language of Compute](https://jmenke.blogspot.com/) i
 | Guide | Audience | Content |
 |-------|----------|---------|
 | [Getting Started](getting-started.md) | New operators | CLI → Kind lab → verify end-to-end |
+| [**Reviewer walkthrough**](reviewer.md) | Workshop / referees | `make review` — seal → memo → lookahead → HeadLink fan-out |
 | [**Architecture Diagrams**](diagrams.md) | Everyone | **Mermaid** — topology, sequences, troubleshooting |
 | [Kind Lab Guide](../lab/README.md) | Local development | Multi-node Kind, Volcano, OpenKruise, demos |
 | [Provisioning Runtimes](provisioning-runtimes.md) | Platform engineers | `kubernetes-init`, `openkruise`, `volcano-init` compared |

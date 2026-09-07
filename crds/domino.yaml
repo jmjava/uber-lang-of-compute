@@ -66,6 +66,14 @@ spec:
                 completedAt:
                   type: string
                   format: date-time
+                message:
+                  type: string
+                prevLink:
+                  type: string
+                  description: Previous Merkle spine link persisted for stepwise RunSingleFrom
+                headLink:
+                  type: string
+                  description: Spine link produced by this domino
       subresources:
         status: {}
       additionalPrinterColumns:

@@ -15,6 +15,7 @@ import (
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/convert"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/engine"
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/store"
+	"github.com/jmjava/uber-lang-of-compute/controller/pkg/types"
 )
 
 const dominoDependencyRequeue = 5 * time.Second
@@ -84,9 +85,16 @@ func (r *DominoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	eng := engine.New(backend)
 	engineSnap := convert.ToEngineSnapshot(&snap)
+	engineSnap.Status = &types.SnapshotStatus{SnapshotID: snap.Status.SnapshotID, Phase: string(snap.Status.Phase)}
 	engineDom := convert.ToEngineDomino(&dom)
 
-	entry, err := eng.RunSingle(snap.Status.SnapshotID, engineSnap, engineDom, priorOutputs)
+	rows, err := backend.ListReplay(snap.Status.SnapshotID)
+	if err != nil {
+		return r.fail(ctx, &dom, fmt.Errorf("list replay: %w", err))
+	}
+	prevLink := store.SpineHead(rows, snap.Status.SnapshotID)
+
+	entry, err := eng.RunSingleFrom(snap.Status.SnapshotID, engineSnap, engineDom, priorOutputs, prevLink)
 	if err != nil {
 		return r.fail(ctx, &dom, err)
 	}
@@ -102,6 +110,8 @@ func (r *DominoReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	dom.Status.InputHash = entry.InputHash
 	dom.Status.OutputHash = entry.OutputHash
 	dom.Status.Reused = entry.Reused
+	dom.Status.PrevLink = entry.PrevLink
+	dom.Status.HeadLink = entry.Link
 	dom.Status.CompletedAt = &now
 	dom.Status.Message = fmt.Sprintf("%s: input=%s output=%s", phase, entry.InputHash[:8], entry.OutputHash[:8])
 	dom.Status.Conditions = []metav1.Condition{{

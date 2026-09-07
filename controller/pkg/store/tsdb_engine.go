@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"time"
 )
@@ -217,24 +218,14 @@ func (t *TSDBEngine) GetLatestResult(snapshotID, dominoID string) (inputHash, ou
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
-	dir := filepath.Join(t.root, "memo", snapshotID, dominoID)
-	entries, err := os.ReadDir(dir)
+	rows, err := t.listReplayLocked(snapshotID)
 	if err != nil {
 		return "", "", "", err
 	}
-	if len(entries) == 0 {
-		return "", "", "", os.ErrNotExist
+	if rec, ok := LastSpineResult(rows, dominoID); ok {
+		return rec.InputHash, rec.OutputHash, rec.Output, nil
 	}
-	latest := entries[len(entries)-1]
-	body, err := os.ReadFile(filepath.Join(dir, latest.Name()))
-	if err != nil {
-		return "", "", "", err
-	}
-	var rec memoRecord
-	if err := json.Unmarshal(body, &rec); err != nil {
-		return "", "", "", err
-	}
-	return rec.InputHash, rec.OutputHash, rec.Output, nil
+	return "", "", "", os.ErrNotExist
 }
 
 func (t *TSDBEngine) Close() error { return nil }
@@ -242,12 +233,21 @@ func (t *TSDBEngine) Close() error { return nil }
 func (t *TSDBEngine) ListReplay(snapshotID string) ([]ReplayEntry, error) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
+	return t.listReplayLocked(snapshotID)
+}
+
+func (t *TSDBEngine) listReplayLocked(snapshotID string) ([]ReplayEntry, error) {
 	dir := filepath.Join(t.root, "replay")
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
-	var out []ReplayEntry
+	type timed struct {
+		entry ReplayEntry
+		at    time.Time
+		name  string
+	}
+	var timedRows []timed
 	for _, f := range files {
 		body, err := os.ReadFile(filepath.Join(dir, f.Name()))
 		if err != nil {
@@ -260,16 +260,30 @@ func (t *TSDBEngine) ListReplay(snapshotID string) ([]ReplayEntry, error) {
 		if rec.SnapshotID != snapshotID {
 			continue
 		}
-		out = append(out, ReplayEntry{
-			SnapshotID: rec.SnapshotID,
-			DominoID:   rec.DominoID,
-			InputHash:  rec.InputHash,
-			OutputHash: rec.OutputHash,
-			Output:     rec.Output,
-			Reused:     rec.Reused,
-			PrevLink:   rec.PrevLink,
-			Link:       rec.Link,
+		timedRows = append(timedRows, timed{
+			entry: ReplayEntry{
+				SnapshotID: rec.SnapshotID,
+				DominoID:   rec.DominoID,
+				InputHash:  rec.InputHash,
+				OutputHash: rec.OutputHash,
+				Output:     rec.Output,
+				Reused:     rec.Reused,
+				PrevLink:   rec.PrevLink,
+				Link:       rec.Link,
+			},
+			at:   rec.CreatedAt,
+			name: f.Name(),
 		})
+	}
+	sort.SliceStable(timedRows, func(i, j int) bool {
+		if !timedRows[i].at.Equal(timedRows[j].at) {
+			return timedRows[i].at.Before(timedRows[j].at)
+		}
+		return timedRows[i].name < timedRows[j].name
+	})
+	out := make([]ReplayEntry, len(timedRows))
+	for i, row := range timedRows {
+		out[i] = row.entry
 	}
 	return out, nil
 }
