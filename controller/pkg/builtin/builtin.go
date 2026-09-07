@@ -29,6 +29,8 @@ func Execute(command, inputJSON string) (string, error) {
 		return interpolate(inputJSON)
 	case "builtin:risk-dv01":
 		return riskDV01(inputJSON)
+	case "builtin:coarsen":
+		return coarsen(inputJSON)
 	default:
 		return "", fmt.Errorf("unknown builtin command: %s", command)
 	}
@@ -44,6 +46,63 @@ func identity(inputJSON string) (string, error) {
 	}
 	out, err := json.Marshal(data)
 	return string(out), err
+}
+
+// coarsen sums numeric value/v across child outputs (a JSON array from
+// multiple FromDomino inputs, or a single object). This is the live
+// fold-up of the windowed aggregation tree: parents aggregate children.
+func coarsen(inputJSON string) (string, error) {
+	if inputJSON == "" || inputJSON == "null" {
+		return marshalCoarsen(0, 0)
+	}
+	var raw interface{}
+	if err := json.Unmarshal([]byte(inputJSON), &raw); err != nil {
+		return "", fmt.Errorf("coarsen: parse input: %w", err)
+	}
+	items := coarsenItems(raw)
+	var sum float64
+	for _, item := range items {
+		sum += numericValue(item)
+	}
+	return marshalCoarsen(sum, len(items))
+}
+
+func marshalCoarsen(sum float64, parts int) (string, error) {
+	out, err := json.Marshal(map[string]interface{}{
+		"value":  sum,
+		"v":      sum,
+		"parts":  parts,
+		"method": "sum",
+	})
+	return string(out), err
+}
+
+func coarsenItems(raw interface{}) []interface{} {
+	if arr, ok := raw.([]interface{}); ok {
+		return arr
+	}
+	return []interface{}{raw}
+}
+
+func numericValue(v interface{}) float64 {
+	switch x := v.(type) {
+	case float64:
+		return x
+	case json.Number:
+		f, _ := x.Float64()
+		return f
+	case int:
+		return float64(x)
+	case int64:
+		return float64(x)
+	case map[string]interface{}:
+		for _, key := range []string{"value", "v"} {
+			if n, ok := x[key]; ok {
+				return numericValue(n)
+			}
+		}
+	}
+	return 0
 }
 
 func interpolate(inputJSON string) (string, error) {

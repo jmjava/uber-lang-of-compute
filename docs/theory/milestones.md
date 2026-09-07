@@ -57,5 +57,9 @@ Or `make theory-prove` from the repository root. Store invariants (M17+) are inc
 | 34 | **verified** | Compact Kind: `rates-desk-wheel` + `julia-finance-wheel` + `julia-finance-openkruise` (`verify-volcano.sh --strict`) |
 | 35 | **verified** | Catalog Snapshot/Domino CRs, PluggableUniverse runtime/image, fail-closed julia runner. [ADR 0038](../adr/0038-crd-operator-standardization.md) |
 | 36 | **verified** | OpenKruise ImagePullJob before runner-slot pods (`verify-volcano.sh --strict`). [ADR 0039](../adr/0039-openkruise-imagepulljob.md) |
+| 37 | **verified** | Unfold parents `builtin:coarsen`; root `v` = leaf count. [ADR 0040](../adr/0040-engine-aggregation-and-cdc.md) |
+| 38 | scheduled | Live Kind Unfold aggregation Workflow (local engine; no wheel spawn) |
+| 39 | scheduled | CDC Kafka round-trip (engine envelopes; not a Debezium connector) |
+| 40 | scheduled | Real Debezium connector + Strimzi, only after 39 |
 
 Full table: [root README roadmap](../../README.md#roadmap).

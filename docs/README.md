@@ -101,6 +101,7 @@ Skip components: `KBL_LAB_VOLCANO=0`, `KBL_LAB_OPENKURISE=0`. See [lab/README.md
 - [0037 Physics Correspondence Layer](adr/0037-physics-correspondence-layer.md)
 - [0038 CRD/operator standardization (after Julia + OpenKruise)](adr/0038-crd-operator-standardization.md)
 - [0039 OpenKruise ImagePullJob](adr/0039-openkruise-imagepulljob.md)
+- [0040 Engine aggregation + CDC remaining work](adr/0040-engine-aggregation-and-cdc.md)
 
 ## Explorations
 
@@ -125,6 +126,7 @@ Full phase table lives in the [root README](../README.md#roadmap). Recent phases
 | 34 | Compact Kind: desk-day + Julia volcano wheel + OpenKruise (**verified**) |
 | 35 | Standardize on existing `kbl.io` CRDs ([ADR 0038](adr/0038-crd-operator-standardization.md)) (**verified**) |
 | 36 | OpenKruise ImagePullJob ([ADR 0039](adr/0039-openkruise-imagepulljob.md)) (**verified**) |
+| 37–40 | Unfold coarsen chain (**37 verified**), live Kind unfold, Kafka CDC, real Debezium later ([ADR 0040](adr/0040-engine-aggregation-and-cdc.md)) |
 
 ## Visual reference
 

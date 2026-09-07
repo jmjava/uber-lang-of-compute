@@ -5,9 +5,9 @@ import (
 )
 
 // WorkflowFromUnfold builds a live deterministic workflow whose dominos are
-// the nodes of a windowed aggregation tree. Leaves read the snapshot; parents
-// read their children (post-order). This is F1 leaving the pattern library:
-// Unfold is now an executable chain, not only a shape theorem.
+// the nodes of a windowed aggregation tree. Leaves identity the snapshot;
+// parents run builtin:coarsen (sum of child value/v) in post-order. This is
+// F1 leaving the pattern library: Unfold is an executable aggregation chain.
 func WorkflowFromUnfold(depth, arity int, snap types.Snapshot) *types.Workflow {
 	root := Unfold(depth, arity, "n", 1)
 	dominos, chain := dominosFromNode(root)
@@ -46,6 +46,7 @@ func dominosFromNode(n *Node) ([]types.Domino, []string) {
 		if len(n.Children) == 0 {
 			d.Spec.Inputs = []types.DominoInput{{FromSnapshot: "snap"}}
 		} else {
+			d.Spec.Command = "builtin:coarsen"
 			for _, c := range n.Children {
 				d.Spec.DependsOn = append(d.Spec.DependsOn, c.Label)
 				d.Spec.Inputs = append(d.Spec.Inputs, types.DominoInput{FromDomino: c.Label})

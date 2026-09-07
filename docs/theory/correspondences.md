@@ -145,13 +145,14 @@ This is the same methodological move as an artificial neuron (McCulloch & Pitts 
 
 **Source \(S\).** Mandelbrot (1982): sets that are statistically self-similar across scales; the Mandelbrot set itself is the connectedness locus of \(z\mapsto z^2+c\). Wilson renormalization and multigrid methods share a *different* idea that the blog actually needs: a hierarchy that can be coarse-grained, with only a finite window materialized.
 
-**Target \(T\).** `theory.Unfold(depth, arity, …)` builds a finite perfect \(k\)-ary tree (the window). Child values partition the parent additively. `theory.Coarsen` drops one level and restores values by summation.
+**Target \(T\).** `theory.Unfold(depth, arity, …)` builds a finite perfect \(k\)-ary tree (the window). Child values partition the parent additively. `theory.Coarsen` drops one level and restores values by summation. The live engine chain (`WorkflowFromUnfold`) identity-copies the snapshot at the leaves and `builtin:coarsen`s parents (sum of child `v`).
 
 **Morphism \(\varphi\).** Infinite self-similar hierarchy \(\mapsto\) the inductive tree that *would* continue forever. Viewport \(\mapsto\) finite depth \(D\). Zoom-out / renormalization \(\mapsto\) `Coarsen`. Conservation of a scalar under coarse-graining \(\mapsto\) additive partition + sum.
 
 **Transfers \(P_+\).**
 
 - **Self-similarity of windows (Thm. F1).** `Coarsen(Unfold(d,k))` is shape- and value-equal to `Unfold(d-1,k)`. Tests: `TestCoarsenRecoversShallowerWindow`, `TestTheoremF1WindowedAggregation`.
+- **Live fold-up (Phase 37).** Root `v` = `LeafCount(d,k)` × leaf `v`; `agg(d,k) = agg(d-1,k)·k`. Tests: `TestWorkflowFromUnfoldAggregatesToLeafCount`.
 - **Finiteness of the window.** Height is exactly \(D\). Test: `TestWindowIsFinite`.
 
 **Does not transfer \(P_-\) (left in nature).**

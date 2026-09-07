@@ -41,7 +41,7 @@ Grades follow [nature-inspired.md](nature-inspired.md): theorem, empirical discr
 | R1 | Unsealed snapshots cannot replicate | Theorem | `TestTheoremR1…` | — |
 | C1 | Routing is a deterministic function | Theorem | `TestTheoremC1…` | — |
 | W1 | Wheel has unique successor; \(n_c\) steps advance one slice | Theorem | `TestTheoremW1…` | Torque / isochrony |
-| F1 | `Coarsen(Unfold(d)) ≅ Unfold(d-1)` | Theorem (pattern + live chain) | `TestCoarsenRecoversShallowerWindow`, `TestWorkflowFromUnfoldRunsDeterministically` | Fractal Kubernetes pod spawn |
+| F1 | `Coarsen(Unfold(d)) ≅ Unfold(d-1)` | Theorem (pattern + live chain) | `TestCoarsenRecoversShallowerWindow`, `TestWorkflowFromUnfoldRunsDeterministically`, `TestWorkflowFromUnfoldAggregatesToLeafCount` | Fractal Kubernetes pod spawn |
 | F-dim | Additive window has similarity dimension 1 | Explorer mimic | `TestSimilarityDimensionAdditiveTreeIsOne` | Hausdorff dim. of the Mandelbrot set |
 | F-esc | Escape-time is a finite iteration window | Explorer mimic | `TestEscapeTimeIsAFiniteWindow` | Connectedness locus of \(z^2+c\) |
 | F-wheel | Window leaves can be wheel seats | Explorer mimic | `TestWheelWindowLeafCount`, `TestWindowSeatsMatchExplorerLeaves`, `TestFullTurnVisitsEveryWindowLeaf` | Live CRD field for depth/arity |

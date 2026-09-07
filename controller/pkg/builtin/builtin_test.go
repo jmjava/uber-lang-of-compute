@@ -75,3 +75,33 @@ func TestTreasuryParCurveLandsOnGrid(t *testing.T) {
 		t.Fatalf("KR01 ladder %+v", byTenor)
 	}
 }
+
+func TestCoarsenSumsChildValues(t *testing.T) {
+	out, err := builtin.Execute("builtin:coarsen", `[{"v":1},{"v":1}]`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var parsed struct {
+		V      float64 `json:"v"`
+		Value  float64 `json:"value"`
+		Parts  int     `json:"parts"`
+		Method string  `json:"method"`
+	}
+	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
+		t.Fatal(err)
+	}
+	if parsed.V != 2 || parsed.Value != 2 || parsed.Parts != 2 || parsed.Method != "sum" {
+		t.Fatalf("coarsen %+v", parsed)
+	}
+
+	nested, err := builtin.Execute("builtin:coarsen", `[{"value":2,"v":2},{"value":2,"v":2}]`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal([]byte(nested), &parsed); err != nil {
+		t.Fatal(err)
+	}
+	if parsed.V != 4 || parsed.Parts != 2 {
+		t.Fatalf("nested coarsen %+v", parsed)
+	}
+}
