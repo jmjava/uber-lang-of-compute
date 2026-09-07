@@ -149,7 +149,8 @@ kubectl get nodes -L kbl.io/gpu
 ```bash
 KBL_LAB_VOLCANO=0 make lab-up          # platform only
 KBL_LAB_OPENKURISE=0 make lab-up       # skip hot-swap demo
-KBL_LAB_PROFILE=compact KBL_LAB_OPENKURISE=0 make lab-up   # minimal i7
+KBL_LAB_PROFILE=compact make lab-up            # desk-day + Julia + OpenKruise on 1 worker
+KBL_LAB_JULIA=0 KBL_LAB_OPENKURISE=0 KBL_LAB_PROFILE=compact make lab-up   # platform + builtin desk-day only
 ```
 
 See also [lab/README.md](README.md).

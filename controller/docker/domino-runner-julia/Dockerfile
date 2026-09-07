@@ -18,6 +18,9 @@ COPY controller/ ./
 RUN CGO_ENABLED=0 go build -o /domino-runner ./cmd/domino-runner
 
 FROM julia:1.12-bookworm AS julia-deps
+# Instantiate into a path we copy; Pkg lands in ~/.julia by default and would
+# be dropped by COPY /opt/kbl/julia alone.
+ENV JULIA_DEPOT_PATH=/opt/kbl/julia-depot
 WORKDIR /opt/kbl/julia
 COPY controller/julia/ ./
 RUN julia --project=. -e 'using Pkg; Pkg.instantiate(); using JSON; using FinanceModels; using SpecialFunctions'
@@ -25,11 +28,14 @@ RUN julia --project=. -e 'using Pkg; Pkg.instantiate(); using JSON; using Financ
 FROM julia:1.12-bookworm
 WORKDIR /opt/kbl/julia
 COPY --from=julia-deps /opt/kbl/julia /opt/kbl/julia
+COPY --from=julia-deps /opt/kbl/julia-depot /opt/kbl/julia-depot
 COPY --from=go-build /domino-runner /usr/local/bin/domino-runner
 COPY controller/julia/scripts ./scripts
 
+ENV JULIA_DEPOT_PATH=/opt/kbl/julia-depot
 ENV KBL_JULIA_PROJECT=/opt/kbl/julia
 ENV KBL_JULIA_BIN=julia
 ENV PATH="/usr/local/bin:${PATH}"
+RUN julia --project=/opt/kbl/julia -e 'using JSON; using FinanceModels; using SpecialFunctions'
 
 ENTRYPOINT ["/usr/local/bin/domino-runner"]

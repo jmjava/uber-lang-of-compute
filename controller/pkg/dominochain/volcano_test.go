@@ -64,6 +64,35 @@ func TestBuildVolcanoJob(t *testing.T) {
 	if !ok || len(inits) != 2 {
 		t.Fatalf("expected 2 init containers, got %v", spec["initContainers"])
 	}
+	containers, ok := spec["containers"].([]interface{})
+	if !ok || len(containers) != 1 {
+		t.Fatalf("expected 1 complete container, got %v", spec["containers"])
+	}
+	complete, _ := containers[0].(map[string]interface{})
+	if complete["image"] != dominochain.DefaultJuliaRunnerImage {
+		t.Fatalf("expected complete container to use runner image, got %v", complete["image"])
+	}
+	if cmd, _ := complete["command"].([]interface{}); len(cmd) > 0 {
+		t.Fatalf("expected complete container to use image entrypoint, got %v", cmd)
+	}
+}
+
+func TestVolcanoJobNameFitsK8sLabel(t *testing.T) {
+	short := &kblv1alpha1.DominoChain{}
+	short.Name = "julia-finance-volcano"
+	if got := dominochain.VolcanoJobName(short); got != "julia-finance-volcano-chain" {
+		t.Fatalf("short name: got %s", got)
+	}
+
+	long := &kblv1alpha1.DominoChain{}
+	long.Name = "julia-finance-wheel-default-context-20250415t000000z-dchain"
+	got := dominochain.VolcanoJobName(long)
+	if len(got) > 63 {
+		t.Fatalf("job name %q is %d chars, want ≤63", got, len(got))
+	}
+	if got != long.Name {
+		t.Fatalf("expected truncated suffix-free name %s, got %s", long.Name, got)
+	}
 }
 
 func TestVolcanoJobPhaseHelpers(t *testing.T) {

@@ -133,18 +133,18 @@ func (b *Builder) BuildOpenKruisePod(chain *kblv1alpha1.DominoChain) *corev1.Pod
 
 	containers := make([]corev1.Container, len(chain.Spec.Steps))
 	for i, step := range chain.Spec.Steps {
+		inputPath := filepath.Join(SnapshotMountPath, "snapshot.json")
+		if i > 0 {
+			inputPath = filepath.Join(HandoffMountPath, fmt.Sprintf("output-%d.json", i-1))
+		}
+		outputPath := filepath.Join(HandoffMountPath, fmt.Sprintf("output-%d.json", i))
 		containers[i] = corev1.Container{
 			Name:            slotName(i, step.Name),
-			Image:           PlaceholderImage,
-			Command:         []string{"/pause"},
+			Image:           b.stepImage(chain, step),
+			Env:             b.stepEnvIO(step, inputPath, outputPath),
 			VolumeMounts:    handoffMounts(),
 			ImagePullPolicy: corev1.PullIfNotPresent,
-			Env: []corev1.EnvVar{
-				{Name: "KBL_STEP_NAME", Value: step.Name},
-				{Name: "KBL_STEP_INDEX", Value: fmt.Sprintf("%d", i)},
-			},
 		}
-		_ = step // real image applied via ContainerRecreateRequest
 	}
 
 	pod := &corev1.Pod{
@@ -179,10 +179,14 @@ func (b *Builder) stepCommand(step kblv1alpha1.DominoStepSpec) []string {
 }
 
 func (b *Builder) stepEnv(step kblv1alpha1.DominoStepSpec, inputPath string) []corev1.EnvVar {
+	return b.stepEnvIO(step, inputPath, filepath.Join(HandoffMountPath, "output.json"))
+}
+
+func (b *Builder) stepEnvIO(step kblv1alpha1.DominoStepSpec, inputPath, outputPath string) []corev1.EnvVar {
 	env := []corev1.EnvVar{
 		{Name: "KBL_COMMAND", Value: step.Command},
 		{Name: "KBL_INPUT", Value: inputPath},
-		{Name: "KBL_OUTPUT", Value: filepath.Join(HandoffMountPath, "output.json")},
+		{Name: "KBL_OUTPUT", Value: outputPath},
 		{Name: "KBL_STEP_NAME", Value: step.Name},
 	}
 	if IsJuliaCommand(step.Command) {

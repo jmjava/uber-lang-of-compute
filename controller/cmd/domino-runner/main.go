@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/executor"
 )
@@ -27,7 +28,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	input, err := os.ReadFile(inputPath)
+	input, err := waitAndReadInput(inputPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "read input: %v\n", err)
 		os.Exit(1)
@@ -42,5 +43,22 @@ func main() {
 	if err := os.WriteFile(outputPath, []byte(out), 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "write output: %v\n", err)
 		os.Exit(1)
+	}
+}
+
+func waitAndReadInput(path string) ([]byte, error) {
+	deadline := time.Now().Add(15 * time.Minute)
+	for {
+		data, err := os.ReadFile(path)
+		if err == nil {
+			return data, nil
+		}
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+		if time.Now().After(deadline) {
+			return nil, fmt.Errorf("timeout waiting for input %s", path)
+		}
+		time.Sleep(200 * time.Millisecond)
 	}
 }

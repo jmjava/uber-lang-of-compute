@@ -257,6 +257,9 @@ func (r *WorkflowReconciler) executeContainer(ctx context.Context, wf *kblv1alph
 func (r *WorkflowReconciler) completeFromChain(ctx context.Context, wf *kblv1alpha1.Workflow, chain *kblv1alpha1.DominoChain, logger interface {
 	Info(msg string, keysAndValues ...interface{})
 }) (ctrl.Result, error) {
+	if skipJuliaOperatorReplay(chain, wf) {
+		return r.completeFromChainStatus(ctx, wf, chain, logger)
+	}
 	s, err := store.OpenForWorkflow(ctx, r.Client, wf, r.StoreRoot)
 	if err != nil {
 		return r.fail(ctx, wf, err)
@@ -316,6 +319,43 @@ func (r *WorkflowReconciler) completeFromChain(ctx context.Context, wf *kblv1alp
 	}
 	r.publishSnapshotEvent(ctx, wf, result)
 	logger.Info("workflow completed via domino chain", "workflow", wf.Name, "chain", chain.Name)
+	return ctrl.Result{}, nil
+}
+
+func (r *WorkflowReconciler) completeFromChainStatus(ctx context.Context, wf *kblv1alpha1.Workflow, chain *kblv1alpha1.DominoChain, logger interface {
+	Info(msg string, keysAndValues ...interface{})
+}) (ctrl.Result, error) {
+	now := metav1.NewTime(time.Now().UTC())
+	n := len(chain.Spec.Steps)
+	dominoResults := make([]kblv1alpha1.DominoResult, n)
+	for i, step := range chain.Spec.Steps {
+		dominoResults[i] = kblv1alpha1.DominoResult{DominoID: step.Name}
+		if i < len(chain.Status.StepResults) {
+			dominoResults[i].OutputHash = chain.Status.StepResults[i].OutputHash
+		}
+	}
+	wf.Status.ObservedGeneration = wf.Generation
+	wf.Status.Phase = kblv1alpha1.WorkflowPhaseCompleted
+	wf.Status.SnapshotID = chain.Status.SnapshotID
+	wf.Status.DominoCount = n
+	wf.Status.ReusedCount = 0
+	wf.Status.RecomputedCount = n
+	wf.Status.LastRunTime = &now
+	wf.Status.DominoResults = dominoResults
+	wf.Status.Message = fmt.Sprintf("container chain completed %d in-cluster julia steps (operator skipped replay)", n)
+	wf.Status.Homeostatic = theory.Homeostatic(theory.PhaseHomeostasis(string(wf.Status.Phase)))
+	wf.Status.Conditions = []metav1.Condition{{
+		Type:               conditionReady,
+		Status:             metav1.ConditionTrue,
+		Reason:             "ContainerChainCompleted",
+		Message:            wf.Status.Message,
+		LastTransitionTime: now,
+		ObservedGeneration: wf.Generation,
+	}}
+	if err := r.Status().Update(ctx, wf); err != nil {
+		return ctrl.Result{}, err
+	}
+	logger.Info("workflow completed via in-cluster julia chain", "workflow", wf.Name, "chain", chain.Name)
 	return ctrl.Result{}, nil
 }
 

@@ -2,7 +2,6 @@ package controller_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -330,6 +329,89 @@ func TestDominoChainVolcanoCompletesWhenInitContainersFinish(t *testing.T) {
 	}
 }
 
+func TestDominoChainJuliaVolcanoCompletesWithoutOperatorReplay(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = kblv1alpha1.AddToScheme(scheme)
+
+	chain := &kblv1alpha1.DominoChain{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "julia-volcano-chain",
+			Namespace:  "default",
+			Generation: 1,
+		},
+		Spec: kblv1alpha1.DominoChainSpec{
+			Runtime: kblv1alpha1.DominoChainRuntimeVolcanoInit,
+			Snapshot: kblv1alpha1.SnapshotSpec{
+				TimeSlice: "2025-04-15T00:00:00Z",
+				Source: kblv1alpha1.SnapshotSource{
+					Inline: map[string]interface{}{"value": 42},
+				},
+				Sealed: true,
+			},
+			Steps: []kblv1alpha1.DominoStepSpec{
+				{Name: "load", Command: "julia:identity"},
+			},
+			RunnerImage: "kbl-domino-runner-julia:lab",
+			StorePath:   t.TempDir() + "/julia-volcano.db",
+		},
+	}
+
+	cl := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithStatusSubresource(chain, &corev1.Pod{}, &corev1.ConfigMap{}).
+		WithObjects(chain).
+		Build()
+
+	r := &kblcontroller.DominoChainReconciler{
+		Client:    cl,
+		Scheme:    scheme,
+		StoreRoot: t.TempDir(),
+	}
+
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: "julia-volcano-chain", Namespace: "default"}}
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("finalizer reconcile: %v", err)
+	}
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("create resources reconcile: %v", err)
+	}
+
+	pod := &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "julia-volcano-chain-chain-domino-chain-0",
+			Namespace: "default",
+			Labels: map[string]string{
+				dominochain.LabelDominoChain: "julia-volcano-chain",
+			},
+		},
+		Status: corev1.PodStatus{
+			Phase: corev1.PodRunning,
+			InitContainerStatuses: []corev1.ContainerStatus{
+				{State: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}},
+			},
+		},
+	}
+	if err := cl.Create(context.Background(), pod); err != nil {
+		t.Fatalf("create volcano task pod: %v", err)
+	}
+
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("complete reconcile: %v", err)
+	}
+
+	var updated kblv1alpha1.DominoChain
+	if err := cl.Get(context.Background(), req.NamespacedName, &updated); err != nil {
+		t.Fatalf("get chain: %v", err)
+	}
+	if updated.Status.Phase != kblv1alpha1.DominoChainPhaseCompleted {
+		t.Errorf("expected Completed, got %s (%s)", updated.Status.Phase, updated.Status.Message)
+	}
+	if updated.Status.SnapshotID == "" {
+		t.Error("expected snapshot ID after in-cluster julia completion")
+	}
+}
+
 func TestDominoChainOpenKruiseCompletes(t *testing.T) {
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
@@ -379,23 +461,20 @@ func TestDominoChainOpenKruiseCompletes(t *testing.T) {
 		t.Fatalf("create pod reconcile: %v", err)
 	}
 
-	for step := 0; step < 2; step++ {
-		if _, err := r.Reconcile(context.Background(), req); err != nil {
-			t.Fatalf("create crr step %d: %v", step, err)
-		}
-		crrName := fmt.Sprintf("openkruise-chain-slot-%d", step)
-		var crr unstructured.Unstructured
-		crr.SetGroupVersionKind(dominochain.ContainerRecreateRequestGVK())
-		if err := cl.Get(context.Background(), types.NamespacedName{Name: crrName, Namespace: "default"}, &crr); err != nil {
-			t.Fatalf("get crr step %d: %v", step, err)
-		}
-		_ = unstructured.SetNestedField(crr.Object, "Completed", "status", "phase")
-		if err := cl.Update(context.Background(), &crr); err != nil {
-			t.Fatalf("update crr step %d: %v", step, err)
-		}
-		if _, err := r.Reconcile(context.Background(), req); err != nil {
-			t.Fatalf("advance step %d: %v", step, err)
-		}
+	var pod corev1.Pod
+	if err := cl.Get(context.Background(), types.NamespacedName{Name: "openkruise-chain-chain", Namespace: "default"}, &pod); err != nil {
+		t.Fatalf("get openkruise pod: %v", err)
+	}
+	pod.Status.Phase = corev1.PodSucceeded
+	pod.Status.ContainerStatuses = []corev1.ContainerStatus{
+		{Name: "slot-0-step-one", State: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}},
+		{Name: "slot-1-step-two", State: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{ExitCode: 0}}},
+	}
+	if err := cl.Status().Update(context.Background(), &pod); err != nil {
+		t.Fatalf("update pod status: %v", err)
+	}
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("complete reconcile: %v", err)
 	}
 
 	var updated kblv1alpha1.DominoChain

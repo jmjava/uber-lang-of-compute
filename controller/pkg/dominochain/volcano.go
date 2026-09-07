@@ -3,6 +3,7 @@ package dominochain
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,8 +27,21 @@ var VolcanoJobGVK = schema.GroupVersionKind{
 }
 
 // VolcanoJobName returns the Volcano Job name for a domino chain.
+// Volcano copies the job name into the batch.volcano.sh/job-name pod label,
+// which must be ≤ 63 characters.
 func VolcanoJobName(chain *kblv1alpha1.DominoChain) string {
-	return chain.Name + "-chain"
+	name := chain.Name + "-chain"
+	if len(name) <= 63 {
+		return name
+	}
+	if len(chain.Name) <= 63 {
+		return chain.Name
+	}
+	trimmed := strings.TrimRight(chain.Name[:63], "-")
+	if trimmed == "" {
+		return "kbl-chain"
+	}
+	return trimmed
 }
 
 // BuildVolcanoJob returns a Volcano Job whose single task runs the init-container domino chain.
@@ -35,6 +49,7 @@ func (b *Builder) BuildVolcanoJob(chain *kblv1alpha1.DominoChain) *unstructured.
 	pod := b.BuildInitChainPod(chain)
 	podSpec := pod.Spec.DeepCopy()
 	podSpec.SchedulerName = VolcanoSchedulerName
+	replaceVolcanoCompleteContainer(podSpec, b.runnerImage(chain))
 
 	queue := chain.Spec.VolcanoQueue
 	if queue == "" {
@@ -86,6 +101,25 @@ func (b *Builder) BuildVolcanoJob(chain *kblv1alpha1.DominoChain) *unstructured.
 	}})
 
 	return job
+}
+
+// replaceVolcanoCompleteContainer swaps /pause for a one-shot identity so
+// TaskCompleted fires and the Volcano queue releases the slot.
+func replaceVolcanoCompleteContainer(spec *corev1.PodSpec, image string) {
+	if spec == nil || len(spec.Containers) == 0 {
+		return
+	}
+	c := &spec.Containers[0]
+	c.Name = "chain-complete"
+	c.Image = image
+	c.Command = nil
+	c.Args = nil
+	c.Env = []corev1.EnvVar{
+		{Name: "KBL_COMMAND", Value: "builtin:identity"},
+		{Name: "KBL_INPUT", Value: HandoffMountPath + "/output.json"},
+		{Name: "KBL_OUTPUT", Value: HandoffMountPath + "/complete.json"},
+		{Name: "KBL_STEP_NAME", Value: "chain-complete"},
+	}
 }
 
 func podSpecToMap(spec corev1.PodSpec) map[string]interface{} {

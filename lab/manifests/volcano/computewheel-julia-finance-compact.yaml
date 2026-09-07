@@ -6,6 +6,7 @@ metadata:
   namespace: default
   labels:
     kbl.io/volcano-demo: "true"
+    kbl.io/julia-demo: "true"
 spec:
   contexts:
     - default-context
@@ -50,3 +51,5 @@ spec:
       runtime: volcano-init
     provisioning:
       runnerImage: kbl-domino-runner-julia:lab
+      storePath: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+      nodeLocal: true

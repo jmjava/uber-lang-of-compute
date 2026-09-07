@@ -10,22 +10,23 @@ INSTALL_OPENKURISE="${KBL_LAB_OPENKURISE:-1}"
 INSTALL_JULIA="${KBL_LAB_JULIA:-1}"
 WHEEL_NAME="julia-finance-wheel"
 APPLY_DESK_DAY=0
+JULIA_WHEEL_MANIFEST=""
+JULIA_WHEEL_NAME=""
 
 case "$KBL_LAB_PROFILE" in
   compact)
     KIND_CONFIG="$ROOT/lab/kind/kind-config-compact.yaml"
     QUEUE_MANIFEST="$ROOT/lab/manifests/volcano/queue-compact.yaml"
+    WHEEL_MANIFEST="$ROOT/lab/manifests/volcano/computewheel-desk-day-compact.yaml"
+    WHEEL_NAME="rates-desk-wheel"
+    APPLY_DESK_DAY=1
     if [[ "${INSTALL_JULIA}" != "0" ]]; then
-      WHEEL_MANIFEST="$ROOT/lab/manifests/volcano/computewheel-julia-finance-compact.yaml"
-      WHEEL_NAME="julia-finance-wheel"
-    else
-      WHEEL_MANIFEST="$ROOT/lab/manifests/volcano/computewheel-desk-day-compact.yaml"
-      WHEEL_NAME="rates-desk-wheel"
-      APPLY_DESK_DAY=1
+      JULIA_WHEEL_MANIFEST="$ROOT/lab/manifests/volcano/computewheel-julia-finance-compact.yaml"
+      JULIA_WHEEL_NAME="julia-finance-wheel"
     fi
     APPLY_VOLCANO_CONTEXTS=0
     APPLY_VOLCANO_BURST=0
-    INSTALL_OPENKURISE="${KBL_LAB_OPENKURISE:-0}"
+    INSTALL_OPENKURISE="${KBL_LAB_OPENKURISE:-1}"
     EXPECTED_NODES=2
     ;;
   home)
@@ -180,6 +181,15 @@ if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
     "computewheel/${WHEEL_NAME}" --timeout=600s 2>/dev/null || {
     echo "Wheel still processing — check: ./lab/scripts/verify-volcano.sh"
   }
+  if [[ -n "${JULIA_WHEEL_MANIFEST}" ]]; then
+    echo "Applying Julia finance wheel ${JULIA_WHEEL_NAME}..."
+    kubectl apply -f "$JULIA_WHEEL_MANIFEST"
+    echo "Waiting for ComputeWheel ${JULIA_WHEEL_NAME}..."
+    kubectl wait --for=jsonpath='{.status.phase}'=Idle \
+      "computewheel/${JULIA_WHEEL_NAME}" --timeout=600s 2>/dev/null || {
+      echo "Julia wheel still processing — check: ./lab/scripts/verify-volcano.sh"
+    }
+  fi
   if [[ "${APPLY_VOLCANO_BURST}" == "1" ]]; then
     chmod +x "$ROOT/lab/scripts/apply-volcano-burst.sh"
     "$ROOT/lab/scripts/apply-volcano-burst.sh"
@@ -191,7 +201,7 @@ if [[ "${INSTALL_OPENKURISE}" != "0" ]]; then
   kubectl apply -k "$ROOT/lab/manifests/openkruise/"
   echo "Waiting for DominoChain julia-finance-openkruise..."
   kubectl wait --for=jsonpath='{.status.phase}'=Completed \
-    dominochain/julia-finance-openkruise --timeout=300s 2>/dev/null || {
+    dominochain/julia-finance-openkruise --timeout=600s 2>/dev/null || {
     echo "OpenKruise chain still running — check: kubectl get dchain,pods,crr -l kbl.io/openkruise-demo=true"
   }
 fi

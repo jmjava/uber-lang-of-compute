@@ -3,7 +3,6 @@ package dominochain
 import (
 	"fmt"
 
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -24,7 +23,7 @@ func ContainerRecreateRequestGVK() schema.GroupVersionKind {
 func ContainerRecreateRequest(chain *kblv1alpha1.DominoChain, b *Builder, stepIndex int) *unstructured.Unstructured {
 	step := chain.Spec.Steps[stepIndex]
 	containerName := StepContainerName(chain, stepIndex)
-	image := b.stepImage(chain, step)
+	_ = b
 
 	crr := &unstructured.Unstructured{}
 	crr.SetGroupVersionKind(ContainerRecreateRequestGVK())
@@ -37,19 +36,12 @@ func ContainerRecreateRequest(chain *kblv1alpha1.DominoChain, b *Builder, stepIn
 	})
 
 	_ = unstructured.SetNestedField(crr.Object, chain.Name+"-chain", "spec", "podName")
-	_ = unstructured.SetNestedSlice(crr.Object, []interface{}{containerName}, "spec", "containers")
+	_ = unstructured.SetNestedSlice(crr.Object, []interface{}{
+		map[string]interface{}{"name": containerName},
+	}, "spec", "containers")
 	_ = unstructured.SetNestedMap(crr.Object, map[string]interface{}{
 		"orderedRecreate": true,
 	}, "spec", "strategy")
-	_ = unstructured.SetNestedMap(crr.Object, map[string]interface{}{
-		"containers": []interface{}{
-			map[string]interface{}{
-				"name":  containerName,
-				"image": image,
-				"env":   envVarsToCRR(b.stepEnv(step, inputPath(stepIndex))),
-			},
-		},
-	}, "spec", "template")
 
 	crr.SetOwnerReferences([]metav1.OwnerReference{{
 		APIVersion: "kbl.io/v1alpha1",
@@ -59,21 +51,6 @@ func ContainerRecreateRequest(chain *kblv1alpha1.DominoChain, b *Builder, stepIn
 	}})
 
 	return crr
-}
-
-func inputPath(stepIndex int) string {
-	if stepIndex == 0 {
-		return SnapshotMountPath + "/snapshot.json"
-	}
-	return HandoffMountPath + "/output.json"
-}
-
-func envVarsToCRR(env []corev1.EnvVar) []interface{} {
-	out := make([]interface{}, len(env))
-	for i, e := range env {
-		out[i] = map[string]interface{}{"name": e.Name, "value": e.Value}
-	}
-	return out
 }
 
 // CRRPhase extracts phase from an unstructured CRR status.

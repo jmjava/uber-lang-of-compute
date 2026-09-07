@@ -18,7 +18,7 @@ Unfold still does **not** spawn live ComputeWheel contexts. The wheel YAML only 
 
 ## Kind + Volcano (compact)
 
-`make lab-volcano-up` applies this book as `rates-desk-wheel`: NY then London on the same T slice, `runtime: volcano-init`, queue `kbl-lab`.
+`make lab-volcano-up` applies this book as `rates-desk-wheel`, then a Julia volcano wheel (`julia-finance-wheel`) and the OpenKruise hot-swap chain (`julia-finance-openkruise`) on the same compact worker.
 
 ```bash
 make lab-volcano-up

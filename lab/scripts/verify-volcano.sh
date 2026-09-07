@@ -81,7 +81,27 @@ fi
 section "Quick checks"
 echo "  scheduler=volcano on pods above confirms Volcano batch path"
 echo "  compact desk-day book: rates-desk-wheel (ny-rates → ln-rates) → Workflow → DominoChain → VCJob"
+echo "  compact Julia wheel: julia-finance-wheel (default-context, julia:greeks) on the same worker"
+echo "  OpenKruise runtime: julia-finance-openkruise (runner slots on kruise-managed cluster)"
 echo "  burst demo: kubectl get dchain -l kbl.io/volcano-burst=true"
+
+section "Julia finance wheel"
+if kubectl get computewheel julia-finance-wheel &>/dev/null; then
+  kubectl get computewheel julia-finance-wheel -o wide
+  kubectl get wf -l kbl.io/computewheel=julia-finance-wheel -o custom-columns=NAME:.metadata.name,PHASE:.status.phase,CONTEXT:.spec.routing.computeContextRef 2>/dev/null || true
+else
+  echo "  (julia-finance-wheel not applied — set KBL_LAB_JULIA=1)"
+fi
+
+section "OpenKruise"
+if kubectl -n kruise-system get deploy kruise-controller-manager &>/dev/null; then
+  kubectl -n kruise-system get pods
+  kubectl get dchain julia-finance-openkruise -o wide 2>/dev/null || echo "  (julia-finance-openkruise not applied)"
+  kubectl get containerrecreaterequests.apps.kruise.io -l kbl.io/openkruise-demo=true 2>/dev/null || \
+    kubectl get containerrecreaterequests.apps.kruise.io -l kbl.io/dominochain=julia-finance-openkruise 2>/dev/null || true
+else
+  echo "  (kruise-system not found — set KBL_LAB_OPENKURISE=1)"
+fi
 
 if [[ "$STRICT" == "1" ]]; then
   kubectl -n volcano-system get deploy volcano-scheduler -o jsonpath='{.status.readyReplicas}' 2>/dev/null | grep -qx '1' \
@@ -90,6 +110,16 @@ if [[ "$STRICT" == "1" ]]; then
     || fail "no ComputeWheel with kbl.io/volcano-demo=true"
   kubectl get jobs.batch.volcano.sh --no-headers 2>/dev/null | grep -q . \
     || fail "no Volcano Jobs created"
+  if kubectl get computewheel julia-finance-wheel &>/dev/null; then
+    kubectl get computewheel julia-finance-wheel -o jsonpath='{.status.phase}' 2>/dev/null | grep -Eq 'Idle|Completed' \
+      || fail "julia-finance-wheel is not Idle"
+  fi
+  if kubectl -n kruise-system get deploy kruise-controller-manager &>/dev/null; then
+    kubectl -n kruise-system get deploy kruise-controller-manager -o jsonpath='{.status.readyReplicas}' 2>/dev/null | grep -qx '1' \
+      || fail "kruise-controller-manager is not ready"
+    kubectl get dchain julia-finance-openkruise -o jsonpath='{.status.phase}' 2>/dev/null | grep -qx 'Completed' \
+      || fail "julia-finance-openkruise is not Completed"
+  fi
   echo ""
   echo "strict Volcano checks passed"
 fi

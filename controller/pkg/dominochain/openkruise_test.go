@@ -22,32 +22,19 @@ func TestContainerRecreateRequestJuliaEnv(t *testing.T) {
 	chain.Namespace = "default"
 
 	crr := dominochain.ContainerRecreateRequest(chain, &dominochain.Builder{}, 0)
-	containers, found, err := unstructured.NestedSlice(crr.Object, "spec", "template", "containers")
+	containers, found, err := unstructured.NestedSlice(crr.Object, "spec", "containers")
 	if err != nil || !found || len(containers) == 0 {
-		t.Fatalf("expected CRR container template: found=%v err=%v", found, err)
+		t.Fatalf("expected CRR containers: found=%v err=%v", found, err)
 	}
-
 	container, ok := containers[0].(map[string]interface{})
 	if !ok {
 		t.Fatal("expected container map")
 	}
-	envSlice, ok := container["env"].([]interface{})
-	if !ok {
-		t.Fatal("expected env slice")
+	if container["name"] == "" {
+		t.Fatal("expected container name")
 	}
-
-	names := map[string]string{}
-	for _, raw := range envSlice {
-		m, ok := raw.(map[string]interface{})
-		if !ok {
-			continue
-		}
-		names[m["name"].(string)] = m["value"].(string)
-	}
-	if names["KBL_COMMAND"] != "julia:interpolate" {
-		t.Fatalf("unexpected command: %v", names)
-	}
-	if names["KBL_JULIA_PROJECT"] != dominochain.JuliaProjectContainerPath {
-		t.Fatalf("expected julia project env, got %v", names)
+	podName, _, _ := unstructured.NestedString(crr.Object, "spec", "podName")
+	if podName != "julia-openkruise-chain" {
+		t.Fatalf("expected podName julia-openkruise-chain, got %q", podName)
 	}
 }

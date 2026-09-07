@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -189,52 +188,17 @@ func (r *DominoChainReconciler) reconcileOpenKruise(ctx context.Context, chain *
 		return ctrl.Result{}, err
 	}
 
-	step := chain.Status.ActiveStep
-	if step >= len(chain.Spec.Steps) {
+	if done, err := r.openKruiseSlotsComplete(&live, chain); err != nil {
+		return r.failChain(ctx, chain, err)
+	} else if done {
 		return r.completeChain(ctx, chain, logger)
 	}
 
-	crrName := fmt.Sprintf("%s-slot-%d", chain.Name, step)
-	var crr unstructured.Unstructured
-	crr.SetGroupVersionKind(schema.GroupVersionKind{
-		Group:   "apps.kruise.io",
-		Version: "v1alpha1",
-		Kind:    "ContainerRecreateRequest",
-	})
-	err := r.Get(ctx, client.ObjectKey{Namespace: chain.Namespace, Name: crrName}, &crr)
-	if apierrors.IsNotFound(err) {
-		newCRR := dominochain.ContainerRecreateRequest(chain, r.builderPtr(), step)
-		if err := controllerutil.SetControllerReference(chain, newCRR, r.Scheme); err != nil {
-			return r.failChain(ctx, chain, err)
-		}
-		if err := r.Create(ctx, newCRR); err != nil {
-			if meta.IsNoMatchError(err) {
-				return r.failChain(ctx, chain, fmt.Errorf("openkruise CRD not installed: %w", err))
-			}
-			return r.failChain(ctx, chain, fmt.Errorf("create CRR: %w", err))
-		}
-		logger.Info("created ContainerRecreateRequest", "chain", chain.Name, "step", step)
-		return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
-	}
-	if err != nil {
-		return ctrl.Result{}, err
+	if live.Status.Phase == corev1.PodFailed {
+		return r.failChain(ctx, chain, fmt.Errorf("pod %s failed", live.Name))
 	}
 
-	if dominochain.IsCRRComplete(&crr) || r.stepContainerSucceeded(&live, chain, step) {
-		chain.Status.StepResults = appendStepResult(chain.Status.StepResults, chain, step, "Completed")
-		chain.Status.ActiveStep = step + 1
-
-		if chain.Status.ActiveStep >= len(chain.Spec.Steps) {
-			return r.completeChain(ctx, chain, logger)
-		}
-
-		chain.Status.Message = fmt.Sprintf("advanced to step %d", chain.Status.ActiveStep)
-		if err := r.Status().Update(ctx, chain); err != nil {
-			return ctrl.Result{}, err
-		}
-		return ctrl.Result{Requeue: true}, nil
-	}
-
+	chain.Status.Message = "waiting for openkruise runner slots"
 	if err := r.Status().Update(ctx, chain); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -244,6 +208,9 @@ func (r *DominoChainReconciler) reconcileOpenKruise(ctx context.Context, chain *
 func (r *DominoChainReconciler) completeChain(ctx context.Context, chain *kblv1alpha1.DominoChain, logger interface {
 	Info(msg string, keysAndValues ...interface{})
 }) (ctrl.Result, error) {
+	if skipJuliaOperatorReplay(chain, nil) {
+		return r.finishChainFromRunner(ctx, chain, logger)
+	}
 	s, err := store.OpenForDominoChain(ctx, r.Client, chain, r.StoreRoot)
 	if err != nil {
 		return r.failChain(ctx, chain, err)
@@ -252,9 +219,48 @@ func (r *DominoChainReconciler) completeChain(ctx context.Context, chain *kblv1a
 	return r.finishChain(ctx, chain, s, logger)
 }
 
+func (r *DominoChainReconciler) finishChainFromRunner(ctx context.Context, chain *kblv1alpha1.DominoChain, logger interface {
+	Info(msg string, keysAndValues ...interface{})
+}) (ctrl.Result, error) {
+	snapJSON, err := dominochain.SnapshotJSON(chain.Spec.Snapshot)
+	if err != nil {
+		return r.failChain(ctx, chain, err)
+	}
+	snapID, err := hash.SnapshotID(chain.Spec.Snapshot.TimeSlice, snapJSON)
+	if err != nil {
+		snapID, _ = hash.Compute(snapJSON)
+	}
+	chain.Status.Phase = kblv1alpha1.DominoChainPhaseCompleted
+	chain.Status.SnapshotID = snapID
+	chain.Status.Message = fmt.Sprintf("completed %d in-cluster julia steps (operator skipped replay)", len(chain.Spec.Steps))
+	chain.Status.StepResults = make([]kblv1alpha1.StepResult, len(chain.Spec.Steps))
+	for i, step := range chain.Spec.Steps {
+		chain.Status.StepResults[i] = kblv1alpha1.StepResult{
+			Name:  step.Name,
+			Index: i,
+			Phase: "Completed",
+		}
+	}
+	chain.Status.Conditions = []metav1.Condition{{
+		Type:               conditionReady,
+		Status:             metav1.ConditionTrue,
+		Reason:             "ChainCompletedInCluster",
+		Message:            chain.Status.Message,
+		LastTransitionTime: metav1.Now(),
+	}}
+	if err := r.Status().Update(ctx, chain); err != nil {
+		return ctrl.Result{}, err
+	}
+	logger.Info("domino chain completed without operator julia replay", "chain", chain.Name, "snapshotID", snapID)
+	return ctrl.Result{}, nil
+}
+
 func (r *DominoChainReconciler) finishChain(ctx context.Context, chain *kblv1alpha1.DominoChain, s store.Backend, logger interface {
 	Info(msg string, keysAndValues ...interface{})
 }) (ctrl.Result, error) {
+	if skipJuliaOperatorReplay(chain, nil) {
+		return r.finishChainFromRunner(ctx, chain, logger)
+	}
 	eng := engine.New(s)
 	wf := dominoChainToWorkflow(chain)
 	result, err := eng.Run(wf)
@@ -309,6 +315,35 @@ func (r *DominoChainReconciler) initChainComplete(pod *corev1.Pod, steps int) (b
 	}
 	// All inits done; main container may still be pause — treat as complete.
 	return pod.Status.Phase == corev1.PodRunning || pod.Status.Phase == corev1.PodSucceeded, nil
+}
+
+func (r *DominoChainReconciler) openKruiseSlotsComplete(pod *corev1.Pod, chain *kblv1alpha1.DominoChain) (bool, error) {
+	if pod.Status.Phase == corev1.PodSucceeded {
+		return true, nil
+	}
+	if len(pod.Status.ContainerStatuses) < len(chain.Spec.Steps) {
+		return false, nil
+	}
+	for i := range chain.Spec.Steps {
+		name := dominochain.StepContainerName(chain, i)
+		found := false
+		for _, cs := range pod.Status.ContainerStatuses {
+			if cs.Name != name {
+				continue
+			}
+			found = true
+			if cs.State.Terminated == nil {
+				return false, nil
+			}
+			if cs.State.Terminated.ExitCode != 0 {
+				return false, fmt.Errorf("openkruise container %s exit code %d", name, cs.State.Terminated.ExitCode)
+			}
+		}
+		if !found {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func (r *DominoChainReconciler) stepContainerSucceeded(pod *corev1.Pod, chain *kblv1alpha1.DominoChain, step int) bool {

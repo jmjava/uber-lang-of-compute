@@ -87,7 +87,7 @@ func TestIsJuliaCommand(t *testing.T) {
 	}
 }
 
-func TestBuildOpenKruisePodPlaceholders(t *testing.T) {
+func TestBuildOpenKruisePodRunnerSlots(t *testing.T) {
 	chain := &kblv1alpha1.DominoChain{
 		Spec: kblv1alpha1.DominoChainSpec{
 			Runtime: kblv1alpha1.DominoChainRuntimeOpenKruise,
@@ -95,6 +95,7 @@ func TestBuildOpenKruisePodPlaceholders(t *testing.T) {
 				{Name: "a", Command: "builtin:identity"},
 				{Name: "b", Command: "builtin:identity"},
 			},
+			RunnerImage: "kbl-domino-runner-julia:lab",
 		},
 	}
 	chain.Name = "swap-chain"
@@ -102,11 +103,11 @@ func TestBuildOpenKruisePodPlaceholders(t *testing.T) {
 
 	pod := (&dominochain.Builder{}).BuildOpenKruisePod(chain)
 	if len(pod.Spec.Containers) != 2 {
-		t.Fatalf("expected 2 placeholder containers, got %d", len(pod.Spec.Containers))
+		t.Fatalf("expected 2 runner containers, got %d", len(pod.Spec.Containers))
 	}
 	for _, c := range pod.Spec.Containers {
-		if c.Image != dominochain.PlaceholderImage {
-			t.Errorf("expected placeholder image, got %s", c.Image)
+		if c.Image != "kbl-domino-runner-julia:lab" {
+			t.Errorf("expected runner image, got %s", c.Image)
 		}
 	}
 }
