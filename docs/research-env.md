@@ -10,7 +10,19 @@ Spin up the **engine test assets** without Kind, Volcano, or a 64 GiB workstatio
 | `kbl-compute` / `kbl-review` | Workshop receipt: seal → chain → memo → lookahead → HeadLink fan-out |
 | `kbl-tsdb` on `:9090` | Live node-local store for TSDB-backed replay |
 
-This is not the Kind lab. Kind remains `make lab-up` ([lab/README.md](../lab/README.md)).
+## Kind + Volcano (compact)
+
+On a 16 GiB research VM (or laptop), skip Julia and OpenKruise:
+
+```bash
+make lab-volcano-up      # Docker/Kind if needed, compact cluster, Volcano, builtin finance wheel
+./lab/scripts/verify-volcano.sh
+make lab-down
+```
+
+`make lab-volcano-up` is opt-in and is **not** started by Cursor `start` (that only starts `kbl-tsdb`). Research VMs without systemd start `dockerd` directly. If `/` is overlay (DinD / Cursor Cloud), Docker uses `fuse-overlayfs` and Kind uses the `native` containerd snapshotter.
+
+Full workstation lab (Julia wheel + OpenKruise) remains `KBL_LAB_PROFILE=home make lab-up`.
 
 ## One command
 

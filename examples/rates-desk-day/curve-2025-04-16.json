@@ -1,0 +1,16 @@
+{
+  "as_of": "2025-04-16T00:00:00Z",
+  "currency": "USD",
+  "curve": "UST_PAR",
+  "comment": "T+1 bear steepener: 2s rally 8bp, 10s +6bp, 30s +10bp",
+  "instruments": [
+    {"instrument_id": "US1Y", "rate": 4.64, "maturity": "2026-04-16"},
+    {"instrument_id": "US2Y", "rate": 4.72, "maturity": "2027-04-16"},
+    {"instrument_id": "US3Y", "rate": 4.58, "maturity": "2028-04-16"},
+    {"instrument_id": "US5Y", "rate": 4.46, "maturity": "2030-04-16"},
+    {"instrument_id": "US7Y", "rate": 4.38, "maturity": "2032-04-16"},
+    {"instrument_id": "US10Y", "rate": 4.31, "maturity": "2035-04-16"},
+    {"instrument_id": "US20Y", "rate": 4.48, "maturity": "2045-04-16"},
+    {"instrument_id": "US30Y", "rate": 4.58, "maturity": "2055-04-16"}
+  ]
+}

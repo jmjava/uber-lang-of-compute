@@ -18,7 +18,12 @@ import (
 
 func loadTestWorkflow(t *testing.T, name string) *types.Workflow {
 	t.Helper()
-	path := filepath.Join("..", "..", "..", "examples", name, "workflow.yaml")
+	return loadExampleEngineWorkflow(t, name, "workflow.yaml")
+}
+
+func loadExampleEngineWorkflow(t *testing.T, rel ...string) *types.Workflow {
+	t.Helper()
+	path := filepath.Join(append([]string{"..", "..", "..", "examples"}, rel...)...)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("read workflow: %v", err)

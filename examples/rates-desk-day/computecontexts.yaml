@@ -1,0 +1,17 @@
+apiVersion: kbl.io/v1alpha1
+kind: ComputeContext
+metadata:
+  name: ny-rates
+spec:
+  nodeName: ny-worker
+  storePath: /var/kbl/store/ny-rates
+  storeType: sqlite
+---
+apiVersion: kbl.io/v1alpha1
+kind: ComputeContext
+metadata:
+  name: ln-rates
+spec:
+  nodeName: ln-worker
+  storePath: /var/kbl/store/ln-rates
+  storeType: sqlite

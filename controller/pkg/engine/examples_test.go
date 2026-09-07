@@ -226,8 +226,8 @@ func TestExampleFinanceCurveSnapshotComputesDV01(t *testing.T) {
 	if risk.Method != "dv01_simplified" || risk.Notional != 1_000_000 {
 		t.Fatalf("risk envelope %+v", risk)
 	}
-	if len(risk.RiskMetrics) != 2 {
-		t.Fatalf("risk tenors %d want 2", len(risk.RiskMetrics))
+	if len(risk.RiskMetrics) != 8 {
+		t.Fatalf("risk tenors %d want 8 (KR01 ladder)", len(risk.RiskMetrics))
 	}
 	byTenor := map[string]float64{}
 	for _, m := range risk.RiskMetrics {
@@ -235,6 +235,9 @@ func TestExampleFinanceCurveSnapshotComputesDV01(t *testing.T) {
 	}
 	almostEqual(t, byTenor["3Y"], 300, "3Y dv01")
 	almostEqual(t, byTenor["7Y"], 700, "7Y dv01")
+	almostEqual(t, byTenor["2Y"], 200, "2Y dv01")
+	almostEqual(t, byTenor["10Y"], 1000, "10Y dv01")
+	almostEqual(t, byTenor["30Y"], 3000, "30Y dv01")
 
 	second := runWorkflow(t, s, wf)
 	if second.WorkEvaluations != 0 || second.WorkReuses != 3 {

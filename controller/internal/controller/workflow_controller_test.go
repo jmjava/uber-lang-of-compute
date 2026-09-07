@@ -2,6 +2,7 @@ package controller_test
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -13,6 +14,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	kyaml "sigs.k8s.io/yaml"
 
 	kblv1alpha1 "github.com/jmjava/uber-lang-of-compute/controller/api/v1alpha1"
 	kblcontroller "github.com/jmjava/uber-lang-of-compute/controller/internal/controller"
@@ -290,5 +292,48 @@ func TestWorkflowReconcilerSkipsCompleted(t *testing.T) {
 	}
 	if time.Since(start) > time.Second {
 		t.Error("expected fast no-op for completed workflow")
+	}
+}
+
+func TestWorkflowReconcilerRatesDeskDayCRD(t *testing.T) {
+	scheme := runtime.NewScheme()
+	_ = clientgoscheme.AddToScheme(scheme)
+	_ = kblv1alpha1.AddToScheme(scheme)
+	_ = corev1.AddToScheme(scheme)
+
+	raw, err := os.ReadFile(filepath.Join("..", "..", "..", "examples", "rates-desk-day", "workflow-risk-crd.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var wf kblv1alpha1.Workflow
+	if err := kyaml.Unmarshal(raw, &wf); err != nil {
+		t.Fatal(err)
+	}
+	wf.Generation = 1
+	wf.Spec.Provisioning.StorePath = filepath.Join(t.TempDir(), "rates-desk.db")
+
+	cl := fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(&wf).WithObjects(&wf).Build()
+	r := &kblcontroller.WorkflowReconciler{Client: cl, Scheme: scheme, StoreRoot: t.TempDir()}
+	req := reconcile.Request{NamespacedName: types.NamespacedName{Name: wf.Name, Namespace: wf.Namespace}}
+
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("finalizer: %v", err)
+	}
+	if _, err := r.Reconcile(context.Background(), req); err != nil {
+		t.Fatalf("execute: %v", err)
+	}
+
+	var updated kblv1alpha1.Workflow
+	if err := cl.Get(context.Background(), req.NamespacedName, &updated); err != nil {
+		t.Fatal(err)
+	}
+	if updated.Status.Phase != kblv1alpha1.WorkflowPhaseCompleted {
+		t.Fatalf("phase %s: %s", updated.Status.Phase, updated.Status.Message)
+	}
+	if updated.Status.WorkEvaluations != 3 || updated.Status.DominoCount != 3 {
+		t.Fatalf("desk-day CRD work eval=%d dominos=%d", updated.Status.WorkEvaluations, updated.Status.DominoCount)
+	}
+	if updated.Status.HeadLink == "" || updated.Status.SnapshotID == "" {
+		t.Fatal("completed desk-day CRD must expose snapshot ID and HeadLink")
 	}
 }

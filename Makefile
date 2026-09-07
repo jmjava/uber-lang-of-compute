@@ -1,6 +1,6 @@
 .PHONY: build test theory-prove review research-up research-down research-test tidy clean docker-domino-runner docker-domino-runner-julia \
 	docker-kbl-controller docker-kbl-tsdb lab-up lab-down lab-volcano-install lab-openkruise-install \
-	lab-verify-volcano lab-setup-wsl-home cdk-synth
+	lab-verify-volcano lab-setup-wsl-home lab-volcano-up cdk-synth run-finance-example run-desk-day
 
 build:
 	cd controller && go build -o bin/kbl-compute ./cmd/kbl-compute
@@ -12,11 +12,11 @@ test:
 	cd controller && go test ./...
 
 theory-prove:
-	cd controller && go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./pkg/store/ ./pkg/events/ ./pkg/review/ ./internal/controller/ -count=1
+	cd controller && go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./pkg/builtin/ ./pkg/store/ ./pkg/events/ ./pkg/review/ ./internal/controller/ -count=1
 
 review: build
 	cd controller && go build -o bin/kbl-review ./cmd/kbl-review
-	cd controller && go test ./pkg/review/ ./pkg/engine/ ./pkg/store/ ./pkg/events/ ./pkg/cdc/ ./pkg/replica/ ./internal/controller/ -count=1
+	cd controller && go test ./pkg/review/ ./pkg/engine/ ./pkg/builtin/ ./pkg/store/ ./pkg/events/ ./pkg/cdc/ ./pkg/replica/ ./internal/controller/ -count=1
 	./controller/bin/kbl-review --workflow examples/finance-curve-snapshot/workflow.yaml
 
 research-up:
@@ -55,6 +55,10 @@ lab-down:
 	chmod +x lab/scripts/*.sh
 	./lab/scripts/down.sh
 
+lab-volcano-up:
+	chmod +x lab/scripts/*.sh
+	./lab/scripts/kind-volcano-up.sh
+
 lab-verify-volcano:
 	chmod +x lab/scripts/verify-volcano.sh
 	./lab/scripts/verify-volcano.sh
@@ -90,3 +94,12 @@ run-finance-example:
 	cd controller && go build -o bin/kbl-compute ./cmd/kbl-compute
 	./controller/bin/kbl-compute --workflow examples/finance-curve-snapshot/workflow.yaml \
 		--store /tmp/kbl-finance/store.db --replay-log /tmp/kbl-finance/replay.json
+
+run-desk-day: build
+	mkdir -p /tmp/kbl-rates-desk
+	./controller/bin/kbl-compute --workflow examples/rates-desk-day/workflow-risk.yaml \
+		--store /tmp/kbl-rates-desk/ny.db --replay-log /tmp/kbl-rates-desk/ny-risk.json
+	./controller/bin/kbl-compute --workflow examples/rates-desk-day/workflow-mid.yaml \
+		--store /tmp/kbl-rates-desk/ny.db --replay-log /tmp/kbl-rates-desk/ln-mid.json
+	./controller/bin/kbl-compute --workflow examples/rates-desk-day/workflow-risk-next.yaml \
+		--store /tmp/kbl-rates-desk/ny.db --replay-log /tmp/kbl-rates-desk/ny-tplus1.json

@@ -1,0 +1,72 @@
+# NY then London on the same 2025-04-15 Cauchy slice, then stop.
+# windowDepth/windowArity = 2 seats (arity^depth). Unfold still does not
+# spawn live contexts — this only checks the seat count.
+apiVersion: kbl.io/v1alpha1
+kind: ComputeWheel
+metadata:
+  name: rates-desk-wheel
+  namespace: default
+  labels:
+    kbl.io/domain: finance
+    kbl.io/desk: rates
+spec:
+  contexts:
+    - ny-rates
+    - ln-rates
+  windowDepth: 1
+  windowArity: 2
+  timeSliceInterval: 24h
+  maxRotations: 1
+  schedule:
+    startTimeSlice: "2025-04-15T00:00:00Z"
+  workflowTemplate:
+    snapshot:
+      source:
+        inline:
+          as_of: "2025-04-15T00:00:00Z"
+          currency: USD
+          curve: UST_PAR
+          instruments:
+            - instrument_id: US1Y
+              rate: 4.70
+              maturity: "2026-04-15"
+            - instrument_id: US2Y
+              rate: 4.80
+              maturity: "2027-04-15"
+            - instrument_id: US3Y
+              rate: 4.62
+              maturity: "2028-04-15"
+            - instrument_id: US5Y
+              rate: 4.45
+              maturity: "2030-04-15"
+            - instrument_id: US7Y
+              rate: 4.35
+              maturity: "2032-04-15"
+            - instrument_id: US10Y
+              rate: 4.25
+              maturity: "2035-04-15"
+            - instrument_id: US20Y
+              rate: 4.40
+              maturity: "2045-04-15"
+            - instrument_id: US30Y
+              rate: 4.48
+              maturity: "2055-04-15"
+      sealed: true
+    dominos:
+      - name: load-curve-data
+        command: builtin:identity
+      - name: interpolate-curve
+        command: builtin:interpolate
+        dependsOn: [load-curve-data]
+        inputs:
+          - fromDomino: load-curve-data
+      - name: compute-risk
+        command: builtin:risk-dv01
+        dependsOn: [interpolate-curve]
+        inputs:
+          - fromDomino: interpolate-curve
+    execution:
+      chain: [load-curve-data, interpolate-curve, compute-risk]
+      deterministic: true
+    routing:
+      universe: rates-universe

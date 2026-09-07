@@ -1,0 +1,54 @@
+# Builtin finance wheel for compact Kind+Volcano (no Julia image).
+apiVersion: kbl.io/v1alpha1
+kind: ComputeWheel
+metadata:
+  name: finance-wheel
+  namespace: default
+  labels:
+    kbl.io/volcano-demo: "true"
+spec:
+  contexts:
+    - default-context
+  timeSliceInterval: 24h
+  maxRotations: 1
+  volcanoQueue: kbl-lab
+  nodeSelector:
+    kbl.io/lab-role: compute
+  schedule:
+    startTimeSlice: "2025-04-15T00:00:00Z"
+  workflowTemplate:
+    snapshot:
+      source:
+        inline:
+          instruments:
+            - instrument_id: US10Y
+              rate: 4.25
+              maturity: "2035-02-15"
+            - instrument_id: US2Y
+              rate: 4.80
+              maturity: "2027-02-15"
+            - instrument_id: US5Y
+              rate: 4.45
+              maturity: "2030-02-15"
+      sealed: true
+    dominos:
+      - name: load-curve-data
+        command: builtin:identity
+      - name: interpolate-curve
+        command: builtin:interpolate
+        dependsOn: [load-curve-data]
+        inputs:
+          - fromDomino: load-curve-data
+      - name: compute-risk
+        command: builtin:risk-dv01
+        dependsOn: [interpolate-curve]
+        inputs:
+          - fromDomino: interpolate-curve
+    execution:
+      chain: [load-curve-data, interpolate-curve, compute-risk]
+      deterministic: true
+      runtime: volcano-init
+    provisioning:
+      runnerImage: kbl-domino-runner:lab
+      storePath: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+      nodeLocal: true

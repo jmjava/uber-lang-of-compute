@@ -7,12 +7,20 @@ IMAGE_TAG="${KBL_LAB_IMAGE_TAG:-lab}"
 KBL_LAB_PROFILE="${KBL_LAB_PROFILE:-home}"
 INSTALL_VOLCANO="${KBL_LAB_VOLCANO:-1}"
 INSTALL_OPENKURISE="${KBL_LAB_OPENKURISE:-1}"
+INSTALL_JULIA="${KBL_LAB_JULIA:-1}"
+WHEEL_NAME="julia-finance-wheel"
 
 case "$KBL_LAB_PROFILE" in
   compact)
     KIND_CONFIG="$ROOT/lab/kind/kind-config-compact.yaml"
     QUEUE_MANIFEST="$ROOT/lab/manifests/volcano/queue-compact.yaml"
-    WHEEL_MANIFEST="$ROOT/lab/manifests/volcano/computewheel-julia-finance-compact.yaml"
+    if [[ "${INSTALL_JULIA}" != "0" ]]; then
+      WHEEL_MANIFEST="$ROOT/lab/manifests/volcano/computewheel-julia-finance-compact.yaml"
+      WHEEL_NAME="julia-finance-wheel"
+    else
+      WHEEL_MANIFEST="$ROOT/lab/manifests/volcano/computewheel-builtin-compact.yaml"
+      WHEEL_NAME="finance-wheel"
+    fi
     APPLY_VOLCANO_CONTEXTS=0
     APPLY_VOLCANO_BURST=0
     INSTALL_OPENKURISE="${KBL_LAB_OPENKURISE:-0}"
@@ -48,6 +56,13 @@ need docker
 need kubectl
 need kustomize
 
+echo "Lab profile: ${KBL_LAB_PROFILE} volcano=${INSTALL_VOLCANO} julia=${INSTALL_JULIA} openkruise=${INSTALL_OPENKURISE}"
+
+if findmnt -n -o FSTYPE / 2>/dev/null | grep -q '^overlay'; then
+  export KIND_EXPERIMENTAL_CONTAINERD_SNAPSHOTTER="${KIND_EXPERIMENTAL_CONTAINERD_SNAPSHOTTER:-native}"
+  echo "nested overlay detected; Kind containerd snapshotter=${KIND_EXPERIMENTAL_CONTAINERD_SNAPSHOTTER}"
+fi
+
 mkdir -p /tmp/kbl-lab/cp /tmp/kbl-lab/w1 /tmp/kbl-lab/w2
 
 echo "Lab profile: ${KBL_LAB_PROFILE} (Kind config: ${KIND_CONFIG##*/})"
@@ -68,13 +83,19 @@ echo "Building lab images..."
 docker build -f "$ROOT/controller/docker/kbl-controller/Dockerfile" -t "kbl-controller:${IMAGE_TAG}" "$ROOT"
 docker build -f "$ROOT/controller/docker/kbl-tsdb/Dockerfile" -t "kbl-tsdb:${IMAGE_TAG}" "$ROOT"
 docker build -f "$ROOT/controller/docker/domino-runner/Dockerfile" -t "kbl-domino-runner:${IMAGE_TAG}" "$ROOT"
-docker build -f "$ROOT/controller/docker/domino-runner-julia/Dockerfile" -t "kbl-domino-runner-julia:${IMAGE_TAG}" "$ROOT"
+if [[ "${INSTALL_JULIA}" != "0" ]]; then
+  docker build -f "$ROOT/controller/docker/domino-runner-julia/Dockerfile" -t "kbl-domino-runner-julia:${IMAGE_TAG}" "$ROOT"
+fi
 
 echo "Loading images into Kind..."
+docker pull registry.k8s.io/pause:3.9
+kind load docker-image registry.k8s.io/pause:3.9 --name "$CLUSTER_NAME"
 kind load docker-image "kbl-controller:${IMAGE_TAG}" --name "$CLUSTER_NAME"
 kind load docker-image "kbl-tsdb:${IMAGE_TAG}" --name "$CLUSTER_NAME"
 kind load docker-image "kbl-domino-runner:${IMAGE_TAG}" --name "$CLUSTER_NAME"
-kind load docker-image "kbl-domino-runner-julia:${IMAGE_TAG}" --name "$CLUSTER_NAME"
+if [[ "${INSTALL_JULIA}" != "0" ]]; then
+  kind load docker-image "kbl-domino-runner-julia:${IMAGE_TAG}" --name "$CLUSTER_NAME"
+fi
 
 echo "Installing CRDs..."
 kubectl apply -f "$ROOT/crds/"
@@ -97,7 +118,11 @@ kubectl -n kbl-system rollout status deployment/kbl-controller --timeout=120s
 kubectl -n kbl-system rollout status deployment/kbl-tsdb --timeout=120s
 
 echo "Applying lab ComputeContext + Workflow..."
-kubectl apply -f "$ROOT/lab/manifests/computecontext-lab.yaml"
+WORKER="$(kubectl get nodes -l kbl.io/lab-role=compute -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+if [[ -z "$WORKER" ]]; then
+  WORKER="$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')"
+fi
+sed "s/nodeName: .*/nodeName: ${WORKER}/" "$ROOT/lab/manifests/computecontext-lab.yaml" | kubectl apply -f -
 kubectl apply -f "$ROOT/lab/manifests/workflow-lab.yaml"
 
 if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
@@ -107,9 +132,9 @@ if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
     kubectl apply -f "$ROOT/lab/manifests/volcano/computecontexts-volcano.yaml"
   fi
   kubectl apply -f "$WHEEL_MANIFEST"
-  echo "Waiting for ComputeWheel julia-finance-wheel (Workflow → DominoChain → VCJob)..."
+  echo "Waiting for ComputeWheel ${WHEEL_NAME} (Workflow → DominoChain → VCJob)..."
   kubectl wait --for=jsonpath='{.status.phase}'=Idle \
-    computewheel/julia-finance-wheel --timeout=600s 2>/dev/null || {
+    "computewheel/${WHEEL_NAME}" --timeout=600s 2>/dev/null || {
     echo "Wheel still processing — check: ./lab/scripts/verify-volcano.sh"
   }
   if [[ "${APPLY_VOLCANO_BURST}" == "1" ]]; then
@@ -135,8 +160,8 @@ echo "  kubectl get nodes -L kbl.io/lab-role,kbl.io/tsdb-node,kbl.io/gpu"
 echo "  kubectl get workflows -o wide"
 echo "  kubectl -n kbl-system get pods -o wide"
 if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
-  echo "  kubectl get wheel julia-finance-wheel -o wide"
-  echo "  kubectl get wf -l kbl.io/computewheel=julia-finance-wheel"
+  echo "  kubectl get wheel -l kbl.io/volcano-demo=true -o wide"
+  echo "  kubectl get wf -l kbl.io/computewheel"
   echo "  kubectl get dchain,vcjob -l kbl.io/volcano-demo=true"
   echo "  kubectl get pods -l kbl.io/volcano-demo=true -o wide"
   echo "  kubectl -n volcano-system get pods"

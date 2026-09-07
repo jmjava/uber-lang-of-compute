@@ -51,6 +51,14 @@ make build
 
 Inspect the replay log for `reused: true` on the second run.
 
+A heavier book (8-point UST par curve, NY risk + London mid memo, T+1 steepener):
+
+```bash
+make run-desk-day
+```
+
+See [examples/rates-desk-day/README.md](../examples/rates-desk-day/README.md).
+
 ### Workshop / reviewer receipt
 
 Repeatable engine path a referee can run in one command (sealed snapshot → builtin chain → memo → wheel lookahead → HeadLink fan-out):
@@ -84,8 +92,8 @@ See [examples/julia-domino-chain/README.md](../examples/julia-domino-chain/READM
 Runnable in-cluster stack: CRDs, controller, TSDB, Volcano, OpenKruise, and demo workloads.
 
 ```bash
-chmod +x lab/scripts/*.sh
-KBL_LAB_PROFILE=home make lab-up   # i9 workstation; use compact on i7 laptop
+make lab-volcano-up                # compact Kind + Volcano + builtin wheel (16 GiB VM)
+# KBL_LAB_PROFILE=home make lab-up # i9 workstation: Julia wheel + OpenKruise
 ```
 
 See [lab/HOME-LAB.md](../lab/HOME-LAB.md) for home-network setup and remote kubectl.
@@ -101,9 +109,9 @@ kubectl -n kbl-system get pods
 ### Verify Volcano path (Phase 25–27)
 
 ```bash
-kubectl get wheel julia-finance-wheel -o wide
-kubectl get wf -l kbl.io/computewheel=julia-finance-wheel
+kubectl get wheel -l kbl.io/volcano-demo=true -o wide
 kubectl get vcjob -l kbl.io/volcano-demo=true
+./lab/scripts/verify-volcano.sh
 ```
 
 ### Verify OpenKruise path (Phase 28)

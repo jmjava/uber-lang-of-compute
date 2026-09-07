@@ -59,3 +59,5 @@ make build
 ```
 
 The second replay log must show `"reused": true` on every entry.
+
+A longer desk-day path (8-point curve, two desks, T+1, replica/CDC, wheel seats) is [examples/rates-desk-day](../examples/rates-desk-day/README.md) and `make run-desk-day`. It does not change this receipt.

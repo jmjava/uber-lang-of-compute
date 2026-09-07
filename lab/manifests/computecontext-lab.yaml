@@ -4,6 +4,9 @@ metadata:
   name: default-context
   namespace: default
 spec:
+  # Kind worker name for the default kbl-lab cluster; up.sh rewrites this
+  # from the live node labeled kbl.io/lab-role=compute.
+  nodeName: kbl-lab-worker
   storeType: tsdb
   storeEndpoint: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
   dataPath: /var/kbl/tsdb

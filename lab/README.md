@@ -28,10 +28,21 @@ KBL_LAB_PROFILE=compact ./lab/scripts/up.sh   # lighter single-worker lab (i7)
 
 ## Quick start
 
+**Research VM / compact Volcano (no Julia, no OpenKruise):**
+
+```bash
+make lab-volcano-up
+./lab/scripts/verify-volcano.sh --strict
+```
+
+On research VMs without systemd, `lab/scripts/install-kind-tools.sh` starts `dockerd` directly. Nested overlay (Cursor Cloud / DinD) uses `fuse-overlayfs` plus Kind's `native` containerd snapshotter.
+
+**Full workstation lab:**
+
 ```bash
 chmod +x lab/scripts/*.sh
 KBL_LAB_PROFILE=home ./lab/scripts/up.sh   # i9 home workstation (default)
-# KBL_LAB_PROFILE=compact ./lab/scripts/up.sh   # i7 laptop
+# KBL_LAB_PROFILE=compact ./lab/scripts/up.sh   # i7 laptop + Julia wheel
 ```
 
 See **[HOME-LAB.md](HOME-LAB.md)** for home-network setup and Docker sizing.

@@ -1,0 +1,10 @@
+.git
+**/.git
+controller/bin
+**/*_test.go
+infra
+docs
+*.md
+.cursor
+.tmp
+/tmp

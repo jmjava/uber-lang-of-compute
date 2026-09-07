@@ -1,5 +1,8 @@
 # Compact Kind cluster for i7-class laptops (16–32 GiB RAM).
 # 1 control-plane + 1 worker — enough for platform + Volcano demo; skip OpenKruise by default.
+#
+# Nested overlay (Cursor Cloud / DinD): up.sh sets
+# KIND_EXPERIMENTAL_CONTAINERD_SNAPSHOTTER=native so kubelet can pull images.
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: kbl-lab

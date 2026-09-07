@@ -71,9 +71,9 @@ func interpolate(inputJSON string) (string, error) {
 		}
 	}
 
-	interpolated := map[string]float64{
-		"3Y": linearInterp(points, 3.0),
-		"7Y": linearInterp(points, 7.0),
+	interpolated := make(map[string]float64, len(keyRateTenors))
+	for _, tenor := range keyRateTenors {
+		interpolated[tenor.Name] = linearInterp(points, tenor.Years)
 	}
 
 	result := map[string]interface{}{
@@ -87,7 +87,7 @@ func interpolate(inputJSON string) (string, error) {
 
 func riskDV01(inputJSON string) (string, error) {
 	var curveData struct {
-		CurvePoints []curvePoint         `json:"curve_points"`
+		CurvePoints  []curvePoint       `json:"curve_points"`
 		Interpolated map[string]float64 `json:"interpolated"`
 	}
 	if err := json.Unmarshal([]byte(inputJSON), &curveData); err != nil {
@@ -105,9 +105,9 @@ func riskDV01(inputJSON string) (string, error) {
 
 	var risks []riskEntry
 	for tenor, rate := range curveData.Interpolated {
-		years := 3.0
-		if tenor == "7Y" {
-			years = 7.0
+		years, ok := tenorYears(tenor)
+		if !ok {
+			continue
 		}
 		dv01 := notional * years * bpShift
 		risks = append(risks, riskEntry{
@@ -127,6 +127,30 @@ func riskDV01(inputJSON string) (string, error) {
 	}
 	out, err := json.Marshal(result)
 	return string(out), err
+}
+
+// keyRateTenors is the standard USD rates KR01 ladder (1s–30s).
+// Interpolate always emits these buckets; risk-dv01 prices $1mm per-year DV01 on each.
+var keyRateTenors = []struct {
+	Name  string
+	Years float64
+}{
+	{"1Y", 1},
+	{"2Y", 2},
+	{"3Y", 3},
+	{"5Y", 5},
+	{"7Y", 7},
+	{"10Y", 10},
+	{"20Y", 20},
+	{"30Y", 30},
+}
+
+func tenorYears(tenor string) (float64, bool) {
+	var years float64
+	if _, err := fmt.Sscanf(tenor, "%fY", &years); err != nil || years <= 0 {
+		return 0, false
+	}
+	return years, true
 }
 
 func linearInterp(points []curvePoint, targetTenor float64) float64 {
