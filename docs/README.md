@@ -121,8 +121,8 @@ Full phase table lives in the [root README](../README.md#roadmap). Recent phases
 | 29 | Documentation hub (this index) |
 | 30 | Architecture diagrams — Mermaid visual reference |
 | 33 | Physics correspondence layer ([theory/](theory/README.md), [ADR 0037](adr/0037-physics-correspondence-layer.md)) |
-| 34 | Compact Kind: desk-day + Julia volcano wheel + OpenKruise |
-| 35 | Standardize on existing `kbl.io` CRDs ([ADR 0038](adr/0038-crd-operator-standardization.md)) — after 34 |
+| 34 | Compact Kind: desk-day + Julia volcano wheel + OpenKruise (**verified**) |
+| 35 | Standardize on existing `kbl.io` CRDs ([ADR 0038](adr/0038-crd-operator-standardization.md)) |
 
 ## Visual reference
 

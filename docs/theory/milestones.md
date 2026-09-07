@@ -54,7 +54,7 @@ Or `make theory-prove` from the repository root. Store invariants (M17+) are inc
 
 | Phase | Status | Work |
 |-------|--------|------|
-| 34 | in progress | Compact Kind: `rates-desk-wheel` + `julia-finance-wheel` + `julia-finance-openkruise` |
-| 35 | blocked on 34 | Standardize operator work on existing `kbl.io` CRDs — Snapshot/Domino catalog, PluggableUniverse runtime selection, fail-closed admission. No new Volcano/OpenKruise/queue CRDs. [ADR 0038](../adr/0038-crd-operator-standardization.md) |
+| 34 | **verified** | Compact Kind: `rates-desk-wheel` + `julia-finance-wheel` + `julia-finance-openkruise` (`verify-volcano.sh --strict`) |
+| 35 | next | Standardize operator work on existing `kbl.io` CRDs — Snapshot/Domino catalog, PluggableUniverse runtime selection, fail-closed admission. No new Volcano/OpenKruise/queue CRDs. [ADR 0038](../adr/0038-crd-operator-standardization.md) |
 
 Full table: [root README roadmap](../../README.md#roadmap).

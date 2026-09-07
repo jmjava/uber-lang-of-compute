@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed — **blocked on Phase 34** (compact Kind: rates desk-day + Julia volcano wheel + OpenKruise). Do not start this work until Phase 34 is Idle/Completed under `verify-volcano.sh --strict`.
+Proposed — **Phase 34 verified** (`verify-volcano.sh --strict`: desk-day Idle, Julia Idle, OpenKruise Completed). Phase 35 is next.
 
 ## Context
 
