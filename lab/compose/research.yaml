@@ -1,7 +1,7 @@
-# Research-test TSDB + optional Kafka bus (no Kind). From repo root:
-#   docker compose -f lab/compose/research.yaml up --build
+# Research-test TSDB + Kafka bus + Postgres WAL + Debezium (no Kind).
+# From repo root:
 #   docker compose -f lab/compose/research.yaml up -d redpanda
-#   KAFKA_BROKERS=127.0.0.1:19092 go test ./controller/pkg/cdc -run TestKafkaCDCRoundTrip
+#   docker compose -f lab/compose/research.yaml up -d postgres debezium
 name: kbl-research
 services:
   tsdb:
@@ -15,13 +15,15 @@ services:
       - tsdb-data:/var/kbl/tsdb
   redpanda:
     image: docker.redpanda.com/redpandadata/redpanda:v24.3.8
+    container_name: kbl-redpanda
+    hostname: kbl-redpanda
     command:
       - redpanda
       - start
       - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
-      - --advertise-kafka-addr=internal://redpanda:9092,external://127.0.0.1:19092
-      - --rpc-addr=redpanda:33145
-      - --advertise-rpc-addr=redpanda:33145
+      - --advertise-kafka-addr=internal://kbl-redpanda:9092,external://127.0.0.1:19092
+      - --rpc-addr=kbl-redpanda:33145
+      - --advertise-rpc-addr=kbl-redpanda:33145
       - --mode=dev-container
       - --smp=1
       - --memory=1G
@@ -31,6 +33,50 @@ services:
       - "19092:19092"
     volumes:
       - redpanda-data:/var/lib/redpanda/data
+  postgres:
+    image: postgres:16-alpine
+    container_name: kbl-postgres
+    hostname: kbl-postgres
+    environment:
+      POSTGRES_USER: kbl
+      POSTGRES_PASSWORD: kbl
+      POSTGRES_DB: kbl
+    command: ["postgres", "-c", "wal_level=logical", "-c", "max_wal_senders=4", "-c", "max_replication_slots=4"]
+    ports:
+      - "15432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/01-kbl.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kbl -d kbl"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  debezium:
+    image: quay.io/debezium/connect:2.7.3.Final
+    container_name: kbl-debezium
+    hostname: kbl-debezium
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kbl-redpanda:9092
+      GROUP_ID: kbl-connect
+      CONFIG_STORAGE_TOPIC: kbl_connect_configs
+      OFFSET_STORAGE_TOPIC: kbl_connect_offsets
+      STATUS_STORAGE_TOPIC: kbl_connect_statuses
+      CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
 volumes:
   tsdb-data:
   redpanda-data:
+  postgres-data:

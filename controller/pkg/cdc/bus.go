@@ -125,9 +125,14 @@ func MarshalEnvelope(env Envelope) ([]byte, error) {
 	return json.Marshal(env)
 }
 
-// UnmarshalEnvelope parses JSON bytes into an envelope.
+// UnmarshalEnvelope parses engine CDC JSON or a real Debezium / Kafka Connect message.
 func UnmarshalEnvelope(data []byte) (Envelope, error) {
+	if env, err := unwrapDebezium(data); err == nil {
+		return env, nil
+	}
 	var env Envelope
-	err := json.Unmarshal(data, &env)
-	return env, err
+	if err := json.Unmarshal(data, &env); err != nil {
+		return Envelope{}, err
+	}
+	return env, nil
 }

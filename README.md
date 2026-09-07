@@ -85,7 +85,7 @@ All ADRs: [docs/README.md#adrs-by-topic](docs/README.md#adrs-by-topic). Foundati
 | **Phase 37** | Unfold aggregation chain — parents `builtin:coarsen` (sum child `v`); leaves identity ([ADR 0040](docs/adr/0040-engine-aggregation-and-cdc.md)) (**verified**) |
 | **Phase 38** | Live Kind Unfold workflow — sealed catalog snapshot, local engine; no wheel spawn (**verified**) |
 | **Phase 39** | CDC Kafka round-trip — engine envelopes on a real broker; still not a Debezium connector (**verified**) |
-| **Phase 40** | Real Debezium + Strimzi — only after 39, not required on compact Kind |
+| **Phase 40** | Real Debezium Postgres connector on the Kafka bus — WAL capture of sealed snapshot rows; not required on compact Kind (**verified**) |
 
 ## Core Concepts
 

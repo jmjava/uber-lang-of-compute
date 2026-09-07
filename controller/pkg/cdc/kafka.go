@@ -121,14 +121,11 @@ func (c *KafkaConsumer) Consume(ctx context.Context, snapshotID string) ([]Envel
 			}
 			continue
 		}
-		if string(msg.Key) != snapshotID && snapshotID != "" {
-			continue
-		}
 		env, err := UnmarshalEnvelope(msg.Value)
 		if err != nil {
 			continue
 		}
-		if !matchesSnapshot(snapshotID, env) {
+		if snapshotID != "" && !matchesSnapshot(snapshotID, env) {
 			continue
 		}
 		out = append(out, env)

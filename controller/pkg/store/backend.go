@@ -1,5 +1,7 @@
 package store
 
+import "fmt"
+
 // Backend provides node-local persistence for snapshots, domino outputs, and memo cache.
 // GetSnapshot returns bytes as persisted at seal time (direct-bytes staging); callers on the
 // hot path should prefer store reads over re-resolving HTTP/path sources.
@@ -48,8 +50,9 @@ func LastSpineResult(rows []ReplayEntry, dominoID string) (ReplayEntry, bool) {
 type Type string
 
 const (
-	TypeSQLite Type = "sqlite"
-	TypeTSDB   Type = "tsdb"
+	TypeSQLite   Type = "sqlite"
+	TypeTSDB     Type = "tsdb"
+	TypePostgres Type = "postgres"
 )
 
 // Config describes how to open a store backend.
@@ -67,15 +70,26 @@ func OpenBackend(cfg Config) (Backend, error) {
 			return nil, errMissingEndpoint
 		}
 		return OpenTSDBClient(cfg.Endpoint)
+	case TypePostgres:
+		if cfg.Path == "" {
+			return nil, fmt.Errorf("postgres dsn required")
+		}
+		return OpenPostgres(cfg.Path)
 	default:
 		if cfg.Path == "" {
 			return nil, errMissingPath
+		}
+		if IsPostgresDSN(cfg.Path) {
+			return OpenPostgres(cfg.Path)
 		}
 		return OpenSQLite(cfg.Path)
 	}
 }
 
-// Open opens a SQLite store at path (backward-compatible default).
+// Open opens a SQLite store at path, or Postgres when path is a postgres:// DSN.
 func Open(path string) (Backend, error) {
+	if IsPostgresDSN(path) {
+		return OpenPostgres(path)
+	}
 	return OpenSQLite(path)
 }

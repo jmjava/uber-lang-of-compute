@@ -25,17 +25,26 @@ container_running() {
   docker ps --format '{{.Names}}' | grep -qx "$NAME"
 }
 
+ensure_network() {
+  docker network inspect "${KBL_RESEARCH_NET:-kbl-research}" >/dev/null 2>&1 || \
+    docker network create "${KBL_RESEARCH_NET:-kbl-research}"
+}
+
 start_with_docker_run() {
+  local net="${KBL_RESEARCH_NET:-kbl-research}"
+  ensure_network
   if container_running; then
+    docker network connect "$net" "$NAME" >/dev/null 2>&1 || true
     echo "redpanda container ${NAME} already running"
     return 0
   fi
   if docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then
     docker start "$NAME"
+    docker network connect "$net" "$NAME" >/dev/null 2>&1 || true
     return 0
   fi
   echo "starting ${NAME} from ${IMAGE} (no docker compose plugin)"
-  docker run -d --name "$NAME" --hostname "$NAME" \
+  docker run -d --name "$NAME" --hostname "$NAME" --network "$net" \
     -p "${PORT}:19092" \
     "$IMAGE" \
     redpanda start \

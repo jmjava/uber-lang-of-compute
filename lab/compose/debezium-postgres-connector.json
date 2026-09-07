@@ -1,0 +1,23 @@
+{
+  "name": "kbl-snapshots",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "kbl-postgres",
+    "database.port": "5432",
+    "database.user": "kbl",
+    "database.password": "kbl",
+    "database.dbname": "kbl",
+    "topic.prefix": "kbl",
+    "plugin.name": "pgoutput",
+    "slot.name": "kbl_debezium",
+    "publication.name": "kbl_publication",
+    "publication.autocreate.mode": "filtered",
+    "table.include.list": "public.snapshots",
+    "snapshot.mode": "no_data",
+    "tombstones.on.delete": "false",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false",
+    "value.converter.schemas.enable": "false"
+  }
+}

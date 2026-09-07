@@ -1,4 +1,4 @@
-.PHONY: build test theory-prove review research-up research-down research-test research-kafka-test research-kafka-down tidy clean docker-domino-runner docker-domino-runner-julia \
+.PHONY: build test theory-prove review research-up research-down research-test research-kafka-test research-kafka-down research-debezium-test research-debezium-down tidy clean docker-domino-runner docker-domino-runner-julia \
 	docker-kbl-controller docker-kbl-tsdb lab-up lab-down lab-volcano-install lab-openkruise-install \
 	lab-verify-volcano lab-setup-wsl-home lab-volcano-up cdk-synth run-finance-example run-desk-day
 
@@ -38,6 +38,14 @@ research-kafka-test:
 research-kafka-down:
 	chmod +x lab/scripts/research-kafka-down.sh
 	./lab/scripts/research-kafka-down.sh
+
+research-debezium-test:
+	chmod +x lab/scripts/research-debezium.sh lab/scripts/research-debezium-down.sh
+	./lab/scripts/research-debezium.sh
+
+research-debezium-down:
+	chmod +x lab/scripts/research-debezium-down.sh
+	./lab/scripts/research-debezium-down.sh
 
 docker-domino-runner:
 	docker build -f controller/docker/domino-runner/Dockerfile \

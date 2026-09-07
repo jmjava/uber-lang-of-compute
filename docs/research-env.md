@@ -48,6 +48,17 @@ make research-kafka-down   # stop Redpanda
 
 `TestKafkaCDCRoundTrip` skips when no broker is reachable and `KAFKA_BROKERS` is unset (`make theory-prove` / `go test ./pkg/cdc` stay green without Kafka). `make research-kafka-test` sets `KAFKA_BROKERS` and fails if the broker is down.
 
+## Debezium WAL capture (Phase 40)
+
+Postgres with `wal_level=logical` plus Debezium's Postgres connector, publishing onto the same Kafka bus. Compact Kind / Strimzi are not required.
+
+```bash
+make research-debezium-test   # Postgres + Redpanda + Connect + TestDebeziumCapturesSealedSnapshot
+make research-debezium-down   # stop Connect + Postgres
+```
+
+`TestDebeziumCapturesSealedSnapshot` skips without the stack. The proof inserts a sealed snapshot through `store.OpenPostgres`, then consumes `kbl.public.snapshots` (Debezium topic prefix) and applies it to a replica. Engine envelopes are not published.
+
 ## Cursor Cloud Agents
 
 `.cursor/environment.json` builds a Go 1.23 image, runs `lab/scripts/research-install.sh` on each environment build, and starts `kbl-tsdb` on agent boot. New agents inherit that without dashboard clicks.

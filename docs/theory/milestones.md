@@ -60,6 +60,6 @@ Or `make theory-prove` from the repository root. Store invariants (M17+) are inc
 | 37 | **verified** | Unfold parents `builtin:coarsen`; root `v` = leaf count. [ADR 0040](../adr/0040-engine-aggregation-and-cdc.md) |
 | 38 | **verified** | Live Kind Unfold aggregation Workflow (`unfold-lab`, root `v=2`; no wheel spawn) |
 | 39 | **verified** | CDC Kafka round-trip (`TestKafkaCDCRoundTrip` / `make research-kafka-test`; not a Debezium connector) |
-| 40 | scheduled | Real Debezium connector + Strimzi, only after 39 |
+| 40 | **verified** | Real Debezium Postgres connector captures sealed snapshot rows onto Kafka (`TestDebeziumCapturesSealedSnapshot` / `make research-debezium-test`) |
 
 Full table: [root README roadmap](../../README.md#roadmap).

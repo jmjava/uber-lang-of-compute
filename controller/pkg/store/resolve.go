@@ -54,6 +54,9 @@ func OpenResolved(ctx context.Context, c client.Client, cfg ResolveConfig) (Back
 		}
 		return OpenBackend(Config{Type: TypeTSDB, Endpoint: endpoint})
 	}
+	if storeType == TypePostgres {
+		return OpenBackend(Config{Type: TypePostgres, Path: path})
+	}
 
 	if path == "" {
 		root := cfg.StoreRoot
@@ -61,6 +64,9 @@ func OpenResolved(ctx context.Context, c client.Client, cfg ResolveConfig) (Back
 			root = "/var/kbl/store"
 		}
 		path = filepath.Join(root, cfg.Namespace, "default.db")
+	}
+	if IsPostgresDSN(path) {
+		return OpenBackend(Config{Type: TypePostgres, Path: path})
 	}
 	return OpenBackend(Config{Type: TypeSQLite, Path: path})
 }
@@ -75,6 +81,10 @@ func ConfigFromWorkflow(wf *kblv1alpha1.Workflow, storeRoot string) ResolveConfi
 		storeType = TypeTSDB
 		endpoint = wf.Spec.Provisioning.StorePath
 		path = ""
+	}
+	if wf.Spec.Provisioning.StorePath != "" && IsPostgresDSN(wf.Spec.Provisioning.StorePath) {
+		storeType = TypePostgres
+		path = wf.Spec.Provisioning.StorePath
 	}
 
 	return ResolveConfig{
@@ -102,6 +112,9 @@ func ConfigFromDominoChain(chain *kblv1alpha1.DominoChain, storeRoot string) Res
 		endpoint = path
 		path = ""
 	}
+	if IsPostgresDSN(path) {
+		storeType = TypePostgres
+	}
 
 	return ResolveConfig{
 		StorePath:     path,
@@ -114,7 +127,7 @@ func ConfigFromDominoChain(chain *kblv1alpha1.DominoChain, storeRoot string) Res
 
 func OpenForDominoChain(ctx context.Context, c client.Client, chain *kblv1alpha1.DominoChain, storeRoot string) (Backend, error) {
 	cfg := ConfigFromDominoChain(chain, storeRoot)
-	if cfg.StorePath == "" && cfg.StoreType != TypeTSDB {
+	if cfg.StorePath == "" && cfg.StoreType != TypeTSDB && cfg.StoreType != TypePostgres {
 		cfg.StorePath = filepath.Join(storeRoot, chain.Namespace, chain.Name+".db")
 	}
 	b, err := OpenResolved(ctx, c, cfg)
@@ -127,7 +140,7 @@ func OpenForDominoChain(ctx context.Context, c client.Client, chain *kblv1alpha1
 // OpenForWorkflow is a convenience wrapper.
 func OpenForWorkflow(ctx context.Context, c client.Client, wf *kblv1alpha1.Workflow, storeRoot string) (Backend, error) {
 	cfg := ConfigFromWorkflow(wf, storeRoot)
-	if cfg.StorePath == "" && cfg.StoreType != TypeTSDB {
+	if cfg.StorePath == "" && cfg.StoreType != TypeTSDB && cfg.StoreType != TypePostgres {
 		if wf.Spec.Provisioning.StorePath != "" && !isTSDBPath(wf.Spec.Provisioning.StorePath) {
 			cfg.StorePath = wf.Spec.Provisioning.StorePath
 		} else {
@@ -164,6 +177,9 @@ func OpenForDomino(ctx context.Context, c client.Client, d *kblv1alpha1.Domino, 
 	if d.Spec.StorePath != "" {
 		if isTSDBPath(d.Spec.StorePath) {
 			return OpenBackend(Config{Type: TypeTSDB, Endpoint: d.Spec.StorePath})
+		}
+		if IsPostgresDSN(d.Spec.StorePath) {
+			return OpenBackend(Config{Type: TypePostgres, Path: d.Spec.StorePath})
 		}
 		return OpenBackend(Config{Type: TypeSQLite, Path: d.Spec.StorePath})
 	}

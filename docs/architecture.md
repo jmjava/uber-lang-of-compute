@@ -86,7 +86,7 @@ Coordination is **event-driven** through a shared bus:
 1. A **Workflow** completes in Universe A → publishes a snapshot-completed event.
 2. **Multiverse** routing rules (partition labels, time-slice overrides, default universe) select target universe(s).
 3. **Kafka** carries events in production; a **MemoryBus** supports single-controller dev without Kafka ([ADR 0009](adr/0009-multiverse-routing.md)).
-4. Optional **Debezium CDC** from TSDB publishes row-level changes ([ADR 0012](adr/0012-debezium-cdc-sync.md)).
+4. Optional **Debezium CDC** from a WAL-capable store (Postgres) publishes row-level changes onto Kafka ([ADR 0012](adr/0012-debezium-cdc-sync.md), [ADR 0040](adr/0040-engine-aggregation-and-cdc.md) Phase 40). SQLite and `kbl-tsdb` HTTP are not tailed.
 5. **ReadReplica** CRs materialize sealed snapshot + domino results into Universe B's node-local store ([ADR 0011](adr/0011-read-replica-materialization.md)).
 
 **Data locality is preserved:** dominos always read from their own universe's store during compute. Cross-universe traffic is routing metadata, completion events, and replicated **sealed** results — never live dataset shipping on the hot path.

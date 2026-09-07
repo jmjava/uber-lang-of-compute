@@ -24,7 +24,7 @@ In-memory CDC bus (`cdc.DefaultMemory()`) supports single-controller dev without
 
 - Two replication paths coexist: direct (Phase 8) and CDC (Phase 9)
 - CDC mode requeues until all domino chain events arrive
-- Real Debezium connectors can replace workflow-exported events in production
+- Real Debezium connectors can replace workflow-exported events in production (Phase 40: Postgres WAL + Debezium Connect on the Kafka bus)
 - Kafka CDC consumer uses short poll window; incomplete sync requeues after 5s
 
 ## References
