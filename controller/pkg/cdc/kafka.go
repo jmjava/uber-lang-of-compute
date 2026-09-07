@@ -32,10 +32,13 @@ func NewKafkaPublisher(cfg KafkaConfig) (*KafkaPublisher, error) {
 	}
 	return &KafkaPublisher{
 		writer: &kafka.Writer{
-			Addr:         kafka.TCP(cfg.Brokers...),
-			Topic:        cfg.Topic,
-			Balancer:     &kafka.LeastBytes{},
-			RequiredAcks: kafka.RequireOne,
+			Addr:                   kafka.TCP(cfg.Brokers...),
+			Topic:                  cfg.Topic,
+			Balancer:               &kafka.LeastBytes{},
+			RequiredAcks:           kafka.RequireOne,
+			AllowAutoTopicCreation: true,
+			BatchTimeout:           10 * time.Millisecond,
+			BatchSize:              1,
 		},
 		topic: cfg.Topic,
 	}, nil
@@ -89,6 +92,7 @@ func NewKafkaConsumer(cfg KafkaConfig) (*KafkaConsumer, error) {
 			Brokers:        cfg.Brokers,
 			Topic:          cfg.Topic,
 			GroupID:        cfg.GroupID,
+			StartOffset:    kafka.FirstOffset, // new replica groups replay from the log head
 			MinBytes:       1,
 			MaxBytes:       10e6,
 			MaxWait:        500 * time.Millisecond,
@@ -105,6 +109,9 @@ func (c *KafkaConsumer) Consume(ctx context.Context, snapshotID string) ([]Envel
 	}
 
 	for time.Now().Before(deadline) {
+		if ctx.Err() != nil {
+			break
+		}
 		readCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 		msg, err := c.reader.ReadMessage(readCtx)
 		cancel()

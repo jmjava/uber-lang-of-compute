@@ -85,6 +85,13 @@ echo "  compact Julia wheel: julia-finance-wheel (default-context, julia:greeks)
 echo "  OpenKruise runtime: julia-finance-openkruise (ImagePullJob + runner slots)"
 echo "  burst demo: kubectl get dchain -l kbl.io/volcano-burst=true"
 
+section "Unfold aggregation"
+if kubectl get wf unfold-lab &>/dev/null; then
+  kubectl get wf unfold-lab -o wide
+else
+  echo "  (unfold-lab not applied)"
+fi
+
 section "Julia finance wheel"
 if kubectl get computewheel julia-finance-wheel &>/dev/null; then
   kubectl get computewheel julia-finance-wheel -o wide
@@ -130,8 +137,30 @@ if [[ "$STRICT" == "1" ]]; then
     fi
     echo "$phase" | grep -Eq 'Completed' \
       || fail "julia-finance-openkruise is not Completed"
-    kubectl get imagepulljobs.apps.kruise.io --no-headers 2>/dev/null | grep -q . \
-      || fail "no OpenKruise ImagePullJob created"
+    if kubectl get imagepulljobs.apps.kruise.io --no-headers 2>/dev/null | grep -q .; then
+      kubectl get imagepulljobs.apps.kruise.io
+    else
+      echo "  (ImagePullJob already cleaned up after Completed chain)"
+    fi
+  fi
+  if kubectl get wf unfold-lab &>/dev/null; then
+    kubectl get wf unfold-lab -o jsonpath='{.status.phase}' 2>/dev/null | grep -qx Completed \
+      || fail "unfold-lab is not Completed"
+    kubectl get wf unfold-lab -o jsonpath='{.status.dominoCount}' 2>/dev/null | grep -qx '3' \
+      || fail "unfold-lab did not run 3 aggregation dominos"
+    replay="$(kubectl get cm unfold-lab-replay -o jsonpath='{.data.replay\.json}' 2>/dev/null || true)"
+    [[ -n "$replay" ]] || fail "unfold-lab-replay ConfigMap missing"
+    echo "$replay" | python3 -c '
+import json, sys
+raw = sys.stdin.read()
+r = json.loads(raw)
+fo = r.get("final_output") or r.get("FinalOutput") or ""
+if isinstance(fo, str):
+    fo = json.loads(fo)
+v = fo.get("v", fo.get("value"))
+if float(v) != 2:
+    raise SystemExit("root v=%r" % (v,))
+' || fail "unfold-lab root v is not 2"
   fi
   echo ""
   echo "strict Volcano checks passed"

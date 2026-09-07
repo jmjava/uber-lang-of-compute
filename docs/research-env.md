@@ -37,6 +37,17 @@ make research-down    # stop kbl-tsdb
 1. `make review` JSON receipt (`first_evaluations: 3`, `second_reuses: 3`)
 2. `kbl-compute --store http://127.0.0.1:9090` twice; second replay log has `"reused": true` on every domino
 
+## Kafka CDC bus (Phase 39)
+
+Engine CDC envelopes round-trip on a real broker. This is **not** Debezium capture — Debezium (Phase 40) would publish onto this bus.
+
+```bash
+make research-kafka-test   # compose Redpanda + TestKafkaCDCRoundTrip
+make research-kafka-down   # stop Redpanda
+```
+
+`TestKafkaCDCRoundTrip` skips when no broker is reachable and `KAFKA_BROKERS` is unset (`make theory-prove` / `go test ./pkg/cdc` stay green without Kafka). `make research-kafka-test` sets `KAFKA_BROKERS` and fails if the broker is down.
+
 ## Cursor Cloud Agents
 
 `.cursor/environment.json` builds a Go 1.23 image, runs `lab/scripts/research-install.sh` on each environment build, and starts `kbl-tsdb` on agent boot. New agents inherit that without dashboard clicks.
@@ -46,7 +57,8 @@ make research-down    # stop kbl-tsdb
 If Docker is available and you do not want the native binary:
 
 ```bash
-docker compose -f lab/compose/research.yaml up --build
+docker compose -f lab/compose/research.yaml up --build          # kbl-tsdb
+docker compose -f lab/compose/research.yaml up -d redpanda      # Kafka bus for Phase 39
 make review
 ./controller/bin/kbl-compute \
   --workflow examples/finance-curve-snapshot/workflow.yaml \

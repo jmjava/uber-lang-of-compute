@@ -170,6 +170,8 @@ kubectl wait --for=jsonpath='{.status.phase}'=Sealed snapshot/ust-par-2025-04-15
 
 echo "Applying lab Workflow..."
 kubectl apply -f "$ROOT/lab/manifests/workflow-lab.yaml"
+echo "Applying Unfold aggregation Workflow..."
+kubectl apply -f "$ROOT/lab/manifests/workflow-unfold.yaml"
 
 if [[ "${INSTALL_VOLCANO}" != "0" ]]; then
   echo "Applying Volcano demo (queue + ComputeWheel volcano-init)..."
@@ -215,6 +217,7 @@ fi
 echo ""
 echo "Lab is up (profile=${KBL_LAB_PROFILE}). Useful commands:"
 echo "  ./lab/scripts/verify-volcano.sh          # Volcano queue, VCJobs, pod placement"
+echo "  kubectl get wf unfold-lab -o wide        # Unfold aggregation (root v=2)"
 echo "  kubectl get nodes -L kbl.io/lab-role,kbl.io/tsdb-node,kbl.io/gpu"
 echo "  kubectl get workflows -o wide"
 echo "  kubectl -n kbl-system get pods -o wide"

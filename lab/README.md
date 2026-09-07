@@ -86,6 +86,7 @@ If upgrading from an older single-node lab cluster, delete and recreate:
 | kbl-tsdb | `kbl-system` | Deployment on `kbl.io/tsdb-node=true` worker |
 | ComputeContext `default-context` | `default` | Points at TSDB service |
 | Workflow `finance-lab` | `default` | 3-step finance chain |
+| Workflow `unfold-lab` | `default` | Depth-1 Unfold aggregation (`builtin:coarsen`; root `v=2`; local engine) |
 | Queue `kbl-lab` | cluster | Volcano queue (profile-sized CPU/memory) |
 | ComputeWheel `julia-finance-wheel` | `default` | **2 contexts** (`compute-a` → `compute-b`), `volcanoQueue: kbl-lab`, `preProvisionNext` |
 | DominoChain `volcano-burst-a/b` | `default` | Parallel VCJobs on different workers (home/default profile) |
@@ -109,7 +110,7 @@ worker w2       kbl.io/lab-role=compute, kbl.io/tsdb-node=true  ← TSDB + Data 
 ./lab/scripts/verify-volcano.sh
 kubectl get nodes -L kbl.io/lab-role,kbl.io/tsdb-node,kbl.io/gpu
 ```
-kubectl get workflows finance-lab -o wide
+kubectl get workflows finance-lab,unfold-lab -o wide
 kubectl -n kbl-system get pods -o wide
 kubectl get wheel julia-finance-wheel -o wide
 kubectl get wf -l kbl.io/computewheel=julia-finance-wheel
@@ -147,6 +148,8 @@ The compact OpenKruise demo installs kruise-manager and applies a **Workflow** w
 ```bash
 kubectl get imagepulljobs.apps.kruise.io
 kubectl logs -l kbl.io/openkruise-demo=true -c slot-2-julia-greeks
+kubectl get wf unfold-lab -o wide
+kubectl get cm unfold-lab-replay -o jsonpath='{.data.replay\.json}'
 ```
 
 ## Layout

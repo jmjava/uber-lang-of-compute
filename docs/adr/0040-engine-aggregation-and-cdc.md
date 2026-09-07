@@ -2,11 +2,11 @@
 
 ## Status
 
-Accepted — **Phase 37 verified** (engine tests). Phases 38–40 scheduled. M1–M32 stay frozen. Courseforge (Phase 32) is skipped.
+Accepted — **Phases 37–39 verified**. Phase 40 scheduled. M1–M32 stay frozen. Courseforge (Phase 32) is skipped.
 
 ## Context
 
-Debezium was never proven as Debezium: `pkg/cdc` is a Debezium-*shaped* envelope over **MemoryBus**. Kafka clients exist; Kind does not run Strimzi or a connector.
+Debezium was never proven as Debezium: `pkg/cdc` is a Debezium-*shaped* envelope over **MemoryBus**. Kafka clients existed; Kind does not run Strimzi or a connector. Phase 39 runs Redpanda via `lab/compose/research.yaml` and round-trips those envelopes.
 
 Windowed Mandelbrot was a shape theorem (`Unfold` / `Coarsen`, F1). `WorkflowFromUnfold` ran as a live chain, but every node was `builtin:identity` — parents did not aggregate children.
 
@@ -17,9 +17,9 @@ Engineering phases only (not theory milestones):
 | Phase | Work | Proof |
 |-------|------|-------|
 | **37** | `builtin:coarsen` sums child `value`/`v`. Unfold parents coarsen; leaves identity the snapshot. | `TestCoarsenSumsChildValues`, `TestWorkflowFromUnfoldAggregatesToLeafCount` |
-| **38** | Same chain as a sealed Workflow against catalog/lab data (local engine on Kind). | Compact `finance-lab`-style Workflow; no new CRDs; Unfold still does not spawn wheel contexts |
-| **39** | CDC Kafka round-trip in the engine (`KafkaBus` + `pkg/cdc` envelopes) without a Debezium connector. | Tests against a real broker or documented skip if none |
-| **40** | Real Debezium connector + Strimzi **only** when Phase 39 is green and the cluster can hold Kafka. Compact Kind is not required to take this. | Connector capture of sealed snapshot rows |
+| **38** | Same chain as a sealed Workflow against catalog/lab data (local engine on Kind). | Compact `unfold-lab` Workflow; replay root `v=2`; Unfold still does not spawn wheel contexts |
+| **39** | **Keep Kafka.** It is the bus Debezium already uses (retention, consumer groups, replay). Engine CDC envelopes round-trip on a real broker. This is not a substitute for Debezium capture. | `TestKafkaCDCRoundTrip` against Redpanda (`make research-kafka-test`) |
+| **40** | Real Debezium connector **on that Kafka bus**, only when the store has a WAL Debezium can tail (not SQLite/kbl-tsdb HTTP). Compact Kind is not required. | Connector capture of sealed snapshot rows |
 
 Non-goals: \(z\mapsto z^2+c\) as scheduler, fractal pod spawn, Unfold spawning ComputeWheel contexts, joules, Everett.
 
@@ -27,7 +27,7 @@ Non-goals: \(z\mapsto z^2+c\) as scheduler, fractal pod spawn, Unfold spawning C
 
 - Continual aggregation is an engine fold-up: root `v` = leaf count × leaf `v` for a unit snapshot.
 - Self-similarity of the live chain: `agg(d,k) = agg(d-1,k) * k` (LeafCount identity), distinct from pattern F1 on Unfold node values.
-- CDC remains MemoryBus until Phase 39/40.
+- CDC MemoryBus remains the default in-process path. Phase 39 proved the same envelopes on a real Kafka/Redpanda broker. Debezium (Phase 40) publishes onto that bus rather than replacing it.
 
 ## References
 

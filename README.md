@@ -83,8 +83,8 @@ All ADRs: [docs/README.md#adrs-by-topic](docs/README.md#adrs-by-topic). Foundati
 | **Phase 35** | CRD/operator standardization — catalog Snapshot+Domino CRs, PluggableUniverse selects runtime/image, fail-closed admission; **no new runtime CRDs** ([ADR 0038](docs/adr/0038-crd-operator-standardization.md)) (**verified**) |
 | **Phase 36** | OpenKruise ImagePullJob — `runtime: openkruise` prefetches the runner image via `kruise-daemon`, then starts runner-slot pods ([ADR 0039](docs/adr/0039-openkruise-imagepulljob.md)) (**verified**) |
 | **Phase 37** | Unfold aggregation chain — parents `builtin:coarsen` (sum child `v`); leaves identity ([ADR 0040](docs/adr/0040-engine-aggregation-and-cdc.md)) (**verified**) |
-| **Phase 38** | Live Kind Unfold workflow — sealed catalog snapshot, local engine; no wheel spawn |
-| **Phase 39** | CDC Kafka round-trip — engine envelopes on a real broker; still not a Debezium connector |
+| **Phase 38** | Live Kind Unfold workflow — sealed catalog snapshot, local engine; no wheel spawn (**verified**) |
+| **Phase 39** | CDC Kafka round-trip — engine envelopes on a real broker; still not a Debezium connector (**verified**) |
 | **Phase 40** | Real Debezium + Strimzi — only after 39, not required on compact Kind |
 
 ## Core Concepts

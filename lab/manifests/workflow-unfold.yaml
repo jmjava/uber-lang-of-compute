@@ -1,0 +1,44 @@
+# Unfold aggregation chain (Phase 38). Depth-1 binary window: two leaves
+# identity the unit snapshot; the parent coarsens (sum). Root v = 2.
+# Local engine — Unfold does not spawn ComputeWheel contexts.
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: unfold-lab
+  namespace: default
+  labels:
+    kbl.io/unfold-demo: "true"
+spec:
+  snapshot:
+    timeSlice: "2025-04-15T00:00:00Z"
+    source:
+      inline:
+        v: 1
+    sealed: true
+  dominos:
+    - name: n.0
+      snapshotRef: unfold-unit
+      command: builtin:identity
+      inputs:
+        - fromSnapshot: snap
+    - name: n.1
+      snapshotRef: unfold-unit
+      command: builtin:identity
+      inputs:
+        - fromSnapshot: snap
+    - name: "n"
+      snapshotRef: unfold-unit
+      command: builtin:coarsen
+      dependsOn: [n.0, n.1]
+      inputs:
+        - fromDomino: n.0
+        - fromDomino: n.1
+  execution:
+    chain: [n.0, n.1, "n"]
+    deterministic: true
+  provisioning:
+    storePath: http://kbl-tsdb.kbl-system.svc.cluster.local:9090
+    nodeLocal: true
+  routing:
+    universe: finance-local
+    computeContextRef: default-context

@@ -1,0 +1,44 @@
+apiVersion: kbl.io/v1alpha1
+kind: Workflow
+metadata:
+  name: unfold-aggregation
+spec:
+  snapshot:
+    metadata:
+      name: unfold-unit
+    spec:
+      timeSlice: "2025-04-15T00:00:00Z"
+      source:
+        inline:
+          v: 1
+      sealed: true
+  dominos:
+    - metadata:
+        name: n.0
+      spec:
+        snapshotRef: unfold-unit
+        command: builtin:identity
+        inputs:
+          - fromSnapshot: snap
+    - metadata:
+        name: n.1
+      spec:
+        snapshotRef: unfold-unit
+        command: builtin:identity
+        inputs:
+          - fromSnapshot: snap
+    - metadata:
+        name: "n"
+      spec:
+        snapshotRef: unfold-unit
+        command: builtin:coarsen
+        dependsOn: [n.0, n.1]
+        inputs:
+          - fromDomino: n.0
+          - fromDomino: n.1
+  execution:
+    chain: [n.0, n.1, "n"]
+    deterministic: true
+  provisioning:
+    storePath: /tmp/kbl-unfold/store.db
+    nodeLocal: true
