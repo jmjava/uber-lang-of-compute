@@ -47,3 +47,14 @@ go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ .
 ```
 
 Or `make theory-prove` from the repository root. Store invariants (M17+) are included. Workshop receipt: `make review`.
+
+## Engineering phases (not theory)
+
+**M1–M32 remain the proved set.** Do not add M33+. Lab and operator work is numbered as README **Phases**.
+
+| Phase | Status | Work |
+|-------|--------|------|
+| 34 | in progress | Compact Kind: `rates-desk-wheel` + `julia-finance-wheel` + `julia-finance-openkruise` |
+| 35 | blocked on 34 | Standardize operator work on existing `kbl.io` CRDs — Snapshot/Domino catalog, PluggableUniverse runtime selection, fail-closed admission. No new Volcano/OpenKruise/queue CRDs. [ADR 0038](../adr/0038-crd-operator-standardization.md) |
+
+Full table: [root README roadmap](../../README.md#roadmap).

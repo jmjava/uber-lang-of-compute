@@ -79,6 +79,8 @@ All ADRs: [docs/README.md#adrs-by-topic](docs/README.md#adrs-by-topic). Foundati
 | **Phase 31** | Volcano lab profiles — home i9 / compact i7, 2-context wheel + parallel burst, `verify-volcano.sh` |
 | **Phase 32 (exploration)** | Courseforge integration — worker images × KBL/Volcano scheduler ([exploration doc](docs/explorations/courseforge-integration.md), [PurePlay use case](docs/explorations/pureplay-multi-tier-platform.md)) |
 | **Phase 33** | Physics correspondence layer — formal model, ensemble entropy, causal past, windowed aggregation (F1), sealed-only replica/CDC, 128-bit snapshot IDs ([docs/theory](docs/theory/README.md), [ADR 0037](docs/adr/0037-physics-correspondence-layer.md)) |
+| **Phase 34** | Compact Kind Julia + OpenKruise — rates desk-day wheel stays; same worker also runs `julia-finance-wheel` and `julia-finance-openkruise` |
+| **Phase 35** | CRD/operator standardization — catalog Snapshot+Domino CRs, PluggableUniverse selects runtime/image, fail-closed admission; **no new runtime CRDs** ([ADR 0038](docs/adr/0038-crd-operator-standardization.md)). Starts after Phase 34. |
 
 ## Core Concepts
 

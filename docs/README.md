@@ -99,6 +99,7 @@ Skip components: `KBL_LAB_VOLCANO=0`, `KBL_LAB_OPENKURISE=0`. See [lab/README.md
 - [0035 Volcano Lab Profiles](adr/0035-volcano-lab-profiles.md)
 - [0036 Courseforge Integration (exploration)](adr/0036-courseforge-integration-exploration.md)
 - [0037 Physics Correspondence Layer](adr/0037-physics-correspondence-layer.md)
+- [0038 CRD/operator standardization (after Julia + OpenKruise)](adr/0038-crd-operator-standardization.md)
 
 ## Explorations
 
@@ -120,6 +121,8 @@ Full phase table lives in the [root README](../README.md#roadmap). Recent phases
 | 29 | Documentation hub (this index) |
 | 30 | Architecture diagrams — Mermaid visual reference |
 | 33 | Physics correspondence layer ([theory/](theory/README.md), [ADR 0037](adr/0037-physics-correspondence-layer.md)) |
+| 34 | Compact Kind: desk-day + Julia volcano wheel + OpenKruise |
+| 35 | Standardize on existing `kbl.io` CRDs ([ADR 0038](adr/0038-crd-operator-standardization.md)) — after 34 |
 
 ## Visual reference
 
