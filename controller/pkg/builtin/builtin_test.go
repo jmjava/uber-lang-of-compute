@@ -105,3 +105,18 @@ func TestCoarsenSumsChildValues(t *testing.T) {
 		t.Fatalf("nested coarsen %+v", parsed)
 	}
 }
+
+func TestRiskDV01RejectsUnpricedCurve(t *testing.T) {
+	for _, input := range []string{
+		`{"interpolated":{}}`,
+		`{"interpolated":{"spot":0.04}}`,
+	} {
+		out, err := builtin.Execute("builtin:risk-dv01", input)
+		if err == nil {
+			t.Fatalf("risk-dv01 %s must be refused", input)
+		}
+		if out != "" {
+			t.Fatalf("refused risk-dv01 must not emit a result, got %s", out)
+		}
+	}
+}

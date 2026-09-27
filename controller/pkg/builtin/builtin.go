@@ -166,7 +166,7 @@ func riskDV01(inputJSON string) (string, error) {
 	for tenor, rate := range curveData.Interpolated {
 		years, ok := tenorYears(tenor)
 		if !ok {
-			continue
+			return "", fmt.Errorf("risk-dv01: unrecognized tenor %q", tenor)
 		}
 		dv01 := notional * years * bpShift
 		risks = append(risks, riskEntry{
@@ -174,6 +174,9 @@ func riskDV01(inputJSON string) (string, error) {
 			Rate:  rate,
 			DV01:  math.Round(dv01*100) / 100,
 		})
+	}
+	if len(risks) == 0 {
+		return "", fmt.Errorf("risk-dv01: no priced tenors")
 	}
 	sort.Slice(risks, func(i, j int) bool {
 		return risks[i].Tenor < risks[j].Tenor
