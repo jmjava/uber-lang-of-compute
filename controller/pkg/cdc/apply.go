@@ -35,7 +35,7 @@ func applySnapshot(target store.Backend, env Envelope) error {
 
 func applyDominoResult(target store.Backend, env Envelope) error {
 	if env.Op == OpDelete {
-		return nil
+		return fmt.Errorf("refusing CDC delete of a domino result")
 	}
 	row, err := decodeAfter[DominoResultRow](env.After)
 	if err != nil {

@@ -144,6 +144,50 @@ func TestApplyDominoResultRequiresSealedParent(t *testing.T) {
 	}
 }
 
+func TestApplyRejectsDominoResultDelete(t *testing.T) {
+	target, err := store.OpenSQLite(t.TempDir() + "/target.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+
+	const snapshotID = "snap-sealed"
+	if err := target.SaveSnapshot(snapshotID, "2025-04-15", `{"v":1}`, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := target.SaveResult(snapshotID, "load", "in", "out", `{"ok":true}`, false, "prev", "link"); err != nil {
+		t.Fatal(err)
+	}
+
+	env := cdc.Envelope{
+		Op:    cdc.OpDelete,
+		Table: cdc.TableDominoResults,
+		After: cdc.DominoResultRow{
+			SnapshotID: snapshotID,
+			DominoID:   "load",
+			InputHash:  "in",
+			OutputHash: "out",
+			Output:     `{"ok":true}`,
+		},
+	}
+	if err := cdc.Apply(target, env); err == nil {
+		t.Fatal("CDC delete of a domino result must be refused")
+	}
+
+	progress, err := cdc.ApplyAll(target, snapshotID, []cdc.Envelope{env})
+	if err == nil {
+		t.Fatal("delete must not complete replication")
+	}
+	if progress.DominoCount != 0 {
+		t.Fatalf("delete must not count as a replicated domino, got %d", progress.DominoCount)
+	}
+
+	_, _, output, err := target.GetLatestResult(snapshotID, "load")
+	if err != nil || output != `{"ok":true}` {
+		t.Fatalf("stored result must remain: err=%v output=%q", err, output)
+	}
+}
+
 func TestExportFromWorkflowSnapshotRefEmitsEnvelopes(t *testing.T) {
 	wf := &kblv1alpha1.Workflow{
 		Spec: kblv1alpha1.WorkflowSpec{
