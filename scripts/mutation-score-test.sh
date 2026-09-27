@@ -51,10 +51,14 @@ echo "mutation-score-test: a log with no score fails"
 printf 'go-mutesting: install failed\n' >"$tmp/log"
 expect_fail "missing score" "$check" --log "$tmp/log" --ceiling "$tmp/ceiling"
 
-echo "mutation-score-test: committed ceiling is still unmeasured"
+echo "mutation-score-test: committed ceiling is frozen at the first measured score"
 got="$(awk -F= '/^survived=/ { print $2; exit }' "$committed")"
-if [[ "$got" != "0" ]]; then
-  echo "mutation-score-test: FAIL committed survived ceiling is ${got}; it stays 0 until CI measures a score" >&2
+if [[ "$got" != "8" ]]; then
+  echo "mutation-score-test: FAIL committed survived ceiling is ${got}; frozen at 8 from run 36340786220 and must not be raised" >&2
+  exit 1
+fi
+if ! grep -q '36340786220' "$committed"; then
+  echo "mutation-score-test: FAIL ceiling comment does not name run 36340786220" >&2
   exit 1
 fi
 

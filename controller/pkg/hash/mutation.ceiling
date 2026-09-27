@@ -1,6 +1,7 @@
 # Survived-mutant ceiling for controller/pkg/hash.
 # Tool: github.com/avito-tech/go-mutesting v0.0.0-20251226130216-48d0401f00fb
 # go-mutesting counts a killed mutant as "passed" and a survivor as "failed".
-# Unmeasured. Stays 0 until a GitHub Actions run of this package reports a score.
-# CI must not rewrite this file. Do not raise survived without that measurement.
-survived=0
+# First measured score from GitHub Actions run 36340786220:
+# 10 passed, 8 failed, total 18. Frozen. Do not raise survived.
+# CI must not rewrite this file.
+survived=8
