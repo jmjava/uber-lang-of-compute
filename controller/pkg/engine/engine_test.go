@@ -555,6 +555,30 @@ func TestRunSingleSpineChainsAcrossSteps(t *testing.T) {
 	}
 }
 
+func TestRunSingleRejectsUnnamedDomino(t *testing.T) {
+	s, err := store.Open(filepath.Join(t.TempDir(), "unnamed.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	domino := wf.Spec.Dominos[0]
+	domino.Metadata.Name = ""
+	const snapshotID = "unnamed-step"
+	_, err = engine.New(s).RunSingle(snapshotID, wf.Spec.Snapshot, domino, nil)
+	if err == nil || !strings.Contains(err.Error(), "domino name is required") {
+		t.Fatalf("unnamed single step must be refused, got %v", err)
+	}
+	rows, err := s.ListReplay(snapshotID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 0 {
+		t.Fatalf("unnamed step wrote %d replay rows", len(rows))
+	}
+}
+
 func TestLoadedSnapshotMatchesContentAddress(t *testing.T) {
 	s, err := store.Open(filepath.Join(t.TempDir(), "addr.db"))
 	if err != nil {

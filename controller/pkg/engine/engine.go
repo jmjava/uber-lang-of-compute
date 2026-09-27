@@ -256,6 +256,9 @@ func (e *Engine) RunSingleFrom(snapshotID string, snap types.Snapshot, domino ty
 	if snapshotID == "" {
 		return nil, fmt.Errorf("snapshot ID is required")
 	}
+	if domino.Metadata.Name == "" {
+		return nil, fmt.Errorf("domino name is required")
+	}
 	if prevLink == "" {
 		prevLink = snapshotID
 	}
