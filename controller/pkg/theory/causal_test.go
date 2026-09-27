@@ -43,3 +43,14 @@ func TestUnknownDominoRejected(t *testing.T) {
 		t.Fatal("expected error")
 	}
 }
+
+func TestEmptyReadRejected(t *testing.T) {
+	chain := []string{"load", "interpolate"}
+	err := theory.AllowedReads(chain, "interpolate", []string{"snapshot", ""})
+	if err == nil {
+		t.Fatal("blank input name must be refused")
+	}
+	if err := theory.AllowedReads(chain, "interpolate", []string{"load"}); err != nil {
+		t.Fatal(err)
+	}
+}
