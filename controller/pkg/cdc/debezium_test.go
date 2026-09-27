@@ -2,6 +2,7 @@ package cdc_test
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/jmjava/uber-lang-of-compute/controller/pkg/cdc"
@@ -58,6 +59,21 @@ func TestUnmarshalDebeziumUnsealedIsRefused(t *testing.T) {
 	defer target.Close()
 	if err := cdc.Apply(target, env); err == nil {
 		t.Fatal("unsealed debezium snapshot must be refused")
+	}
+}
+
+func TestUnmarshalDebeziumMissingTableIsRefused(t *testing.T) {
+	raw := []byte(`{
+		"payload": {
+			"op": "c",
+			"source": {"connector":"postgresql"},
+			"after": {"snapshot_id":"abc","time_slice":"2025-04-15","data":"{}","sealed":true}
+		}
+	}`)
+	if _, err := cdc.UnmarshalEnvelope(raw); err == nil {
+		t.Fatal("debezium record missing source.table must be refused")
+	} else if !strings.Contains(err.Error(), "missing source.table") {
+		t.Fatalf("got %v", err)
 	}
 }
 

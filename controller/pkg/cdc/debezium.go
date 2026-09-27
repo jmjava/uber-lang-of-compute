@@ -2,8 +2,13 @@ package cdc
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 )
+
+// errNotDebezium means the bytes are not a Debezium/Kafka Connect record.
+// UnmarshalEnvelope falls through to the engine envelope parser only for this error.
+var errNotDebezium = errors.New("not a debezium record")
 
 // unwrapDebezium maps a Kafka Connect / Debezium JSON record onto Envelope.
 // Engine-published envelopes have no source.connector and fall through.
@@ -28,7 +33,7 @@ func unwrapDebezium(data []byte) (Envelope, error) {
 		return Envelope{}, err
 	}
 	if msg.Source.Connector == "" && msg.Source.Table == "" {
-		return Envelope{}, fmt.Errorf("not a debezium record")
+		return Envelope{}, errNotDebezium
 	}
 	if msg.Source.Table == "" {
 		return Envelope{}, fmt.Errorf("debezium record missing source.table")
