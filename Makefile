@@ -1,4 +1,5 @@
 .PHONY: build test theory-prove review research-up research-down research-test research-kafka-test research-kafka-down research-debezium-test research-debezium-down tidy clean docker-domino-runner docker-domino-runner-julia \
+	ratchet ratchet-run ratchet-fitness ratchet-clean ratchet-hotspot ratchet-baseline ratchet-mutation \
 	docker-kbl-controller docker-kbl-tsdb lab-up lab-down lab-volcano-install lab-openkruise-install \
 	lab-verify-volcano lab-setup-wsl-home lab-volcano-up cdk-synth run-finance-example run-desk-day
 
@@ -10,6 +11,31 @@ build:
 
 test:
 	cd controller && go test ./...
+
+# Snap's go binary cannot run as root. Re-exec as the login user when that happens.
+ratchet:
+	@if go version >/dev/null 2>&1; then \
+		$(MAKE) ratchet-run; \
+	else \
+		sudo -u ubuntu -H env HOME=/home/ubuntu PATH="/home/ubuntu/go/bin:$$PATH" $(MAKE) ratchet-run; \
+	fi
+
+ratchet-run: ratchet-fitness ratchet-clean ratchet-hotspot ratchet-baseline ratchet-mutation
+
+ratchet-fitness:
+	cd controller && go test ./pkg/fitness/ -count=1
+
+ratchet-clean:
+	./scripts/ratchet-clean.sh
+
+ratchet-hotspot:
+	./scripts/ratchet-hotspot.sh
+
+ratchet-baseline:
+	./scripts/ratchet-baseline.sh
+
+ratchet-mutation:
+	./scripts/ratchet-mutation.sh
 
 theory-prove:
 	cd controller && go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./pkg/builtin/ ./pkg/store/ ./pkg/events/ ./pkg/review/ ./internal/controller/ -count=1

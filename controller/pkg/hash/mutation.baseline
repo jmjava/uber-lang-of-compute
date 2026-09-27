@@ -1,0 +1,7 @@
+# Killed-mutant floor for controller/pkg/hash from the existing hash tests.
+# Tool: github.com/avito-tech/go-mutesting v0.0.0-20251226130216-48d0401f00fb
+# go-mutesting labels a killed mutant as "passed" and a survivor as "failed".
+# CI fails when killed/total drops below this floor. It does not rewrite this file.
+# Measured: The mutation score is 0.555556 (10 passed, 8 failed, 0 duplicated, 0 skipped, total is 18)
+killed=10
+total=18
