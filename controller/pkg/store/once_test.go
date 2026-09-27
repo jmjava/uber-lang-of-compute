@@ -35,6 +35,29 @@ func TestSealedSnapshotIsWriteOnce(t *testing.T) {
 	}
 }
 
+func TestSealedSnapshotRejectsTimeSliceRewrite(t *testing.T) {
+	s, err := store.Open(filepath.Join(t.TempDir(), "once.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	if err := s.SaveSnapshot("snap", "2025-01-01", `{"v":1}`, true); err != nil {
+		t.Fatal(err)
+	}
+	err = s.SaveSnapshot("snap", "2025-01-02", `{"v":1}`, true)
+	if err == nil || !errors.Is(err, store.ErrSealedOverwrite) {
+		t.Fatalf("got %v want ErrSealedOverwrite", err)
+	}
+	gotSlice, gotData, sealed, err := s.GetSnapshot("snap")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gotSlice != "2025-01-01" || gotData != `{"v":1}` || !sealed {
+		t.Fatalf("sealed row changed: slice=%q data=%q sealed=%v", gotSlice, gotData, sealed)
+	}
+}
+
 func TestSealedSnapshotIsWriteOnceTSDB(t *testing.T) {
 	eng, err := store.OpenTSDBEngine(t.TempDir())
 	if err != nil {
