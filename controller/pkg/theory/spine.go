@@ -11,6 +11,9 @@ import (
 // Nature-inspired reading: a worldline you can audit, like a Merkle spine,
 // not a full Merkle DAG and not a blockchain.
 func VerifySpine(snapshotID string, entries []types.ReplayLogEntry) error {
+	if snapshotID == "" {
+		return fmt.Errorf("spine requires a snapshot ID")
+	}
 	prev := snapshotID
 	for i, e := range entries {
 		if e.PrevLink != prev {

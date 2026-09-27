@@ -33,6 +33,13 @@ func TestVerifySpineRejectsTamperedOutput(t *testing.T) {
 	}
 }
 
+func TestVerifySpineRejectsEmptySnapshotID(t *testing.T) {
+	e := linkedEntry(t, "", "in", "out")
+	if err := theory.VerifySpine("", []types.ReplayLogEntry{e}); err == nil {
+		t.Fatal("a spine with no snapshot ID must be refused")
+	}
+}
+
 func TestVerifySpineRejectsBrokenPrev(t *testing.T) {
 	const snap = "snap-root"
 	e1 := linkedEntry(t, snap, "in1", "out1")
