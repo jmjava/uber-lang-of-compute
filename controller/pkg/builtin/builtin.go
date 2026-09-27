@@ -116,6 +116,9 @@ func interpolate(inputJSON string) (string, error) {
 		}
 		instruments = wrapped.Instruments
 	}
+	if len(instruments) == 0 {
+		return "", fmt.Errorf("interpolate: no instruments")
+	}
 
 	sort.Slice(instruments, func(i, j int) bool {
 		return instruments[i].Maturity < instruments[j].Maturity
