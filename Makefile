@@ -1,4 +1,4 @@
-.PHONY: build test theory-prove review research-up research-down research-test research-kafka-test research-kafka-down research-debezium-test research-debezium-down tidy clean docker-domino-runner docker-domino-runner-julia \
+.PHONY: build test clean-as-you-code theory-prove review research-up research-down research-test research-kafka-test research-kafka-down research-debezium-test research-debezium-down tidy clean docker-domino-runner docker-domino-runner-julia \
 	docker-kbl-controller docker-kbl-tsdb lab-up lab-down lab-volcano-install lab-openkruise-install \
 	lab-verify-volcano lab-setup-wsl-home lab-volcano-up cdk-synth run-finance-example run-desk-day
 
@@ -10,6 +10,9 @@ build:
 
 test:
 	cd controller && go test ./...
+
+clean-as-you-code:
+	./scripts/clean-as-you-code.sh
 
 theory-prove:
 	cd controller && go test ./pkg/theory/ ./pkg/engine/ ./pkg/wheel/ ./pkg/routing/ ./pkg/replica/ ./pkg/cdc/ ./pkg/hash/ ./pkg/convert/ ./pkg/executor/ ./pkg/builtin/ ./pkg/store/ ./pkg/events/ ./pkg/review/ ./internal/controller/ -count=1
