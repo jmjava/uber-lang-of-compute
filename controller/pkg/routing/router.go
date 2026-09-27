@@ -38,6 +38,9 @@ func (r *Router) Resolve(evt events.SnapshotEvent) (Target, error) {
 	// Time-slice override takes precedence.
 	for _, ts := range r.spec.TimeSliceRoutes {
 		if ts.TimeSlice != "" && ts.TimeSlice == evt.TimeSlice {
+			if ts.Universe == "" {
+				return Target{}, fmt.Errorf("time-slice route %q names no universe", ts.TimeSlice)
+			}
 			return Target{
 				Universe:          ts.Universe,
 				PluggableUniverse: r.refs[ts.Universe],

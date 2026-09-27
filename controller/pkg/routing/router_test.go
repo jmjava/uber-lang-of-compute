@@ -148,6 +148,32 @@ func TestAmbiguousPartitionMatchRejected(t *testing.T) {
 	}
 }
 
+func TestTimeSliceRouteWithoutUniverseIsRefused(t *testing.T) {
+	spec := kblv1alpha1.MultiverseSpec{
+		DefaultUniverse: "finance-local",
+		Universes: []kblv1alpha1.UniverseRouteSpec{
+			{
+				Name:       "rates-universe",
+				Partitions: []kblv1alpha1.PartitionRule{{Key: "asset_class", Values: []string{"rates"}}},
+			},
+		},
+		TimeSliceRoutes: []kblv1alpha1.TimeSliceRoute{{
+			TimeSlice: "2025-04-15",
+		}},
+	}
+	target, err := routing.NewRouter(spec).Resolve(events.SnapshotEvent{
+		SnapshotID: "snap",
+		TimeSlice:  "2025-04-15",
+		Partitions: map[string]string{"asset_class": "rates"},
+	})
+	if err == nil {
+		t.Fatal("time-slice route with no universe must be refused")
+	}
+	if target.Universe != "" {
+		t.Fatalf("refused route must not select a universe, got %q", target.Universe)
+	}
+}
+
 func TestFanoutRejectsIncompleteEvent(t *testing.T) {
 	r := routing.NewRouter(kblv1alpha1.MultiverseSpec{
 		Universes: []kblv1alpha1.UniverseRouteSpec{{Name: "rates"}, {Name: "credit"}},
