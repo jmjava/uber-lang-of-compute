@@ -37,6 +37,9 @@ func (e *Engine) Run(wf *types.Workflow) (*types.RunResult, error) {
 	if !snap.Spec.Sealed {
 		return nil, fmt.Errorf("snapshot %q is not sealed; cannot execute deterministically", snap.Metadata.Name)
 	}
+	if snap.Spec.TimeSlice == "" {
+		return nil, fmt.Errorf("snapshot %q has no time slice", snap.Metadata.Name)
+	}
 
 	content, snapshotData, snapshotID, err := snapshot.ResolveEngineContentPreferStore(e.store, snap, "")
 	if err != nil {
@@ -252,6 +255,9 @@ func (e *Engine) RunSingle(snapshotID string, snap types.Snapshot, domino types.
 func (e *Engine) RunSingleFrom(snapshotID string, snap types.Snapshot, domino types.Domino, priorOutputs map[string]string, prevLink string) (*types.ReplayLogEntry, error) {
 	if !snap.Spec.Sealed {
 		return nil, fmt.Errorf("snapshot %q is not sealed", snap.Metadata.Name)
+	}
+	if snap.Spec.TimeSlice == "" {
+		return nil, fmt.Errorf("snapshot %q has no time slice", snap.Metadata.Name)
 	}
 	if snapshotID == "" {
 		return nil, fmt.Errorf("snapshot ID is required")

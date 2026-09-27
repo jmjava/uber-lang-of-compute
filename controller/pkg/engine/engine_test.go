@@ -2,6 +2,7 @@ package engine_test
 
 import (
 	"bytes"
+	"database/sql"
 	"io"
 	"os"
 	"path/filepath"
@@ -223,6 +224,45 @@ func TestMemoizationReusesResults(t *testing.T) {
 
 	if result1.FinalOutput != result2.FinalOutput {
 		t.Errorf("final output changed between runs")
+	}
+}
+
+func TestRunRejectsSnapshotWithoutTimeSlice(t *testing.T) {
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "no-slice.db")
+	s, err := store.Open(dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	wf.Spec.Snapshot.Spec.TimeSlice = ""
+	_, err = engine.New(s).Run(wf)
+	if err == nil || !strings.Contains(err.Error(), "no time slice") {
+		t.Fatalf("sealed snapshot without a time slice must be refused, got %v", err)
+	}
+
+	domino := wf.Spec.Dominos[0]
+	_, err = engine.New(s).RunSingle("no-slice", wf.Spec.Snapshot, domino, nil)
+	if err == nil || !strings.Contains(err.Error(), "no time slice") {
+		t.Fatalf("single step without a time slice must be refused, got %v", err)
+	}
+
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	var snapshots, replay int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM snapshots`).Scan(&snapshots); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.QueryRow(`SELECT COUNT(*) FROM replay_log`).Scan(&replay); err != nil {
+		t.Fatal(err)
+	}
+	if snapshots != 0 || replay != 0 {
+		t.Fatalf("blank time slice wrote snapshots=%d replay=%d", snapshots, replay)
 	}
 }
 
