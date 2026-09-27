@@ -21,7 +21,7 @@ func Apply(target store.Backend, env Envelope) error {
 
 func applySnapshot(target store.Backend, env Envelope) error {
 	if env.Op == OpDelete {
-		return nil
+		return fmt.Errorf("refusing CDC delete of a sealed snapshot")
 	}
 	row, err := decodeAfter[SnapshotRow](env.After)
 	if err != nil {

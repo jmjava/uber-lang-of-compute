@@ -144,6 +144,41 @@ func TestApplyDominoResultRequiresSealedParent(t *testing.T) {
 	}
 }
 
+func TestApplyRejectsSnapshotDelete(t *testing.T) {
+	target, err := store.OpenSQLite(t.TempDir() + "/target.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+
+	const snapshotID = "snap-sealed"
+	if err := target.SaveSnapshot(snapshotID, "2025-04-15", `{"v":1}`, true); err != nil {
+		t.Fatal(err)
+	}
+
+	env := cdc.Envelope{
+		Op:    cdc.OpDelete,
+		Table: cdc.TableSnapshots,
+		After: cdc.SnapshotRow{SnapshotID: snapshotID, TimeSlice: "2025-04-15", Data: `{"v":1}`, Sealed: true},
+	}
+	if err := cdc.Apply(target, env); err == nil {
+		t.Fatal("CDC delete of a sealed snapshot must be refused")
+	}
+
+	progress, err := cdc.ApplyAll(target, snapshotID, []cdc.Envelope{env})
+	if err == nil {
+		t.Fatal("delete must not complete replication")
+	}
+	if progress.SnapshotApplied {
+		t.Fatal("delete must not mark the snapshot applied")
+	}
+
+	_, data, sealed, err := target.GetSnapshot(snapshotID)
+	if err != nil || !sealed || data != `{"v":1}` {
+		t.Fatalf("stored snapshot must remain: err=%v data=%q sealed=%v", err, data, sealed)
+	}
+}
+
 func TestExportFromWorkflowSnapshotRefEmitsEnvelopes(t *testing.T) {
 	wf := &kblv1alpha1.Workflow{
 		Spec: kblv1alpha1.WorkflowSpec{
