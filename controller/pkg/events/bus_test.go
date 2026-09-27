@@ -45,3 +45,22 @@ func TestMemoryBusPublishIsIdempotentOnEventID(t *testing.T) {
 		t.Fatalf("published log %d want 1", len(bus.Published()))
 	}
 }
+
+func TestMemoryBusRejectsMissingEventID(t *testing.T) {
+	bus := events.NewMemoryBus()
+	defer bus.Close()
+
+	err := bus.Publish(context.Background(), events.SnapshotEvent{
+		Type:       events.TypeSnapshotCompleted,
+		SnapshotID: "snap",
+		Worldline:  "h1|h2",
+		Universe:   "rates",
+		Workflow:   "wf",
+	})
+	if err == nil {
+		t.Fatal("publish without EventID must be refused")
+	}
+	if len(bus.Published()) != 0 {
+		t.Fatalf("refused event must not be recorded, got %d", len(bus.Published()))
+	}
+}

@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -19,6 +20,9 @@ func NewMemoryBus() *MemoryBus {
 }
 
 func (m *MemoryBus) Publish(ctx context.Context, evt SnapshotEvent) error {
+	if evt.EventID == "" {
+		return fmt.Errorf("event ID is required")
+	}
 	m.mu.Lock()
 	if m.closed {
 		m.mu.Unlock()
