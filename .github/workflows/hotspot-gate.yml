@@ -1,0 +1,36 @@
+name: Hotspot gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  hotspot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: git fetch origin main
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: controller/go.sum
+
+      - name: Install gocyclo
+        run: |
+          go install github.com/fzipp/gocyclo/cmd/gocyclo@v0.6.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Hotspot gate tests
+        run: ./scripts/hotspot-gate-test.sh
+
+      - name: Hotspot gate
+        run: ./scripts/hotspot-gate.sh
