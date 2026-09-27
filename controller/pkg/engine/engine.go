@@ -202,6 +202,9 @@ func (e *Engine) resolveInputs(d *types.Domino, snap types.Snapshot, snapshotID 
 
 	var parts []interface{}
 	for _, input := range d.Spec.Inputs {
+		if input.FromDomino == "" && input.FromSnapshot == "" {
+			return "", fmt.Errorf("input names neither a snapshot nor a domino")
+		}
 		if input.FromDomino != "" {
 			out, ok := priorOutputs[input.FromDomino]
 			if !ok {

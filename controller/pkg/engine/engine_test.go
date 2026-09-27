@@ -2,6 +2,7 @@ package engine_test
 
 import (
 	"bytes"
+	"database/sql"
 	"io"
 	"os"
 	"path/filepath"
@@ -183,6 +184,40 @@ func TestRejectsDependsOnOutsideCausalPast(t *testing.T) {
 	_, err = engine.New(s).Run(wf)
 	if err == nil {
 		t.Fatal("DependsOn of a later domino must be rejected")
+	}
+}
+
+func TestBlankInputSelectorRefused(t *testing.T) {
+	dir := t.TempDir()
+	dbPath := filepath.Join(dir, "blank-input.db")
+	s, err := store.Open(dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	wf := loadTestWorkflow(t, "simple-domino-chain")
+	first := wf.Spec.Execution.Chain[0]
+	for i := range wf.Spec.Dominos {
+		if wf.Spec.Dominos[i].Metadata.Name == first {
+			wf.Spec.Dominos[i].Spec.Inputs = []types.DominoInput{{}}
+		}
+	}
+	_, err = engine.New(s).Run(wf)
+	if err == nil || !strings.Contains(err.Error(), "neither a snapshot nor a domino") {
+		t.Fatalf("blank input selector must be refused, got %v", err)
+	}
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	var n int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM replay_log`).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	if n != 0 {
+		t.Fatalf("blank selector wrote %d replay rows", n)
 	}
 }
 
