@@ -1,0 +1,6 @@
+# Frozen golangci-lint 2.13.2 findings for controller/.golangci.yml.
+# One path<TAB>code line per allowed occurrence.
+# CI compares today's findings to this file and does not rewrite it.
+# A higher count fails. A finding that is gone may leave a stale line.
+# Do not delete a line while the finding remains.
+pkg/theory/correspondence_test.go	SA4000

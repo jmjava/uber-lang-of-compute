@@ -1,0 +1,38 @@
+name: Frozen static baseline
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - verify/uloc-baseline
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: controller/go.sum
+
+      - name: CGO toolchain
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends gcc libc6-dev
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v2.13.2
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Static baseline proving test
+        run: bash scripts/test-check-static-baseline.sh
+
+      - name: Frozen static baseline
+        run: |
+          python3 scripts/check-static-baseline.py
+          git diff --exit-code -- controller/.golangci-baseline.txt
