@@ -61,6 +61,19 @@ func TestUnmarshalDebeziumUnsealedIsRefused(t *testing.T) {
 	}
 }
 
+func TestUnmarshalDebeziumMissingTableIsRefused(t *testing.T) {
+	raw := []byte(`{
+		"payload": {
+			"op": "c",
+			"source": {"connector":"postgresql"},
+			"after": {"snapshot_id":"abc","time_slice":"2025-04-15","data":"{}","sealed":true}
+		}
+	}`)
+	if _, err := cdc.UnmarshalEnvelope(raw); err == nil {
+		t.Fatal("debezium record without source.table must be refused")
+	}
+}
+
 func TestUnmarshalEngineEnvelopeStillWorks(t *testing.T) {
 	env := cdc.Envelope{
 		Op:    cdc.OpCreate,
