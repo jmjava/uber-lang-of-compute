@@ -13,6 +13,9 @@ import (
 func VerifySpine(snapshotID string, entries []types.ReplayLogEntry) error {
 	prev := snapshotID
 	for i, e := range entries {
+		if e.InputHash == "" || e.OutputHash == "" {
+			return fmt.Errorf("entry %d is missing an input or output hash", i)
+		}
 		if e.PrevLink != prev {
 			return fmt.Errorf("entry %d prev-link mismatch", i)
 		}
