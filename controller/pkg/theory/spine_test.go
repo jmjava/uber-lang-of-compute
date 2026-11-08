@@ -33,6 +33,14 @@ func TestVerifySpineRejectsTamperedOutput(t *testing.T) {
 	}
 }
 
+func TestVerifySpineRejectsMissingInputHash(t *testing.T) {
+	const snap = "snap-root"
+	e1 := linkedEntry(t, snap, "", "out1")
+	if err := theory.VerifySpine(snap, []types.ReplayLogEntry{e1}); err == nil {
+		t.Fatal("a spine entry with no input hash must be refused")
+	}
+}
+
 func TestVerifySpineRejectsBrokenPrev(t *testing.T) {
 	const snap = "snap-root"
 	e1 := linkedEntry(t, snap, "in1", "out1")
