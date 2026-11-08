@@ -76,6 +76,13 @@ func TestTreasuryParCurveLandsOnGrid(t *testing.T) {
 	}
 }
 
+func TestInterpolateRejectsEmptyCurve(t *testing.T) {
+	_, err := builtin.Execute("builtin:interpolate", `[]`)
+	if err == nil {
+		t.Fatal("empty instrument list must be refused")
+	}
+}
+
 func TestCoarsenSumsChildValues(t *testing.T) {
 	out, err := builtin.Execute("builtin:coarsen", `[{"v":1},{"v":1}]`)
 	if err != nil {
