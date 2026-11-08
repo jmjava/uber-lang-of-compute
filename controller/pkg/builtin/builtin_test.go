@@ -83,6 +83,13 @@ func TestRiskDV01RejectsUnknownTenor(t *testing.T) {
 	}
 }
 
+func TestIdentityRejectsInvalidJSON(t *testing.T) {
+	_, err := builtin.Execute("builtin:identity", `{`)
+	if err == nil {
+		t.Fatal("invalid JSON must be refused")
+	}
+}
+
 func TestInterpolateRejectsEmptyCurve(t *testing.T) {
 	_, err := builtin.Execute("builtin:interpolate", `[]`)
 	if err == nil {

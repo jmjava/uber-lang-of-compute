@@ -42,7 +42,7 @@ func identity(inputJSON string) (string, error) {
 	}
 	var data interface{}
 	if err := json.Unmarshal([]byte(inputJSON), &data); err != nil {
-		return inputJSON, nil
+		return "", fmt.Errorf("identity: invalid JSON: %w", err)
 	}
 	out, err := json.Marshal(data)
 	return string(out), err
