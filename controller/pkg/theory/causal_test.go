@@ -31,6 +31,15 @@ func TestFutureReadRejected(t *testing.T) {
 	}
 }
 
+func TestEmptyReadRejected(t *testing.T) {
+	// A blank earlier in the chain must not make a blank read legal.
+	chain := []string{"", "risk"}
+	err := theory.AllowedReads(chain, "risk", []string{"snapshot", ""})
+	if err == nil {
+		t.Fatal("blank input must be refused")
+	}
+}
+
 func TestSnapshotReadAlwaysAllowed(t *testing.T) {
 	chain := []string{"load"}
 	if err := theory.AllowedReads(chain, "load", []string{"snapshot"}); err != nil {
