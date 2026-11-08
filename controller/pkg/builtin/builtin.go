@@ -169,7 +169,7 @@ func riskDV01(inputJSON string) (string, error) {
 	for tenor, rate := range curveData.Interpolated {
 		years, ok := tenorYears(tenor)
 		if !ok {
-			continue
+			return "", fmt.Errorf("risk-dv01: unknown tenor %q", tenor)
 		}
 		dv01 := notional * years * bpShift
 		risks = append(risks, riskEntry{

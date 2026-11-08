@@ -76,6 +76,13 @@ func TestTreasuryParCurveLandsOnGrid(t *testing.T) {
 	}
 }
 
+func TestRiskDV01RejectsUnknownTenor(t *testing.T) {
+	_, err := builtin.Execute("builtin:risk-dv01", `{"interpolated":{"10Y":4.25,"6M":1}}`)
+	if err == nil {
+		t.Fatal("unknown tenor must be refused")
+	}
+}
+
 func TestInterpolateRejectsEmptyCurve(t *testing.T) {
 	_, err := builtin.Execute("builtin:interpolate", `[]`)
 	if err == nil {
