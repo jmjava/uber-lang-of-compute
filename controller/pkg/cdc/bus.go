@@ -3,6 +3,7 @@ package cdc
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sync"
 )
 
@@ -126,13 +127,18 @@ func MarshalEnvelope(env Envelope) ([]byte, error) {
 }
 
 // UnmarshalEnvelope parses engine CDC JSON or a real Debezium / Kafka Connect message.
+// A record that names a Debezium connector is not retried as an engine envelope.
 func UnmarshalEnvelope(data []byte) (Envelope, error) {
-	if env, err := unwrapDebezium(data); err == nil {
+	env, err := unwrapDebezium(data)
+	if err == nil {
 		return env, nil
 	}
-	var env Envelope
-	if err := json.Unmarshal(data, &env); err != nil {
+	if !errors.Is(err, errNotDebezium) {
 		return Envelope{}, err
 	}
-	return env, nil
+	var fallback Envelope
+	if err := json.Unmarshal(data, &fallback); err != nil {
+		return Envelope{}, err
+	}
+	return fallback, nil
 }
