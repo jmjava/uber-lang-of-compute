@@ -21,15 +21,19 @@ func CausalPast(chain []string, domino string) ([]string, error) {
 }
 
 // AllowedReads reports whether every requested input name lies in the causal
-// past of the executing domino. "snapshot" is always allowed; other names
-// must be strictly earlier in the chain (not the current domino).
+// past of the executing domino. "snapshot" is always allowed. A blank name is
+// not an event, even when the chain also contains a blank slot. Every other
+// name must be strictly earlier in the chain (not the current domino).
 func AllowedReads(chain []string, domino string, inputs []string) error {
 	idx := indexOf(chain, domino)
 	if idx < 0 {
 		return fmt.Errorf("domino %q not in chain", domino)
 	}
 	for _, in := range inputs {
-		if in == "snapshot" || in == "" {
+		if in == "" {
+			return fmt.Errorf("input name is empty (outside causal past of %q)", domino)
+		}
+		if in == "snapshot" {
 			continue
 		}
 		src := indexOf(chain, in)
